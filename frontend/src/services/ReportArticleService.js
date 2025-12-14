@@ -1,7 +1,9 @@
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+
 class ReportArticleService {
   static async reportArticle(token, article_id, description) {
     try {
-      const response = await fetch('http://localhost:8000/report_article/add', {
+      const response = await fetch(`${API_BASE_URL}/report_article/add`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

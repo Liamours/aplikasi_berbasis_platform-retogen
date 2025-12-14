@@ -1,4 +1,4 @@
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000' || 'http://127.0.0.1:8000';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 
 const EditRatingService = {
   editRating: async (token, articleId, ratingId, ratingValue) => {
@@ -16,7 +16,7 @@ const EditRatingService = {
           rating_value: ratingValue
         })
       });
-
+      
       const data = await response.json();
       return data;
     } catch (error) {

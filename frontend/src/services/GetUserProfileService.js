@@ -1,7 +1,9 @@
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+
 class GetUserProfileService {
   static async getUserProfile(token, user_email) {
     try {
-      const response = await fetch('http://localhost:8000/report_user/get_user_profile', {
+      const response = await fetch(`${API_BASE_URL}/report_user/get_user_profile`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -11,7 +13,6 @@ class GetUserProfileService {
           user_email: user_email
         }),
       });
-
       const data = await response.json();
       return data;
     } catch (error) {

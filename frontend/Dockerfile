@@ -1,28 +1,19 @@
 FROM node:18-alpine AS build
-
 WORKDIR /app
-
-# Copy package files
 COPY package*.json ./
-
-# Install dependencies (npm ci uses package-lock.json for exact versions)
 RUN npm ci --omit=dev
-
-# Copy application code (node_modules excluded via .dockerignore)
 COPY . .
-
-# Build the React application
 RUN npm run build
 
-# Production stage with nginx
 FROM nginx:alpine
-
-# Copy built assets from build stage
 COPY --from=build /app/build /usr/share/nginx/html
-
-# Copy custom nginx configuration for React Router
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-EXPOSE 80
+# Create startup script to replace port 80 with Railway's PORT
+RUN echo '#!/bin/sh' > /start.sh && \
+    echo 'sed -i "s/listen 80;/listen ${PORT:-80};/g" /etc/nginx/conf.d/default.conf' >> /start.sh && \
+    echo 'nginx -g "daemon off;"' >> /start.sh && \
+    chmod +x /start.sh
 
-CMD ["nginx", "-g", "daemon off;"]
+EXPOSE 80
+CMD ["/start.sh"]

@@ -1,4 +1,4 @@
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 
 /**
  * Get user details by user ID
@@ -18,11 +18,11 @@ export const getUserDetails = async (userEmail, token) => {
         user_email: userEmail
       })
     });
-
+    
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
-
+    
     const data = await response.json();
     return data;
   } catch (error) {
@@ -51,11 +51,11 @@ export const deleteUser = async (userId, token) => {
         user_id: userId
       })
     });
-
+    
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
-
+    
     const data = await response.json();
     return data;
   } catch (error) {
@@ -84,11 +84,11 @@ export const makeAdmin = async (userId, token) => {
         user_id: userId
       })
     });
-
+    
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
-
+    
     const data = await response.json();
     return data;
   } catch (error) {

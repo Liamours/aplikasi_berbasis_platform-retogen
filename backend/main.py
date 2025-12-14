@@ -8,22 +8,29 @@ import uvicorn
 
 app = FastAPI(title="Updated Backend Template")
 
-# Get allowed origins from environment variable or use defaults for local development
-ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000").split(",")
+# Get allowed origins from environment
+ALLOWED_ORIGINS = os.getenv(
+    "ALLOWED_ORIGINS", 
+    "http://localhost:3000,http://127.0.0.1:3000"
+).split(",")
 
+print(f"🔍 Allowed Origins: {ALLOWED_ORIGINS}")
+
+# CORS middleware - must be FIRST
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=ALLOWED_ORIGINS,
-    allow_credentials=True,
+    allow_origins=ALLOWED_ORIGINS,  # Back to specific origins
+    allow_credentials=False,  # Keep this False since you're using localStorage
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Pasang custom error handler
+# Add exception handler
 app.add_exception_handler(RequestValidationError, validation_exception_handler)
 
-app.include_router(article.router, prefix="/article", tags=["Article"])
+# Include routers
 app.include_router(auth.router, prefix="/auth", tags=["Auth"])
+app.include_router(article.router, prefix="/article", tags=["Article"])
 app.include_router(comment.router, prefix="/comment", tags=["Comment"])
 app.include_router(rating.router, prefix="/rating", tags=["Rating"])
 app.include_router(report_article.router, prefix="/report_article", tags=["Report Article"])
@@ -35,4 +42,4 @@ def root():
     return {"message": "API Ready"}
 
 if __name__ == "__main__":
-    uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)
+    uvicorn.run("main:app", host="0.0.0.0", port=int(os.getenv("PORT", 8000)), reload=True)

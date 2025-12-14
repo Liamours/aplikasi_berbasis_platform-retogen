@@ -4,40 +4,34 @@ from schemas.register_schema import RegisterUser
 from services.auth_service import AuthService
 from utils.token import set_session_token
 import re
+import os
 
 router = APIRouter()
 
-def validate_register_input(data: RegisterUser):
+# Add this to detect if running in production
+IS_PRODUCTION = os.getenv("RAILWAY_ENVIRONMENT") == "production"
 
+def validate_register_input(data: RegisterUser):
     if not re.fullmatch(r"^[A-Za-z0-9]{8,16}$", data.username):
         return {"confirmation": "username length must be 8 - 16 characters, only alphabetic characters and numbers (aA-zZ, 0-9) are allowed"}
-
     if not re.fullmatch(r"^[A-Za-zA-Z ]{4,32}$", data.fullname):
         return {"confirmation": "fullname length must be 4 - 32 characters, only alphabetic characters (aA-zZ) are allowed"}
-
     password = data.password
     if len(password) < 8 or len(password) > 16:
         return {"confirmation": "password length must be 8 - 16 characters"}
-
     if not re.search(r"[a-z]", password):
         return {"confirmation": "password must contain at least one lowercase letter"}
-
     if not re.search(r"[A-Z]", password):
         return {"confirmation": "password must contain at least one uppercase letter"}
-
     if not re.search(r"\d", password):
         return {"confirmation": "password must contain at least one number"}
-
     if not password.isalnum():
         return {"confirmation": "password can only contain letters and numbers"}
-
     return None
-
-
 
 def validate_login_input(data: LoginUser):
     if not data.email:
-        return {"confirmation": "email doesn't exists"}
+        return {"confirmation": "email doesn't exist"}
     
     if not data.password:
         return {"confirmation": "password is incorrect"}
@@ -52,17 +46,22 @@ async def register(data: RegisterUser):
 
 @router.post("/login")
 async def login(data: LoginUser, response: Response):
-
     validate_error = validate_login_input(data)
     if validate_error:
         return validate_error
-
+    
     result = await AuthService.login(data)
+    
+    # Since we're using localStorage on frontend, the cookie is optional
+    # You can remove this section if you want, or keep it for server-side sessions
     if result.get("confirmation") == "login successful":
         response.set_cookie(
             key="token",
             value=result["token"],
             httponly=True,
-            samesite="Lax"
+            secure=True,  # Always use secure in production
+            samesite="none",  # Required for cross-origin
+            max_age=3600 * 24 * 7
         )
+    
     return result

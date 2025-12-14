@@ -1,11 +1,12 @@
 import axios from 'axios';
 
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: { 'Content-Type': 'application/json' },
-  timeout: 10000,
+  timeout: 30000,  // Increased timeout
+  withCredentials: false,  // Add this line
 });
 
 api.interceptors.request.use((config) => config);
