@@ -26,7 +26,6 @@
   flex-direction: column;
   justify-content: center;   /* tengah secara vertikal */
   align-items: center;       /* tengah secara horizontal */
-  min-height: 100vh;         /* setinggi viewport */
   text-align: center;
   padding: 20px;
 }

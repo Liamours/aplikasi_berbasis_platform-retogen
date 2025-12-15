@@ -9,7 +9,6 @@ import { getUserDetails } from '../../../services/UserService';
 function Account() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
@@ -19,7 +18,6 @@ function Account() {
 
   const fetchUserDetails = async () => {
     try {
-      setLoading(true);
       const token = localStorage.getItem('token');
       const email = '';
       
@@ -63,8 +61,6 @@ function Account() {
     } catch (err) {
       console.error('Error fetching user details:', err);
       setError('Server is busy. Please try again later.');
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -82,20 +78,6 @@ function Account() {
       year: 'numeric' 
     });
   };
-
-  if (loading) {
-    return (
-      <>
-        <div className="bg-shape-1"></div>
-        <div className="bg-shape-2"></div>
-        <div className="bg-shape-3"></div>
-        <Navbar showBack={true}/>
-          <div className="loading-message">
-            <h2>Loading...</h2>
-          </div>
-      </>
-    );
-  }
 
   if (error) {
     return (
