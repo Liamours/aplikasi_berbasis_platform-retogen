@@ -19,7 +19,6 @@ function Account() {
 
   const fetchUserDetails = async () => {
     try {
-      setLoading(true);
       const token = localStorage.getItem('token');
       const email = '';
       
@@ -63,9 +62,6 @@ function Account() {
     } catch (err) {
       console.error('Error fetching user details:', err);
       setError('Server is busy. Please try again later.');
-    } finally {
-      setLoading(false);
-    }
   };
 
   const handleLogout = () => {
