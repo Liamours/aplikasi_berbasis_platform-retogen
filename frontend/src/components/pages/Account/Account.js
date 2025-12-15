@@ -19,6 +19,7 @@ function Account() {
 
   const fetchUserDetails = async () => {
     try {
+      setLoading(true);
       const token = localStorage.getItem('token');
       const email = '';
       
@@ -62,6 +63,9 @@ function Account() {
     } catch (err) {
       console.error('Error fetching user details:', err);
       setError('Server is busy. Please try again later.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleLogout = () => {
@@ -86,10 +90,9 @@ function Account() {
         <div className="bg-shape-2"></div>
         <div className="bg-shape-3"></div>
         <Navbar showBack={true}/>
-
-        <div className="account-container">
-          <div className="loading-spinner">Loading...</div>
-        </div>
+          <div className="loading-message">
+            <h2>Loading...</h2>
+          </div>
       </>
     );
   }
