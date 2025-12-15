@@ -141,6 +141,17 @@ body.dark-mode .bg-shape-3 {
   max-width: 480px;
 }
 
+.auth-container.with-sidebar {
+  max-width: 1000px;
+  display: flex;
+  gap: 32px;
+  align-items: flex-start;
+}
+
+.auth-container.with-sidebar .auth-card {
+  flex: 0 0 480px;
+}
+
 .auth-card {
   background: rgba(220, 220, 220, 0.7);
   backdrop-filter: blur(12px);
@@ -179,12 +190,19 @@ body.dark-mode .auth-subtitle {
   color: #b8b8b8;
 }
 
+.requirements-sidebar {
+  flex: 1;
+  min-width: 300px;
+  max-width: 400px;
+}
+
 .requirements-box {
   background: rgba(0, 206, 209, 0.05);
   border: 1px solid rgba(0, 206, 209, 0.2);
   border-radius: 12px;
-  padding: 20px;
-  margin-bottom: 24px;
+  padding: 24px;
+  position: sticky;
+  top: 100px;
 }
 
 body.dark-mode .requirements-box {
@@ -497,5 +515,24 @@ body.dark-mode .success-modal p {
 
   .auth-title {
     font-size: 28px;
+  }
+
+  .auth-container.with-sidebar {
+    flex-direction: column;
+    max-width: 480px;
+  }
+
+  .auth-container.with-sidebar .auth-card {
+    flex: 1;
+    width: 100%;
+  }
+
+  .requirements-sidebar {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .requirements-box {
+    position: static;
   }
 }

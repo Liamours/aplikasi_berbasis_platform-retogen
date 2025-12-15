@@ -300,7 +300,7 @@ function Auth() {
       <Navbar showBack={true} onBackClick={() => navigate('/')} />
 
       <div className="container">
-        <div className="auth-container">
+        <div className={`auth-container ${!isLogin ? 'with-sidebar' : ''}`}>
           <div className="auth-card">
             <h2 className="auth-title">
               {isLogin ? 'Welcome Back' : 'Create Account'}
@@ -310,45 +310,6 @@ function Auth() {
                 ? 'Sign in to continue to Retogen' 
                 : 'Join our community of honest reviewers'}
             </p>
-
-            {!isLogin && (
-              <div className="requirements-box">
-                <h4 className="requirements-title">Registration Requirements</h4>
-                <div className="requirements-list">
-                  <div className="requirement-item">
-                    <strong>Username:</strong>
-                    <ul>
-                      <li>8-16 characters</li>
-                      <li>Only letters and numbers (no symbols or spaces)</li>
-                    </ul>
-                  </div>
-                  <div className="requirement-item">
-                    <strong>Full Name:</strong>
-                    <ul>
-                      <li>4-32 characters</li>
-                      <li>Only letters and spaces</li>
-                    </ul>
-                  </div>
-                  <div className="requirement-item">
-                    <strong>Email:</strong>
-                    <ul>
-                      <li>Must contain @ symbol</li>
-                      <li>Valid format (e.g., user@example.com)</li>
-                    </ul>
-                  </div>
-                  <div className="requirement-item">
-                    <strong>Password:</strong>
-                    <ul>
-                      <li>8-16 characters</li>
-                      <li>At least 1 lowercase letter</li>
-                      <li>At least 1 uppercase letter</li>
-                      <li>At least 1 number</li>
-                      <li>No symbols allowed</li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
-            )}
 
             {error && (
               <div className="error-banner">
@@ -505,6 +466,47 @@ function Auth() {
               )}
             </div>
           </div>
+
+          {!isLogin && (
+            <div className="requirements-sidebar">
+              <div className="requirements-box">
+                <h4 className="requirements-title">Registration Requirements</h4>
+                <div className="requirements-list">
+                  <div className="requirement-item">
+                    <strong>Username:</strong>
+                    <ul>
+                      <li>8-16 characters</li>
+                      <li>Only letters and numbers (no symbols or spaces)</li>
+                    </ul>
+                  </div>
+                  <div className="requirement-item">
+                    <strong>Full Name:</strong>
+                    <ul>
+                      <li>4-32 characters</li>
+                      <li>Only letters and spaces</li>
+                    </ul>
+                  </div>
+                  <div className="requirement-item">
+                    <strong>Email:</strong>
+                    <ul>
+                      <li>Must contain @ symbol</li>
+                      <li>Valid format (e.g., user@example.com)</li>
+                    </ul>
+                  </div>
+                  <div className="requirement-item">
+                    <strong>Password:</strong>
+                    <ul>
+                      <li>8-16 characters</li>
+                      <li>At least 1 lowercase letter</li>
+                      <li>At least 1 uppercase letter</li>
+                      <li>At least 1 number</li>
+                      <li>No symbols allowed</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
