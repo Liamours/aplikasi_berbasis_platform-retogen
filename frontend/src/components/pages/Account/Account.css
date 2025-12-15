@@ -22,8 +22,13 @@
 /* Loading and Error States */
 .loading-message,
 .error-message {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;   /* tengah secara vertikal */
+  align-items: center;       /* tengah secara horizontal */
+  min-height: 100vh;         /* setinggi viewport */
   text-align: center;
-  padding: 100px 20px;
+  padding: 20px;
 }
 
 .loading-message h2,
