@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { FiAlertCircle, FiCheckCircle } from 'react-icons/fi';
+import { FiAlertCircle, FiCheckCircle, FiInfo } from 'react-icons/fi';
 import Navbar from '../../common/Navbar/Navbar';
 import { authService } from '../../../services/AuthService';
 import { initializeTheme } from '../../../services/themeUtils';
@@ -300,7 +300,7 @@ function Auth() {
       <Navbar showBack={true} onBackClick={() => navigate('/')} />
 
       <div className="container">
-        <div className={`auth-container ${!isLogin ? 'with-sidebar' : ''}`}>
+        <div className="auth-container">
           <div className="auth-card">
             <h2 className="auth-title">
               {isLogin ? 'Welcome Back' : 'Create Account'}
@@ -322,7 +322,20 @@ function Auth() {
               {!isLogin && (
                 <>
                   <div className="form-group">
-                    <label className="form-label">Username</label>
+                    <label className="form-label">
+                      Username
+                      <div className="info-tooltip">
+                        <FiInfo size={16} className="info-icon" />
+                        <div className="tooltip-content">
+                          <strong>Username Requirements:</strong>
+                          <ul>
+                            <li>8-16 characters</li>
+                            <li>Only letters and numbers</li>
+                            <li>No symbols or spaces</li>
+                          </ul>
+                        </div>
+                      </div>
+                    </label>
                     <input
                       type="text"
                       name="username"
@@ -342,7 +355,19 @@ function Auth() {
                   </div>
 
                   <div className="form-group">
-                    <label className="form-label">Full Name</label>
+                    <label className="form-label">
+                      Full Name
+                      <div className="info-tooltip">
+                        <FiInfo size={16} className="info-icon" />
+                        <div className="tooltip-content">
+                          <strong>Full Name Requirements:</strong>
+                          <ul>
+                            <li>4-32 characters</li>
+                            <li>Only letters and spaces</li>
+                          </ul>
+                        </div>
+                      </div>
+                    </label>
                     <input
                       type="text"
                       name="fullname"
@@ -364,7 +389,21 @@ function Auth() {
               )}
 
               <div className="form-group">
-                <label className="form-label">Email</label>
+                <label className="form-label">
+                  Email
+                  {!isLogin && (
+                    <div className="info-tooltip">
+                      <FiInfo size={16} className="info-icon" />
+                      <div className="tooltip-content">
+                        <strong>Email Requirements:</strong>
+                        <ul>
+                          <li>Must contain @ symbol</li>
+                          <li>Valid format (e.g., user@example.com)</li>
+                        </ul>
+                      </div>
+                    </div>
+                  )}
+                </label>
                 <input
                   type="email"
                   name="email"
@@ -384,7 +423,24 @@ function Auth() {
               </div>
 
               <div className="form-group">
-                <label className="form-label">Password</label>
+                <label className="form-label">
+                  Password
+                  {!isLogin && (
+                    <div className="info-tooltip">
+                      <FiInfo size={16} className="info-icon" />
+                      <div className="tooltip-content">
+                        <strong>Password Requirements:</strong>
+                        <ul>
+                          <li>8-16 characters</li>
+                          <li>At least 1 lowercase letter</li>
+                          <li>At least 1 uppercase letter</li>
+                          <li>At least 1 number</li>
+                          <li>No symbols allowed</li>
+                        </ul>
+                      </div>
+                    </div>
+                  )}
+                </label>
                 <input
                   type="password"
                   name="password"
@@ -466,47 +522,6 @@ function Auth() {
               )}
             </div>
           </div>
-
-          {!isLogin && (
-            <div className="requirements-sidebar">
-              <div className="requirements-box">
-                <h4 className="requirements-title">Registration Requirements</h4>
-                <div className="requirements-list">
-                  <div className="requirement-item">
-                    <strong>Username:</strong>
-                    <ul>
-                      <li>8-16 characters</li>
-                      <li>Only letters and numbers (no symbols or spaces)</li>
-                    </ul>
-                  </div>
-                  <div className="requirement-item">
-                    <strong>Full Name:</strong>
-                    <ul>
-                      <li>4-32 characters</li>
-                      <li>Only letters and spaces</li>
-                    </ul>
-                  </div>
-                  <div className="requirement-item">
-                    <strong>Email:</strong>
-                    <ul>
-                      <li>Must contain @ symbol</li>
-                      <li>Valid format (e.g., user@example.com)</li>
-                    </ul>
-                  </div>
-                  <div className="requirement-item">
-                    <strong>Password:</strong>
-                    <ul>
-                      <li>8-16 characters</li>
-                      <li>At least 1 lowercase letter</li>
-                      <li>At least 1 uppercase letter</li>
-                      <li>At least 1 number</li>
-                      <li>No symbols allowed</li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
         </div>
       </div>
 
