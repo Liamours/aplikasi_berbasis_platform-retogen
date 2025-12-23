@@ -85,13 +85,17 @@ function Account() {
 
   if (loading) {
     return (
-      <div className="page-container">
+      <div className="main-page">
         <div className="bg-shape-1"></div>
         <div className="bg-shape-2"></div>
         <div className="bg-shape-3"></div>
-        <Navbar showBack={true}/>
-        <div className="loading-message" role="status" aria-live="polite">
-          <h2>Loading...</h2>
+
+        <Navbar showAccount={true} />
+
+        <div className="container">
+          <div className="loading-message">
+            <h2>Loading...</h2>
+          </div>
         </div>
       </div>
     );
