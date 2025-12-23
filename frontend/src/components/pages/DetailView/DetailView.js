@@ -759,7 +759,7 @@ function DetailView() {
         <Navbar showAccount={true} />
         <div className="navbar-placeholder"></div>
         <div className="loading-container">
-          <p>Loading article...</p>
+          <h2>Loading article...</h2>
         </div>
       </>
     );
