@@ -756,10 +756,9 @@ function DetailView() {
   if (isLoading) {
     return (
       <>
-        <Navbar />
+        <Navbar showAccount={true} />
         <div className="navbar-placeholder"></div>
         <div className="loading-container">
-          <div className="loading-spinner"></div>
           <p>Loading article...</p>
         </div>
       </>
