@@ -23,3 +23,7 @@ typer==0.20.0
 rich==14.2.0
 shellingham==1.5.4
 watchfiles==1.1.1
+pytest
+pytest-asyncio
+httpx
+mongomock
