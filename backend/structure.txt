@@ -1,0 +1,382 @@
+
+[generate-gitignore.py]
+  import os
+  import ast
+
+[main.py]
+  import os
+  import logging
+  from fastapi import FastAPI
+  from fastapi.exceptions import RequestValidationError
+  from fastapi.middleware.cors import CORSMiddleware
+  from core.api_handlers import validation_exception_handler
+  from routes import auth, article, comment, rating, report_article, report_user, user
+  import uvicorn
+  def root (line 41)
+
+[core\api_handlers.py]
+  from fastapi import Request
+  from fastapi.exceptions import RequestValidationError
+  from fastapi.responses import JSONResponse
+  from fastapi.encoders import jsonable_encoder
+  async def validation_exception_handler (line 6)
+
+[core\dependencies.py]
+  from fastapi import Depends
+  from fastapi.security import OAuth2PasswordBearer
+  import jwt
+  import os
+  from jwt import ExpiredSignatureError, InvalidTokenError
+  from core.exceptions import Unauthorized
+  def get_current_user (line 14)
+
+[core\exceptions.py]
+  from fastapi import HTTPException
+  class NotFound (line 3)
+  class BadRequest (line 7)
+  class Unauthorized (line 11)
+  def __init__ (line 4)
+  def __init__ (line 8)
+  def __init__ (line 12)
+
+[core\security.py]
+  import bcrypt
+  import jwt
+  import os
+  from datetime import datetime, timedelta
+  def hash_password (line 9)
+  def verify_password (line 13)
+  def create_token (line 16)
+  def decode_token (line 21)
+
+[core\__init__.py]
+
+[db\connection.py]
+  import os
+  import logging
+  from motor.motor_asyncio import AsyncIOMotorClient
+
+[db\__init__.py]
+
+[models\articles.py]
+  from pydantic import BaseModel
+  from typing import Literal
+  class Article (line 4)
+
+[models\comments.py]
+  from pydantic import BaseModel
+  from typing import Optional
+  from datetime import datetime
+  class Comment (line 5)
+
+[models\ratings.py]
+  from pydantic import BaseModel
+  from typing import Literal
+  class Rating (line 4)
+
+[models\report_article.py]
+  from pydantic import BaseModel
+  class ReportArticle (line 3)
+
+[models\report_user.py]
+  from pydantic import BaseModel
+  from typing import Optional
+  from datetime import datetime
+  class ReportUser (line 5)
+
+[models\users.py]
+  from pydantic import BaseModel, EmailStr
+  class User (line 3)
+
+[models\__init__.py]
+
+[routes\article.py]
+  from fastapi import APIRouter, Depends
+  from schemas.edit_article_get_schema import EditArticleGetRequest
+  from schemas.edit_article_update_schema import EditArticleUpdateRequest
+  from schemas.view_article_schema import ViewArticleRequest
+  from schemas.verification_schema import VerificationRequest
+  from services.rating_service import RatingService
+  from services.comment_service import CommentService
+  from services.article_service import ArticleService
+  from services.auth_service import AuthService
+  from utils.base64_utils import base64_to_bytes, bytes_to_base64
+  from schemas.delete_article_schema import DeleteArticleRequest
+  from bson import ObjectId, errors
+  from db.connection import db
+  from schemas.add_article_schema import AddArticle
+  from schemas.main_page_schema import MainPageRequest
+  from core.dependencies import get_current_user
+  async def edit_get_article (line 21)
+  async def edit_update_article (line 45)
+  async def view_article (line 83)
+  async def delete_article (line 154)
+  async def main_page (line 182)
+  async def verification (line 215)
+  async def add_article (line 231)
+
+[routes\auth.py]
+  from fastapi import APIRouter, Response
+  from schemas.login_schema import LoginUser
+  from schemas.register_schema import RegisterUser
+  from services.auth_service import AuthService
+  import re
+  import os
+  def validate_register_input (line 12)
+  def validate_login_input (line 30)
+  async def register (line 38)
+  async def login (line 45)
+
+[routes\comment.py]
+  from fastapi import APIRouter, Depends
+  from schemas.add_comment_schema import AddCommentRequest
+  from schemas.edit_comment_update_schema import EditCommentRequest
+  from schemas.edit_comment_get_schema import EditCommentGetRequest
+  from services.comment_service import CommentService
+  from services.article_service import ArticleService
+  from services.auth_service import AuthService
+  from db.connection import db
+  from bson import ObjectId
+  from utils.base64_utils import bytes_to_base64
+  from services.rating_service import RatingService
+  from schemas.comment_delete_schema import DeleteCommentRequest
+  from core.dependencies import get_current_user
+  async def add_comment (line 18)
+  async def edit_comment (line 118)
+  async def edit_get_comment (line 209)
+  async def delete_comment (line 243)
+
+[routes\rating.py]
+  from fastapi import APIRouter, Depends
+  from schemas.add_rating_schema import AddRatingSchema
+  from services.auth_service import AuthService
+  from services.rating_service import RatingService
+  from schemas.edit_rating_get_schema import EditRatingGetRequest
+  from schemas.edit_rating_update_schema import EditRatingUpdateRequest
+  from db.connection import db
+  from bson import ObjectId
+  from utils.base64_utils import bytes_to_base64
+  from core.dependencies import get_current_user
+  async def add_rating (line 15)
+  async def edit_rating_get (line 95)
+  async def edit_rating_update (line 125)
+
+[routes\report_article.py]
+  from fastapi import APIRouter, Depends
+  from schemas.add_report_article_schema import AddReportArticleSchema
+  from services.report_article_service import ReportArticleService
+  from bson import ObjectId
+  from core.dependencies import get_current_user
+  async def add_report_article (line 10)
+
+[routes\report_user.py]
+  from fastapi import APIRouter, Depends
+  from schemas.get_user_profile_schema import GetUserProfileRequest
+  from schemas.report_user_schema import ReportUserRequest
+  from services.report_user_service import ReportUserService
+  from db.connection import db
+  from core.dependencies import get_current_user
+  async def get_user_profile (line 11)
+  async def report_user (line 45)
+
+[routes\user.py]
+  from fastapi import APIRouter, Depends
+  from schemas.get_all_users_schema import GetAllUsersRequest
+  from schemas.get_user_details_schema import GetUserDetailsRequest
+  from schemas.make_admin_schema import MakeAdminRequest
+  from schemas.delete_user_schema import DeleteUserRequest
+  from services.user_service import UserService
+  from services.auth_service import AuthService
+  from core.dependencies import get_current_user
+  async def get_all_users (line 13)
+  async def get_user_details (line 35)
+  async def delete_user (line 82)
+  async def make_admin (line 101)
+
+[routes\__init__.py]
+
+[schemas\add_article_schema.py]
+  from pydantic import BaseModel
+  from typing import Literal
+  class AddArticle (line 4)
+
+[schemas\add_comment_schema.py]
+  from pydantic import BaseModel
+  from typing import Optional
+  class AddCommentRequest (line 4)
+
+[schemas\add_rating_schema.py]
+  from pydantic import BaseModel, Field
+  class AddRatingSchema (line 3)
+
+[schemas\add_report_article_schema.py]
+  from pydantic import BaseModel, Field
+  class AddReportArticleSchema (line 3)
+
+[schemas\comment_delete_schema.py]
+  from pydantic import BaseModel
+  class DeleteCommentRequest (line 3)
+
+[schemas\delete_article_schema.py]
+  from pydantic import BaseModel
+  class DeleteArticleRequest (line 3)
+
+[schemas\delete_user_schema.py]
+  from pydantic import BaseModel
+  class DeleteUserRequest (line 3)
+
+[schemas\edit_article_get_schema.py]
+  from pydantic import BaseModel
+  class EditArticleGetRequest (line 3)
+
+[schemas\edit_article_update_schema.py]
+  from pydantic import BaseModel
+  from typing import Optional, Literal
+  class EditArticleUpdateRequest (line 4)
+
+[schemas\edit_comment_get_schema.py]
+  from pydantic import BaseModel
+  class EditCommentGetRequest (line 3)
+
+[schemas\edit_comment_update_schema.py]
+  from pydantic import BaseModel
+  class EditCommentRequest (line 3)
+
+[schemas\edit_rating_get_schema.py]
+  from pydantic import BaseModel
+  class EditRatingGetRequest (line 3)
+
+[schemas\edit_rating_update_schema.py]
+  from pydantic import BaseModel
+  class EditRatingUpdateRequest (line 3)
+
+[schemas\get_all_users_schema.py]
+  from pydantic import BaseModel
+  class GetAllUsersRequest (line 3)
+
+[schemas\get_user_details_schema.py]
+  from pydantic import BaseModel
+  from typing import Optional
+  class GetUserDetailsRequest (line 4)
+
+[schemas\get_user_profile_schema.py]
+  from pydantic import BaseModel, EmailStr
+  class GetUserProfileRequest (line 3)
+
+[schemas\login_schema.py]
+  from pydantic import BaseModel, EmailStr
+  class LoginUser (line 3)
+
+[schemas\main_page_schema.py]
+  from pydantic import BaseModel
+  class MainPageRequest (line 3)
+
+[schemas\make_admin_schema.py]
+  from pydantic import BaseModel
+  class MakeAdminRequest (line 3)
+
+[schemas\register_schema.py]
+  from pydantic import BaseModel, EmailStr
+  class RegisterUser (line 3)
+
+[schemas\report_user_schema.py]
+  from pydantic import BaseModel, EmailStr
+  class ReportUserRequest (line 3)
+
+[schemas\verification_schema.py]
+  from pydantic import BaseModel
+  class VerificationRequest (line 3)
+
+[schemas\view_article_schema.py]
+  from pydantic import BaseModel
+  class ViewArticleRequest (line 3)
+
+[schemas\__init__.py]
+
+[services\article_service.py]
+  from db.connection import db
+  from bson import ObjectId, Binary
+  from utils.image_validator import validate_image_bytes
+  from datetime import datetime
+  class ArticleService (line 6)
+  async def fetch_article (line 9)
+  async def update_article (line 19)
+  async def add_article (line 48)
+  async def get_ratings (line 80)
+
+[services\auth_service.py]
+  from core.security import verify_password, hash_password, create_token, decode_token
+  from db.connection import db
+  from datetime import datetime
+  class AuthService (line 6)
+  async def register (line 8)
+  async def login (line 31)
+  async def verify_token (line 47)
+  async def is_admin (line 55)
+
+[services\comment_service.py]
+  from db.connection import db
+  from datetime import datetime
+  from bson import ObjectId
+  class CommentService (line 5)
+  async def add_comment (line 8)
+  async def get_comments (line 23)
+  async def edit_comment (line 30)
+  async def delete_comment_and_children (line 63)
+
+[services\rating_service.py]
+  from db.connection import db
+  from datetime import datetime
+  from bson import ObjectId
+  class RatingService (line 5)
+  async def add_rating (line 8)
+  async def get_rating_by_user (line 22)
+  async def get_ratings (line 29)
+  async def fetch_article (line 36)
+  async def get_comments (line 43)
+  async def get_rating_by_id (line 50)
+  async def update_rating (line 57)
+
+[services\report_article_service.py]
+  from db.connection import db
+  from bson import ObjectId
+  from datetime import datetime
+  class ReportArticleService (line 5)
+  async def add_report (line 8)
+
+[services\report_user_service.py]
+  from db.connection import db
+  from bson import ObjectId
+  from datetime import datetime
+  class ReportUserService (line 5)
+  async def fetch_user_by_email (line 8)
+  async def save_report (line 20)
+  async def increment_report_count (line 53)
+
+[services\user_service.py]
+  from db.connection import db
+  from bson import ObjectId
+  from services.comment_service import CommentService
+  class UserService (line 5)
+  async def get_all_users (line 8)
+  async def get_user_by_id (line 17)
+  async def get_reports_for_user (line 25)
+  async def delete_user (line 34)
+  async def make_admin (line 65)
+  async def get_user_by_email (line 76)
+
+[services\__init__.py]
+
+[utils\base64_utils.py]
+  import base64
+  def base64_to_bytes (line 3)
+  def bytes_to_base64 (line 10)
+
+[utils\image_validator.py]
+  def validate_image_bytes (line 1)
+
+[utils\token.py]
+  from fastapi import Response
+  def set_session_token (line 3)
+
+[utils\__init__.py]

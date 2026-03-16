@@ -1,0 +1,205 @@
+--- add_article_schema.py ---
+from pydantic import BaseModel
+from typing import Literal
+
+class AddArticle(BaseModel):
+    token: str
+    article_title: str
+    article_preview: str
+    article_content: str
+    article_tag: Literal["office", "budget", "gaming", "flagship"]
+    article_image: str
+
+
+--- add_comment_schema.py ---
+from pydantic import BaseModel
+from typing import Optional
+
+class AddCommentRequest(BaseModel):
+    token: str
+    article_id: str
+    parent_comment_id: Optional[str] = None
+    comment_content: str
+
+--- add_rating_schema.py ---
+from pydantic import BaseModel, Field
+
+class AddRatingSchema(BaseModel):
+    token: str
+    article_id: str
+    rating_value: int = Field(..., ge=1, le=5)
+
+
+--- add_report_article_schema.py ---
+from pydantic import BaseModel, Field
+
+class AddReportArticleSchema(BaseModel):
+    token: str
+    article_id: str
+    description: str = Field(..., min_length=1)
+
+
+--- comment_delete_schema.py ---
+from pydantic import BaseModel
+
+class DeleteCommentRequest(BaseModel):
+    token: str
+    comment_id: str
+
+
+--- delete_article_schema.py ---
+from pydantic import BaseModel
+
+class DeleteArticleRequest(BaseModel):
+    token: str
+    article_id: str
+
+
+--- delete_user_schema.py ---
+from pydantic import BaseModel
+
+class DeleteUserRequest(BaseModel):
+    token: str
+    user_id: str
+
+--- edit_article_get_schema.py ---
+# schemas/edit_article_get_schema.py
+from pydantic import BaseModel
+
+class EditArticleGetRequest(BaseModel):
+    token: str
+    article_id: str
+
+
+--- edit_article_update_schema.py ---
+from pydantic import BaseModel
+from typing import Optional, Literal
+
+class EditArticleUpdateRequest(BaseModel):
+    token: str
+    article_id: str
+
+    article_title: Optional[str] = None
+    article_preview: Optional[str] = None
+    article_content: Optional[str] = None
+    article_tag: Optional[Literal["office", "budget", "gaming", "flagship"]] = None
+    article_image: Optional[str] = None  # base64
+
+
+--- edit_comment_get_schema.py ---
+from pydantic import BaseModel
+
+class EditCommentGetRequest(BaseModel):
+    token: str
+    comment_id: str
+
+
+--- edit_comment_update_schema.py ---
+from pydantic import BaseModel
+
+class EditCommentRequest(BaseModel):
+    token: str
+    article_id: str
+    comment_id: str
+    parent_comment_id: str | None = None
+    comment_content: str
+
+
+--- edit_rating_get_schema.py ---
+from pydantic import BaseModel
+
+class EditRatingGetRequest(BaseModel):
+    token: str
+    article_id: str
+    rating_id: str
+
+
+--- edit_rating_update_schema.py ---
+from pydantic import BaseModel
+
+class EditRatingUpdateRequest(BaseModel):
+    token: str
+    article_id: str
+    rating_id: str
+    rating_value: int
+
+
+--- get_all_users_schema.py ---
+from pydantic import BaseModel
+
+class GetAllUsersRequest(BaseModel):
+    token: str
+
+--- get_user_details_schema.py ---
+from pydantic import BaseModel
+from typing import Optional
+
+class GetUserDetailsRequest(BaseModel):
+    token: str
+    user_email: Optional[str] = None
+
+
+--- get_user_profile_schema.py ---
+from pydantic import BaseModel, EmailStr
+
+class GetUserProfileRequest(BaseModel):
+    token: str
+    user_email: EmailStr
+
+--- login_schema.py ---
+from pydantic import BaseModel, EmailStr
+
+class LoginUser(BaseModel):
+    email: EmailStr
+    password: str
+
+
+--- main_page_schema.py ---
+from pydantic import BaseModel
+
+class MainPageRequest(BaseModel):
+    token: str
+
+--- make_admin_schema.py ---
+from pydantic import BaseModel
+
+class MakeAdminRequest(BaseModel):
+    token: str
+    user_id: str
+
+
+--- register_schema.py ---
+from pydantic import BaseModel, EmailStr
+
+class RegisterUser(BaseModel):
+    username: str
+    fullname: str
+    email: EmailStr
+    password: str
+
+
+--- report_user_schema.py ---
+from pydantic import BaseModel, EmailStr
+
+class ReportUserRequest(BaseModel):
+    token: str
+    reported_user_email: EmailStr
+    description: str
+
+--- verification_schema.py ---
+from pydantic import BaseModel
+
+class VerificationRequest(BaseModel):
+    token: str
+
+--- view_article_schema.py ---
+from pydantic import BaseModel
+
+class ViewArticleRequest(BaseModel):
+    token: str
+    article_id: str
+
+
+--- __init__.py ---
+
+
