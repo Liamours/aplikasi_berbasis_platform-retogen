@@ -1,10 +1,13 @@
+import logging
 from db.connection import db
 from bson import ObjectId, Binary
 from utils.image_validator import validate_image_bytes
 from datetime import datetime
 
+logger = logging.getLogger(__name__)
+
 class ArticleService:
-    
+
     @staticmethod
     async def fetch_article(article_id: str):
         try:
@@ -12,7 +15,8 @@ class ArticleService:
                 "_id": ObjectId(article_id),
                 "is_deleted": False
             })
-        except:
+        except Exception as e:
+            logger.error("fetch_article error: %s", e)
             return None
 
     @staticmethod
@@ -41,14 +45,14 @@ class ArticleService:
                 {"$set": update_fields}
             )
             return result.modified_count > 0
-        except:
+        except Exception as e:
+            logger.error("update_article error: %s", e)
             return False
-        
+
     @staticmethod
     async def add_article(title, preview, content, tag, image_bytes, author_id):
         try:
             now = datetime.utcnow()
-
             doc = {
                 "article_title": title,
                 "article_preview": preview,
@@ -61,24 +65,18 @@ class ArticleService:
                 "updated_at": now,
                 "is_deleted": False
             }
-
             result = await db.article.insert_one(doc)
-
             if result.inserted_id:
                 return str(result.inserted_id)
-
             return None
-
         except Exception as e:
-            print("ADD ARTICLE ERROR:", e)
+            logger.error("add_article error: %s", e)
             return None
 
-    # ＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝
-    # Tambahan: get_ratings → DIPAKAI DI add_comment
-    # ＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝
     @staticmethod
     async def get_ratings(article_id: str):
         try:
             return await db.ratings.find({"article_id": article_id}).to_list(None)
-        except:
+        except Exception as e:
+            logger.error("get_ratings error: %s", e)
             return None

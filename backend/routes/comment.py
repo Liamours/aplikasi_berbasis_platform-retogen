@@ -38,7 +38,6 @@ async def add_comment(req: AddCommentRequest, payload: dict = Depends(get_curren
             parent = await db.comment.find_one({"_id": ObjectId(req.parent_comment_id)})
         except:
             parent = None
-
         if parent is None:
             return {"confirmation": "backend error"}
 
@@ -52,7 +51,7 @@ async def add_comment(req: AddCommentRequest, payload: dict = Depends(get_curren
     if not new_comment_id:
         return {"confirmation": "backend error"}
 
-    userclass = "admin" if user.get("role") == "admin" else "user"
+    userclass = "admin" if AuthService.is_admin(payload) else "user"
 
     image_base64 = None
     if article.get("article_image"):
@@ -125,7 +124,6 @@ async def edit_comment(req: EditCommentRequest, payload: dict = Depends(get_curr
             parent_oid = ObjectId(req.parent_comment_id)
         except:
             return {"confirmation": "backend error"}
-
         parent_exists = await db.comment.find_one({"_id": parent_oid, "article_id": req.article_id})
         if not parent_exists:
             return {"confirmation": "backend error"}
@@ -144,8 +142,7 @@ async def edit_comment(req: EditCommentRequest, payload: dict = Depends(get_curr
     if not article:
         return {"confirmation": "backend error"}
 
-    is_admin = await AuthService.is_admin(payload)
-    userclass = "admin" if is_admin else "user"
+    userclass = "admin" if AuthService.is_admin(payload) else "user"
 
     try:
         image_base64 = bytes_to_base64(bytes(article.get("article_image"))) if article.get("article_image") else None
@@ -259,7 +256,8 @@ async def delete_comment(req: DeleteCommentRequest, payload: dict = Depends(get_
     if not user:
         return {"confirmation": "token invalid"}
 
-    if str(user["_id"]) != str(comment["owner_id"]):
+    is_admin = AuthService.is_admin(payload)
+    if not is_admin and str(user["_id"]) != str(comment["owner_id"]):
         return {"confirmation": "backend error"}
 
     deleted = await CommentService.delete_comment_and_children(req.comment_id)
@@ -270,7 +268,7 @@ async def delete_comment(req: DeleteCommentRequest, payload: dict = Depends(get_
     if article is None:
         return {"confirmation": "backend error"}
 
-    userclass = "admin" if user.get("role") == "admin" else "user"
+    userclass = "admin" if is_admin else "user"
 
     image_base64 = None
     if article.get("article_image"):

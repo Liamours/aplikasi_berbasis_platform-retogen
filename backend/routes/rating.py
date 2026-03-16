@@ -38,7 +38,7 @@ async def add_rating(req: AddRatingSchema, payload: dict = Depends(get_current_u
     if not new_rating_id:
         return {"confirmation": "backend error"}
 
-    userclass = "admin" if user.get("role") == "admin" else "user"
+    userclass = "admin" if AuthService.is_admin(payload) else "user"
 
     image_base64 = None
     if article.get("article_image"):
@@ -117,7 +117,7 @@ async def edit_rating_get(req: EditRatingGetRequest, payload: dict = Depends(get
                 "created_at": rating["created_at"]
             }
         }
-    except Exception as e:
+    except Exception:
         return {"confirmation": "backend error"}
 
 
@@ -146,7 +146,7 @@ async def edit_rating_update(req: EditRatingUpdateRequest, payload: dict = Depen
     if not article:
         return {"confirmation": "backend error"}
 
-    userclass = "admin" if user.get("role") == "admin" else "user"
+    userclass = "admin" if AuthService.is_admin(payload) else "user"
 
     try:
         image_base64 = bytes_to_base64(bytes(article["article_image"])) if article.get("article_image") else None

@@ -10,7 +10,7 @@ router = APIRouter()
 
 @router.post("/get_all")
 async def get_all_users(payload: dict = Depends(get_current_user)):
-    if not await AuthService.is_admin(payload):
+    if not AuthService.is_admin(payload):
         return {"confirmation": "not admin"}
 
     users_raw = await UserService.get_all_users()
@@ -32,7 +32,7 @@ async def get_all_users(payload: dict = Depends(get_current_user)):
 
 @router.post("/get_details")
 async def get_user_details(req: GetUserDetailsRequest, payload: dict = Depends(get_current_user)):
-    is_admin = await AuthService.is_admin(payload)
+    is_admin = AuthService.is_admin(payload)
     token_user_email = payload.get("email")
 
     if is_admin:
@@ -79,7 +79,7 @@ async def get_user_details(req: GetUserDetailsRequest, payload: dict = Depends(g
 
 @router.post("/delete")
 async def delete_user(req: DeleteUserRequest, payload: dict = Depends(get_current_user)):
-    if not await AuthService.is_admin(payload):
+    if not AuthService.is_admin(payload):
         return {"confirmation": "not admin"}
 
     user = await UserService.get_user_by_id(req.user_id)
@@ -98,7 +98,7 @@ async def delete_user(req: DeleteUserRequest, payload: dict = Depends(get_curren
 
 @router.post("/make_admin")
 async def make_admin(req: MakeAdminRequest, payload: dict = Depends(get_current_user)):
-    if not await AuthService.is_admin(payload):
+    if not AuthService.is_admin(payload):
         return {"confirmation": "not admin"}
 
     user = await UserService.get_user_by_id(req.user_id)

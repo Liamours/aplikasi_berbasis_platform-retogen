@@ -1,7 +1,9 @@
-# services/auth_service.py
-from core.security import verify_password, hash_password, create_token, decode_token
+import logging
+from core.security import verify_password, hash_password, create_token
 from db.connection import db
 from datetime import datetime
+
+logger = logging.getLogger(__name__)
 
 class AuthService:
     @staticmethod
@@ -30,33 +32,20 @@ class AuthService:
     @staticmethod
     async def login(data):
         try:
-            users = await db.user.find_one({"email": data.email})
-        except Exception:
+            user = await db.user.find_one({"email": data.email})
+        except Exception as e:
+            logger.error("login db error: %s", e)
             return {"confirmation": "backend error"}
 
-        if not users:
+        if not user:
             return {"confirmation": "email doesn't exist"}
 
-        if not verify_password(data.password, users["password"]):
+        if not verify_password(data.password, user["password"]):
             return {"confirmation": "password incorrect"}
 
-        token = create_token({"email": users["email"]})
+        token = create_token({"email": user["email"], "role": user.get("role", "user")})
         return {"confirmation": "login successful", "token": token}
 
     @staticmethod
-    async def verify_token(token: str):
-        try:
-            payload = decode_token(token)
-            return payload
-        except:
-            return None
-
-    @staticmethod
-    async def is_admin(payload):
-        try:
-            user = await db.user.find_one({"email": payload.get("email")})
-            if not user:
-                return False
-            return user.get("role") == "admin"
-        except:
-            return False
+    def is_admin(payload: dict) -> bool:
+        return payload.get("role") == "admin"

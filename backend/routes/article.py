@@ -21,7 +21,7 @@ async def edit_get_article(req: EditArticleGetRequest, payload: dict = Depends(g
     if article is None:
         return {"confirmation": "backend error"}
 
-    if not await AuthService.is_admin(payload):
+    if not AuthService.is_admin(payload):
         return {"confirmation": "not admin"}
 
     image_base64 = None
@@ -83,10 +83,12 @@ async def view_article(req: ViewArticleRequest, payload: dict = Depends(get_curr
     if article is None:
         return {"confirmation": "backend error"}
 
+    if article.get("is_deleted"):
+        return {"confirmation": "backend error"}
+
     user_email = payload.get("email")
     user = await db.user.find_one({"email": user_email})
-    is_admin = await AuthService.is_admin(payload)
-    userclass = "admin" if is_admin else "user"
+    userclass = "admin" if AuthService.is_admin(payload) else "user"
 
     image_base64 = None
     if article.get("article_image"):
@@ -159,7 +161,7 @@ async def delete_article(req: DeleteArticleRequest, payload: dict = Depends(get_
     if article is None:
         return {"confirmation": "backend error"}
 
-    if not await AuthService.is_admin(payload):
+    if not AuthService.is_admin(payload):
         return {"confirmation": "not admin"}
 
     try:
@@ -211,32 +213,20 @@ async def main_page(payload: dict = Depends(get_current_user)):
 
 @router.post("/verification")
 async def verification(payload: dict = Depends(get_current_user)):
-    user_email = payload.get("email")
-    if user_email is None:
-        return {"confirmation": "token invalid"}
-
-    user = await db.user.find_one({"email": user_email})
-    if not user:
-        return {"confirmation": "backend error"}
-
-    if user.get("role") != "admin":
+    if not AuthService.is_admin(payload):
         return {"confirmation": "not admin"}
-
     return {"confirmation": "successful"}
 
 
 @router.post("/add")
 async def add_article(req: AddArticle, payload: dict = Depends(get_current_user)):
-    user_email = payload.get("email")
-    if user_email is None:
-        return {"confirmation": "token invalid"}
+    if not AuthService.is_admin(payload):
+        return {"confirmation": "not admin"}
 
+    user_email = payload.get("email")
     user = await db.user.find_one({"email": user_email})
     if not user:
         return {"confirmation": "token invalid"}
-
-    if user.get("role") != "admin":
-        return {"confirmation": "not admin"}
 
     author_id = str(user["_id"])
 
