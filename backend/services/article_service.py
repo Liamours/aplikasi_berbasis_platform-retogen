@@ -80,3 +80,68 @@ class ArticleService:
         except Exception as e:
             logger.error("get_ratings error: %s", e)
             return None
+
+    @staticmethod
+    async def get_articles_filtered(sort: str, tag: str = None, search: str = None):
+        try:
+            match = {"is_deleted": False}
+
+            if tag:
+                match["article_tag"] = tag
+            if search:
+                match["article_title"] = {"$regex": search, "$options": "i"}
+
+            if sort in ("newest", "oldest", "most_reported", "by_tag", "search_title"):
+                sort_field = {
+                    "newest": ("created_at", -1),
+                    "oldest": ("created_at", 1),
+                    "most_reported": ("report_count", -1),
+                    "by_tag": ("article_tag", 1),
+                    "search_title": ("article_title", 1),
+                }[sort]
+
+                cursor = db.article.find(match).sort(sort_field[0], sort_field[1])
+                return await cursor.to_list(length=None)
+
+            if sort == "highest_rated":
+                pipeline = [
+                    {"$match": match},
+                    {"$addFields": {"article_id_str": {"$toString": "$_id"}}},
+                    {"$lookup": {
+                        "from": "rating",
+                        "localField": "article_id_str",
+                        "foreignField": "article_id",
+                        "as": "ratings"
+                    }},
+                    {"$addFields": {
+                        "avg_rating": {"$avg": "$ratings.rating_value"}
+                    }},
+                    {"$sort": {"avg_rating": -1}},
+                    {"$project": {"ratings": 0, "article_id_str": 0}}
+                ]
+                return await db.article.aggregate(pipeline).to_list(length=None)
+
+            if sort == "most_commented":
+                pipeline = [
+                    {"$match": match},
+                    {"$addFields": {"article_id_str": {"$toString": "$_id"}}},
+                    {"$lookup": {
+                        "from": "comment",
+                        "localField": "article_id_str",
+                        "foreignField": "article_id",
+                        "as": "comments"
+                    }},
+                    {"$addFields": {
+                        "comment_count": {"$size": "$comments"}
+                    }},
+                    {"$sort": {"comment_count": -1}},
+                    {"$project": {"comments": 0, "article_id_str": 0}}
+                ]
+                return await db.article.aggregate(pipeline).to_list(length=None)
+
+            cursor = db.article.find(match).sort("created_at", -1)
+            return await cursor.to_list(length=None)
+
+        except Exception as e:
+            logger.error("get_articles_filtered error: %s", e)
+            return None
