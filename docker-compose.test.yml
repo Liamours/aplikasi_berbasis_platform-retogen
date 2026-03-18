@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  mongodb-test:
+    image: mongo:latest
+    container_name: retogen-mongodb-test
+    ports:
+      - "27018:27017"
+    environment:
+      - MONGO_INITDB_DATABASE=Retogen_test
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+networks:
+  default:
+    name: retogen-test-network

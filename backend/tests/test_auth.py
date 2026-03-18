@@ -1,262 +1,175 @@
 def test_register_success(client):
     print("\n[TEST CASE] Register - Data Valid")
-
     payload = {
-        "username": "rafiq123",
-        "fullname": "Rafiq Labib",
-        "email": "rafiq@mail.com",
+        "username": "testuser1",
+        "fullname": "Test User One",
+        "email": "testuser1@mail.com",
         "password": "Password1"
     }
-
-    print("[INPUT]")
-    for k, v in payload.items():
-        print(f"    {k}: {v}")
-
     response = client.post("/auth/registration", json=payload)
-
-    print("[OUTPUT]")
     print(f"    response: {response.json()}")
-
     assert response.status_code == 200
     assert response.json()["confirmation"] == "register successful"
 
-    print("[RESULT]")
-    print("    User berhasil register")
-    
-def test_register_invalid_username(client):
-    print("\n[TEST CASE] Register - Username Tidak Valid")
 
+def test_register_invalid_username_too_short(client):
+    print("\n[TEST CASE] Register - Username Terlalu Pendek")
     payload = {
         "username": "raf",
         "fullname": "Rafiq Labib",
-        "email": "rafiq@mail.com",
+        "email": "raf@mail.com",
         "password": "Password1"
     }
-
-    print("[INPUT]")
-    for k, v in payload.items():
-        print(f"    {k}: {v}")
-
     response = client.post("/auth/registration", json=payload)
-
-    print("[OUTPUT]")
     print(f"    response: {response.json()}")
-
     assert "username length must be" in response.json()["confirmation"]
 
-    print("[RESULT]")
-    print("    Sistem menolak username tidak valid")
-    
-    
-def test_register_duplicate_email(client):
-    print("\n[TEST CASE] Register - Email Duplicate")
 
+def test_register_invalid_username_special_chars(client):
+    print("\n[TEST CASE] Register - Username Mengandung Karakter Spesial")
     payload = {
-        "username": "rafiq123",
+        "username": "rafiq!@#",
         "fullname": "Rafiq Labib",
-        "email": "rafiq@mail.com",
+        "email": "rafiqspec@mail.com",
         "password": "Password1"
     }
-
-    print("[INPUT]")
-    for k, v in payload.items():
-        print(f"    {k}: {v}")
-
-    client.post("/auth/registration", json=payload)
     response = client.post("/auth/registration", json=payload)
-
-    print("[OUTPUT]")
     print(f"    response: {response.json()}")
+    assert "username length must be" in response.json()["confirmation"]
 
+
+def test_register_duplicate_email(client):
+    print("\n[TEST CASE] Register - Email Duplikat")
+    payload = {
+        "username": "dupuser1",
+        "fullname": "Dup User",
+        "email": "dupuser@mail.com",
+        "password": "Password1"
+    }
+    client.post("/auth/registration", json=payload)
+    payload["username"] = "dupuser2"
+    response = client.post("/auth/registration", json=payload)
+    print(f"    response: {response.json()}")
     assert response.json()["confirmation"] == "email already registered"
 
-    print("[RESULT]")
-    print("    Sistem menolak email duplicate")
-    
-def test_register_invalid_password_format(client):
-    print("\n[TEST CASE] Register - Password Tidak Sesuai Format")
 
+def test_register_password_no_uppercase(client):
+    print("\n[TEST CASE] Register - Password Tanpa Huruf Besar")
     payload = {
-        "username": "rafiq123",
-        "fullname": "Rafiq Labib",
-        "email": "rafiq@mail.com",
-        "password": "password"  # tidak ada uppercase & angka
+        "username": "testuser2",
+        "fullname": "Test User Two",
+        "email": "testuser2@mail.com",
+        "password": "password1"
     }
-
-    print("[INPUT]")
-    for k, v in payload.items():
-        print(f"    {k}: {v}")
-
     response = client.post("/auth/registration", json=payload)
-
-    print("[OUTPUT]")
-    print(f"    status_code: {response.status_code}")
     print(f"    response: {response.json()}")
+    assert "uppercase" in response.json()["confirmation"]
 
+
+def test_register_password_no_lowercase(client):
+    print("\n[TEST CASE] Register - Password Tanpa Huruf Kecil")
+    payload = {
+        "username": "testuser3",
+        "fullname": "Test User Three",
+        "email": "testuser3@mail.com",
+        "password": "PASSWORD1"
+    }
+    response = client.post("/auth/registration", json=payload)
+    print(f"    response: {response.json()}")
+    assert "lowercase" in response.json()["confirmation"]
+
+
+def test_register_password_no_number(client):
+    print("\n[TEST CASE] Register - Password Tanpa Angka")
+    payload = {
+        "username": "testuser4",
+        "fullname": "Test User Four",
+        "email": "testuser4@mail.com",
+        "password": "Password"
+    }
+    response = client.post("/auth/registration", json=payload)
+    print(f"    response: {response.json()}")
+    assert "number" in response.json()["confirmation"]
+
+
+def test_register_password_only_numbers(client):
+    print("\n[TEST CASE] Register - Password Hanya Angka")
+    payload = {
+        "username": "testuser5",
+        "fullname": "Test User Five",
+        "email": "testuser5@mail.com",
+        "password": "12345678"
+    }
+    response = client.post("/auth/registration", json=payload)
+    print(f"    response: {response.json()}")
     assert response.status_code == 200
-    assert "password must contain at least one uppercase letter" in response.json()["confirmation"]
+    assert "uppercase" in response.json()["confirmation"] or "lowercase" in response.json()["confirmation"]
 
-    print("[RESULT]")
-    print("    Sistem menolak password yang tidak memenuhi format")
-    
+
+def test_register_password_too_short(client):
+    print("\n[TEST CASE] Register - Password Terlalu Pendek")
+    payload = {
+        "username": "testuser6",
+        "fullname": "Test User Six",
+        "email": "testuser6@mail.com",
+        "password": "Pass1"
+    }
+    response = client.post("/auth/registration", json=payload)
+    print(f"    response: {response.json()}")
+    assert "8 - 16" in response.json()["confirmation"]
+
+
+def test_register_fullname_too_short(client):
+    print("\n[TEST CASE] Register - Fullname Terlalu Pendek")
+    payload = {
+        "username": "testuser7",
+        "fullname": "Ab",
+        "email": "testuser7@mail.com",
+        "password": "Password1"
+    }
+    response = client.post("/auth/registration", json=payload)
+    print(f"    response: {response.json()}")
+    assert "fullname" in response.json()["confirmation"]
+
+
 def test_login_success(client):
     print("\n[TEST CASE] Login - Berhasil")
-
-    register_payload = {
-        "username": "rafiq123",
-        "fullname": "Rafiq Labib",
-        "email": "rafiq@mail.com",
-        "password": "Password1"
-    }
-
-    login_payload = {
-        "email": "rafiq@mail.com",
-        "password": "Password1"
-    }
-
-    # register dulu
-    client.post("/auth/registration", json=register_payload)
-
-    print("[INPUT]")
-    for k, v in login_payload.items():
-        print(f"    {k}: {v}")
-
-    response = client.post("/auth/login", json=login_payload)
-
-    print("[OUTPUT]")
-    print(f"    status_code: {response.status_code}")
+    response = client.post("/auth/login", json={
+        "email": "fathanaryamaulana@gmail.com",
+        "password": "Tsukiya0"
+    })
     print(f"    response: {response.json()}")
-
     assert response.status_code == 200
     assert response.json()["confirmation"] == "login successful"
     assert "token" in response.json()
 
-    print("[RESULT]")
-    print("    Login berhasil dan token dikembalikan")
-    
+
 def test_login_wrong_password(client):
     print("\n[TEST CASE] Login - Password Salah")
-
-    register_payload = {
-        "username": "rafiq123",
-        "fullname": "Rafiq Labib",
-        "email": "rafiq@mail.com",
-        "password": "Password1"
-    }
-
-    login_payload = {
-        "email": "rafiq@mail.com",
-        "password": "WrongPass1"
-    }
-
-    client.post("/auth/registration", json=register_payload)
-
-    print("[INPUT]")
-    for k, v in login_payload.items():
-        print(f"    {k}: {v}")
-
-    response = client.post("/auth/login", json=login_payload)
-
-    print("[OUTPUT]")
-    print(f"    status_code: {response.status_code}")
+    response = client.post("/auth/login", json={
+        "email": "fathanaryamaulana@gmail.com",
+        "password": "WrongPass0"
+    })
     print(f"    response: {response.json()}")
-
-    assert response.status_code == 200
     assert response.json()["confirmation"] == "password incorrect"
 
-    print("[RESULT]")
-    print("    Sistem menolak login dengan password salah")
-    
+
 def test_login_email_not_found(client):
     print("\n[TEST CASE] Login - Email Tidak Ditemukan")
-
-    payload = {
-        "email": "tidakada@mail.com",
+    response = client.post("/auth/login", json={
+        "email": "notexist@mail.com",
         "password": "Password1"
-    }
-
-    print("[INPUT]")
-    for k, v in payload.items():
-        print(f"    {k}: {v}")
-
-    response = client.post("/auth/login", json=payload)
-
-    print("[OUTPUT]")
-    print(f"    status_code: {response.status_code}")
+    })
     print(f"    response: {response.json()}")
-
-    assert response.status_code == 200
     assert response.json()["confirmation"] == "email doesn't exist"
 
-    print("[RESULT]")
-    print("    Sistem menolak login karena email tidak ditemukan")
-    
-def test_register_email_case_insensitive(client):
-    print("\n[TEST CASE] Register - Email Case Sensitivity")
 
-    payload1 = {
-        "username": "rafiq123",
-        "fullname": "Rafiq Labib",
-        "email": "rafiq@mail.com",
-        "password": "Password1"
-    }
-
-    payload2 = {
-        "username": "rafiq456",
-        "fullname": "Rafiq Labib",
-        "email": "Rafiq@mail.com",
-        "password": "Password1"
-    }
-
-    client.post("/auth/registration", json=payload1)
-    response = client.post("/auth/registration", json=payload2)
-
-    print("[OUTPUT]")
-    print(response.json())
-
-    # idealnya ini harus ditolak (409)
-    assert response.status_code in [200, 409]
-
-    print("[RESULT]")
-    print("    Cek apakah sistem sensitif terhadap case email")
-    
-def test_register_email_with_spaces(client):
-    print("\n[TEST CASE] Register - Email Dengan Spasi")
-
-    payload = {
-        "username": "rafiq123",
-        "fullname": "Rafiq Labib",
-        "email": "  rafiq@mail.com  ",
-        "password": "Password1"
-    }
-
-    response = client.post("/auth/registration", json=payload)
-
-    print("[OUTPUT]")
-    print(response.json())
-
-    # tergantung implementasi, ini bisa lolos atau gagal
-    assert response.status_code in [200, 400]
-
-    print("[RESULT]")
-    print("    Sistem diuji terhadap input email dengan spasi")
-    
-def test_register_password_only_numbers(client):
-    print("\n[TEST CASE] Register - Password Hanya Angka")
-
-    payload = {
-        "username": "rafiq123",
-        "fullname": "Rafiq Labib",
-        "email": "rafiq@mail.com",
-        "password": "12345678"
-    }
-
-    response = client.post("/auth/registration", json=payload)
-
-    print("[OUTPUT]")
-    print(response.json())
-
-    assert response.status_code == 200
-
-    print("[RESULT]")
-    print("    Sistem menolak password tanpa huruf")
+def test_login_user_role(client):
+    print("\n[TEST CASE] Login - User Biasa")
+    response = client.post("/auth/login", json={
+        "email": "steven098@gmail.com",
+        "password": "123Asdfg"
+    })
+    print(f"    response: {response.json()}")
+    assert response.json()["confirmation"] == "login successful"
+    assert "token" in response.json()

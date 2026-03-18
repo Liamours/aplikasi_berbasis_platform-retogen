@@ -1,39 +1,37 @@
-# tests/conftest.py
-import sys
-import os
-
-sys.path.append(os.path.dirname(os.path.dirname(__file__)))
-
-from main import app
 import pytest
-from fastapi.testclient import TestClient
-from main import app
+import httpx
 
-# fake in-memory database
-class FakeUserCollection:
-    def __init__(self):
-        self.users = []
+BASE_URL = "http://localhost:8000"
 
-    async def find_one(self, query):
-        for user in self.users:
-            if user["email"] == query.get("email"):
-                return user
-        return None
+ADMIN_EMAIL = "fathanaryamaulana@gmail.com"
+ADMIN_PASSWORD = "Tsukiya0"
+USER_EMAIL = "steven098@gmail.com"
+USER_PASSWORD = "123Asdfg"
 
-    async def insert_one(self, data):
-        self.users.append(data)
-        return {"inserted_id": "fake_id"}
+ARTICLE_ID = "675e8a1f2c4d3e8f9a1b2c3d"
+ARTICLE_ID_ALREADY_RATED = "675e8a1f2c4d3e8f9a1b2c40"
+USER_ID_REGULAR = "69b9009fe445e0618ae70c88"
 
-class FakeDB:
-    def __init__(self):
-        self.user = FakeUserCollection()
+@pytest.fixture(scope="session")
+def client():
+    return httpx.Client(base_url=BASE_URL)
 
-@pytest.fixture
-def client(monkeypatch):
-    fake_db = FakeDB()
+@pytest.fixture(scope="session")
+def admin_token(client):
+    r = client.post("/auth/login", json={"email": ADMIN_EMAIL, "password": ADMIN_PASSWORD})
+    assert r.json()["confirmation"] == "login successful", f"Admin login failed: {r.json()}"
+    return r.json()["token"]
 
-    # override db di auth_service
-    import services.auth_service as auth_service
-    monkeypatch.setattr(auth_service, "db", fake_db)
+@pytest.fixture(scope="session")
+def user_token(client):
+    r = client.post("/auth/login", json={"email": USER_EMAIL, "password": USER_PASSWORD})
+    assert r.json()["confirmation"] == "login successful", f"User login failed: {r.json()}"
+    return r.json()["token"]
 
-    return TestClient(app)
+@pytest.fixture(scope="session")
+def auth_headers_admin(admin_token):
+    return {"Authorization": f"Bearer {admin_token}"}
+
+@pytest.fixture(scope="session")
+def auth_headers_user(user_token):
+    return {"Authorization": f"Bearer {user_token}"}
