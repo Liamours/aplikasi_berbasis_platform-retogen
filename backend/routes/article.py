@@ -11,6 +11,7 @@ from schemas.delete_article_schema import DeleteArticleRequest
 from bson import ObjectId, errors
 from db.connection import db
 from schemas.add_article_schema import AddArticle
+from schemas.main_page_schema import MainPageRequest
 from core.dependencies import get_current_user
 
 router = APIRouter()
@@ -53,10 +54,6 @@ async def edit_update_article(req: EditArticleUpdateRequest, payload: dict = Dep
 
     if not (1 <= len(req.article_content) <= 65536):
         return {"confirmation": "Content must be 1-65536 characters long."}
-
-    allowed_tags = ["office", "budget", "gaming", "flagship"]
-    if req.article_tag not in allowed_tags:
-        return {"confirmation": "Invalid article tag."}
 
     try:
         image_bytes = base64_to_bytes(req.article_image)
@@ -179,7 +176,7 @@ async def delete_article(req: DeleteArticleRequest, payload: dict = Depends(get_
 
 
 @router.post("/main_page")
-async def main_page(payload: dict = Depends(get_current_user)):
+async def main_page(req: MainPageRequest, payload: dict = Depends(get_current_user)):
     user_email = payload.get("email")
     user = await db.user.find_one({"email": user_email})
 
@@ -188,10 +185,13 @@ async def main_page(payload: dict = Depends(get_current_user)):
 
     username = user.get("username", "")
 
-    try:
-        cursor = db.article.find({"is_deleted": False})
-        articles = await cursor.to_list(length=None)
-    except Exception:
+    articles = await ArticleService.get_articles_filtered(
+        sort=req.sort.value,
+        tag=req.tag,
+        search=req.search
+    )
+
+    if articles is None:
         return {"confirmation": "backend error"}
 
     list_article = []
@@ -207,6 +207,9 @@ async def main_page(payload: dict = Depends(get_current_user)):
     return {
         "confirmation": "fetch data successful",
         "username": username,
+        "sort": req.sort.value,
+        "tag": req.tag,
+        "search": req.search,
         "list_article": list_article
     }
 
@@ -238,10 +241,6 @@ async def add_article(req: AddArticle, payload: dict = Depends(get_current_user)
 
     if not (1 <= len(req.article_content) <= 65536):
         return {"confirmation": "Content must be 1-65536 characters long."}
-
-    allowed_tags = ["office", "budget", "gaming", "flagship"]
-    if req.article_tag not in allowed_tags:
-        return {"confirmation": "Invalid article tag."}
 
     try:
         image_bytes = base64_to_bytes(req.article_image)
