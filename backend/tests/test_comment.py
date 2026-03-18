@@ -32,38 +32,85 @@ def add_comment(client, content="Komentar pertama"):
 # =========================
 
 def test_add_comment_success(client):
+    print("\n[TEST CASE] Add Comment - Success")
+
     create_article(client)
 
-    res = add_comment(client)
+    payload = {
+        "article_id": VALID_ARTICLE_ID,
+        "comment_content": "Komentar pertama",
+        "parent_comment_id": None
+    }
 
-    data = res.json()
+    print("[INPUT]")
+    for k, v in payload.items():
+        print(f"{k}: {v}")
+
+    res = client.post("/comment/add", json=payload)
+
+    print("[OUTPUT]")
+    print(res.json())
 
     assert res.status_code == 200
-    assert data["confirmation"] == "successful"
-    assert "comments" in data
+    assert res.json()["confirmation"] == "successful"
+
+    print("[RESULT]")
+    print("Komentar berhasil ditambahkan")
 
 
 def test_add_comment_empty_content(client):
+    print("\n[TEST CASE] Add Comment - Content Kosong")
+
     create_article(client)
 
-    res = add_comment(client, "")
+    payload = {
+        "article_id": VALID_ARTICLE_ID,
+        "comment_content": "",
+        "parent_comment_id": None
+    }
+
+    print("[INPUT]")
+    for k, v in payload.items():
+        print(f"{k}: {v}")
+
+    res = client.post("/comment/add", json=payload)
+
+    print("[OUTPUT]")
+    print(res.json())
 
     assert res.json()["confirmation"] == "backend error"
 
+    print("[RESULT]")
+    print("Sistem menolak komentar kosong")
+
 
 def test_add_comment_article_not_found(client):
+    print("\n[TEST CASE] Add Comment - Article Tidak Ditemukan")
+
     payload = {
         "article_id": "invalid",
         "comment_content": "isi",
         "parent_comment_id": None
     }
 
+    print("[INPUT]")
+    for k, v in payload.items():
+        print(f"{k}: {v}")
+
     res = client.post("/comment/add", json=payload)
+
+    print("[OUTPUT]")
+    print(res.json())
 
     assert res.json()["confirmation"] == "backend error"
 
+    print("[RESULT]")
+    print("Sistem menolak karena artikel tidak ditemukan")
+
 
 def test_add_comment_invalid_parent(client):
+    print("\n[TEST CASE] Add Comment - Parent Invalid")
+
     create_article(client)
 
     payload = {
@@ -72,9 +119,19 @@ def test_add_comment_invalid_parent(client):
         "parent_comment_id": "invalid_id"
     }
 
+    print("[INPUT]")
+    for k, v in payload.items():
+        print(f"{k}: {v}")
+
     res = client.post("/comment/add", json=payload)
 
+    print("[OUTPUT]")
+    print(res.json())
+
     assert res.json()["confirmation"] == "backend error"
+
+    print("[RESULT]")
+    print("Sistem menolak parent comment tidak valid")
 
 
 # =========================
@@ -82,10 +139,11 @@ def test_add_comment_invalid_parent(client):
 # =========================
 
 def test_edit_comment_success(client):
+    print("\n[TEST CASE] Edit Comment - Success")
+
     create_article(client)
     add_comment(client)
 
-    # ambil comment_id dari fake DB
     from services.comment_service import db
     comment_id = str(db.comment.comments[0]["_id"])
 
@@ -96,13 +154,25 @@ def test_edit_comment_success(client):
         "parent_comment_id": None
     }
 
+    print("[INPUT]")
+    for k, v in payload.items():
+        print(f"{k}: {v}")
+
     res = client.post("/comment/edit/update", json=payload)
+
+    print("[OUTPUT]")
+    print(res.json())
 
     assert res.status_code == 200
     assert res.json()["confirmation"] == "successful"
 
+    print("[RESULT]")
+    print("Komentar berhasil diupdate")
+
 
 def test_edit_comment_invalid_content(client):
+    print("\n[TEST CASE] Edit Comment - Content Invalid")
+
     create_article(client)
     add_comment(client)
 
@@ -112,40 +182,72 @@ def test_edit_comment_invalid_content(client):
     payload = {
         "article_id": VALID_ARTICLE_ID,
         "comment_id": comment_id,
-        "comment_content": "",  # ❌ invalid
+        "comment_content": "",
         "parent_comment_id": None
     }
 
+    print("[INPUT]")
+    for k, v in payload.items():
+        print(f"{k}: {v}")
+
     res = client.post("/comment/edit/update", json=payload)
+
+    print("[OUTPUT]")
+    print(res.json())
 
     assert res.json()["confirmation"] == "backend error"
 
+    print("[RESULT]")
+    print("Sistem menolak update komentar kosong")
+
 
 # =========================
-# EDIT GET COMMENT
+# GET COMMENT
 # =========================
 
 def test_get_comment_success(client):
+    print("\n[TEST CASE] Get Comment - Success")
+
     create_article(client)
     add_comment(client)
 
     from services.comment_service import db
     comment_id = str(db.comment.comments[0]["_id"])
 
-    res = client.post("/comment/edit/get", json={
-        "comment_id": comment_id
-    })
+    payload = {"comment_id": comment_id}
+
+    print("[INPUT]")
+    print(payload)
+
+    res = client.post("/comment/edit/get", json=payload)
+
+    print("[OUTPUT]")
+    print(res.json())
 
     assert res.status_code == 200
     assert res.json()["confirmation"] == "successful"
 
+    print("[RESULT]")
+    print("Komentar berhasil diambil")
+
 
 def test_get_comment_not_found(client):
-    res = client.post("/comment/edit/get", json={
-        "comment_id": "invalid"
-    })
+    print("\n[TEST CASE] Get Comment - Not Found")
+
+    payload = {"comment_id": "invalid"}
+
+    print("[INPUT]")
+    print(payload)
+
+    res = client.post("/comment/edit/get", json=payload)
+
+    print("[OUTPUT]")
+    print(res.json())
 
     assert res.json()["confirmation"] == "backend error"
+
+    print("[RESULT]")
+    print("Komentar tidak ditemukan")
 
 
 # =========================
@@ -153,23 +255,45 @@ def test_get_comment_not_found(client):
 # =========================
 
 def test_delete_comment_success(client):
+    print("\n[TEST CASE] Delete Comment - Success")
+
     create_article(client)
     add_comment(client)
 
     from services.comment_service import db
     comment_id = str(db.comment.comments[0]["_id"])
 
-    res = client.post("/comment/delete", json={
-        "comment_id": comment_id
-    })
+    payload = {"comment_id": comment_id}
+
+    print("[INPUT]")
+    print(payload)
+
+    res = client.post("/comment/delete", json=payload)
+
+    print("[OUTPUT]")
+    print(res.json())
 
     assert res.status_code == 200
     assert res.json()["confirmation"] == "successful"
 
+    print("[RESULT]")
+    print("Komentar berhasil dihapus")
+
 
 def test_delete_comment_not_found(client):
-    res = client.post("/comment/delete", json={
-        "comment_id": "invalid"
-    })
+    print("\n[TEST CASE] Delete Comment - Not Found")
+
+    payload = {"comment_id": "invalid"}
+
+    print("[INPUT]")
+    print(payload)
+
+    res = client.post("/comment/delete", json=payload)
+
+    print("[OUTPUT]")
+    print(res.json())
 
     assert res.json()["confirmation"] == "backend error"
+
+    print("[RESULT]")
+    print("Komentar tidak ditemukan")

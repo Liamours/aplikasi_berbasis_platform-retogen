@@ -3,6 +3,10 @@ from bson import ObjectId
 VALID_ARTICLE_ID = "507f1f77bcf86cd799439011"
 
 
+# =========================
+# HELPER
+# =========================
+
 def seed_article(client):
     from services.article_service import db
 
@@ -15,53 +19,102 @@ def seed_article(client):
     })
 
 
+# =========================
+# REPORT ARTICLE
+# =========================
+
 def test_report_article_success(client):
+    print("\n[TEST CASE] Report Article - Success")
+
     seed_article(client)
 
-    res = client.post("/report_article/add", json={
+    payload = {
         "article_id": VALID_ARTICLE_ID,
         "description": "spam"
-    })
+    }
 
-    data = res.json()
+    print("[INPUT]")
+    for k, v in payload.items():
+        print(f"{k}: {v}")
+
+    res = client.post("/report_article/add", json=payload)
+
+    print("[OUTPUT]")
+    print(res.json())
 
     assert res.status_code == 200
-    assert data["confirmation"] == "successful: article reported"
+    assert res.json()["confirmation"] == "successful: article reported"
+
+    print("[RESULT]")
+    print("Artikel berhasil dilaporkan")
 
 
 def test_report_article_empty_description(client):
-    res = client.post("/report_article/add", json={
+    print("\n[TEST CASE] Report Article - Description Kosong")
+
+    payload = {
         "article_id": VALID_ARTICLE_ID,
         "description": ""
-    })
+    }
+
+    print("[INPUT]")
+    for k, v in payload.items():
+        print(f"{k}: {v}")
+
+    res = client.post("/report_article/add", json=payload)
+
+    print("[OUTPUT]")
+    print(res.json())
 
     assert res.status_code == 422
 
+    print("[RESULT]")
+    print("Sistem menolak deskripsi kosong")
+
 
 def test_report_article_invalid_id(client):
-    res = client.post("/report_article/add", json={
+    print("\n[TEST CASE] Report Article - ID Tidak Valid")
+
+    payload = {
         "article_id": "invalid_id",
         "description": "spam"
-    })
+    }
 
-    data = res.json()
+    print("[INPUT]")
+    for k, v in payload.items():
+        print(f"{k}: {v}")
+
+    res = client.post("/report_article/add", json=payload)
+
+    print("[OUTPUT]")
+    print(res.json())
 
     assert res.status_code == 200
-    assert data["confirmation"] == "invalid article_id"
+    assert res.json()["confirmation"] == "invalid article_id"
+
+    print("[RESULT]")
+    print("Sistem menolak ID artikel tidak valid")
 
 
 def test_report_article_backend_error(client):
-    # tidak seed article → update gagal (simulate error)
+    print("\n[TEST CASE] Report Article - Backend Error (Article Tidak Ada)")
 
-    res = client.post("/report_article/add", json={
+    payload = {
         "article_id": VALID_ARTICLE_ID,
         "description": "spam"
-    })
+    }
 
-    data = res.json()
+    print("[INPUT]")
+    for k, v in payload.items():
+        print(f"{k}: {v}")
 
-    # tergantung implementasi kamu:
-    # kalau insert tetap sukses → tetap successful
-    # kalau mau strict → harusnya backend error
+    res = client.post("/report_article/add", json=payload)
 
+    print("[OUTPUT]")
+    print(res.json())
+
+    # fleksibel sesuai implementasi kamu
     assert res.status_code == 200
+
+    print("[RESULT]")
+    print("Sistem diuji saat artikel tidak tersedia di database")

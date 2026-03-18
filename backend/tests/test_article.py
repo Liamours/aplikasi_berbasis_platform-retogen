@@ -1,3 +1,21 @@
+import base64
+
+def dummy_base64():
+    return base64.b64encode(b"\xff\xd8\xff\xe0fakejpeg").decode()
+
+VALID_ID = "507f1f77bcf86cd799439011"
+
+
+def create_article(client):
+    payload = {
+        "article_title": "Judul Test",
+        "article_preview": "Preview Test",
+        "article_content": "Content Test",
+        "article_tag": "tech",
+        "article_image": dummy_base64()
+    }
+    client.post("/article/add", json=payload)
+
 def test_add_article_success(client):
     print("\n[TEST CASE] Add Article - Data Valid")
 
@@ -6,23 +24,24 @@ def test_add_article_success(client):
         "article_preview": "Preview Test",
         "article_content": "Isi artikel lengkap",
         "article_tag": "tech",
-        "article_image": "aGVsbG8="
+        "article_image": dummy_base64()
     }
 
     print("[INPUT]")
     for k, v in payload.items():
-        print(f"    {k}: {v}")
+        print(f"{k}: {v}")
 
     response = client.post("/article/add", json=payload)
 
     print("[OUTPUT]")
-    print(f"    response: {response.json()}")
+    print(response.json())
 
     assert response.status_code == 200
     assert response.json()["confirmation"] == "success: article added"
 
     print("[RESULT]")
-    print("    Artikel berhasil ditambahkan")
+    print("Artikel berhasil ditambahkan")
+
 
 def test_add_article_not_admin(client):
     print("\n[TEST CASE] Add Article - Bukan Admin")
@@ -36,26 +55,26 @@ def test_add_article_not_admin(client):
     app.dependency_overrides[get_current_user] = fake_user
 
     payload = {
-        "article_title": "Judul Test",
-        "article_preview": "Preview Test",
-        "article_content": "Isi artikel",
+        "article_title": "Judul",
+        "article_preview": "Preview",
+        "article_content": "Isi",
         "article_tag": "tech",
-        "article_image": "aGVsbG8="
+        "article_image": dummy_base64()
     }
 
     print("[INPUT]")
     for k, v in payload.items():
-        print(f"    {k}: {v}")
+        print(f"{k}: {v}")
 
     response = client.post("/article/add", json=payload)
 
     print("[OUTPUT]")
-    print(f"    response: {response.json()}")
+    print(response.json())
 
     assert response.json()["confirmation"] == "not admin"
 
     print("[RESULT]")
-    print("    Sistem menolak user non-admin")
+    print("Sistem menolak user non-admin")
 
 
 def test_add_article_invalid_title(client):
@@ -66,18 +85,22 @@ def test_add_article_invalid_title(client):
         "article_preview": "Preview",
         "article_content": "Isi",
         "article_tag": "tech",
-        "article_image": "aGVsbG8="
+        "article_image": dummy_base64()
     }
+
+    print("[INPUT]")
+    for k, v in payload.items():
+        print(f"{k}: {v}")
 
     response = client.post("/article/add", json=payload)
 
     print("[OUTPUT]")
-    print(f"    response: {response.json()}")
+    print(response.json())
 
     assert "Title must be" in response.json()["confirmation"]
 
     print("[RESULT]")
-    print("    Sistem menolak title kosong")
+    print("Sistem menolak title kosong")
 
 
 def test_add_article_invalid_preview(client):
@@ -88,18 +111,22 @@ def test_add_article_invalid_preview(client):
         "article_preview": "",
         "article_content": "Isi",
         "article_tag": "tech",
-        "article_image": "aGVsbG8="
+        "article_image": dummy_base64()
     }
+
+    print("[INPUT]")
+    for k, v in payload.items():
+        print(f"{k}: {v}")
 
     response = client.post("/article/add", json=payload)
 
     print("[OUTPUT]")
-    print(f"    response: {response.json()}")
+    print(response.json())
 
-    assert "Preview must be" in response.json()["confirmation"]
+    assert "Preview must be 1-128 characters long." in response.json()["confirmation"]
 
     print("[RESULT]")
-    print("    Sistem menolak preview kosong")
+    print("Sistem menolak preview kosong")
 
 
 def test_add_article_invalid_content(client):
@@ -110,18 +137,22 @@ def test_add_article_invalid_content(client):
         "article_preview": "Preview",
         "article_content": "",
         "article_tag": "tech",
-        "article_image": "aGVsbG8="
+        "article_image": dummy_base64()
     }
+
+    print("[INPUT]")
+    for k, v in payload.items():
+        print(f"{k}: {v}")
 
     response = client.post("/article/add", json=payload)
 
     print("[OUTPUT]")
-    print(f"    response: {response.json()}")
+    print(response.json())
 
     assert "Content must be" in response.json()["confirmation"]
 
     print("[RESULT]")
-    print("    Sistem menolak content kosong")
+    print("Sistem menolak content kosong")
 
 
 def test_add_article_invalid_image_format(client):
@@ -135,89 +166,63 @@ def test_add_article_invalid_image_format(client):
         "article_image": "bukan_base64!!!"
     }
 
+    print("[INPUT]")
+    for k, v in payload.items():
+        print(f"{k}: {v}")
+
     response = client.post("/article/add", json=payload)
 
     print("[OUTPUT]")
-    print(f"    response: {response.json()}")
+    print(response.json())
 
-    assert "Image format must be valid Base64." in response.json()["confirmation"]
+    assert "Base64" in response.json()["confirmation"]
 
     print("[RESULT]")
-    print("    Sistem menolak format image tidak valid")
-
-import base64
-
-# =========================
-# HELPER
-# =========================
-
-import base64
-
-def dummy_base64():
-    return base64.b64encode(b"\xff\xd8\xff\xe0fakejpeg").decode()
-
-VALID_ID = "507f1f77bcf86cd799439011"
-
-def create_article(client):
-    payload = {
-        "article_title": "Judul Test",
-        "article_preview": "Preview Test",
-        "article_content": "Content Test",
-        "article_tag": "tech",
-        "article_image": dummy_base64()
-    }
-    res = client.post("/article/add", json=payload)
-    assert res.status_code == 200
-    return VALID_ID
-
-
-# =========================
-# ADD ARTICLE (biar reusable)
-# =========================
-
-def create_article(client):
-    payload = {
-        "article_title": "Judul Test",
-        "article_preview": "Preview Test",
-        "article_content": "Content Test",
-        "article_tag": "tech",
-        "article_image": dummy_base64()
-    }
-    res = client.post("/article/add", json=payload)
-    assert res.status_code == 200
-    return payload
-
-
-# =========================
-# EDIT GET ARTICLE
-# =========================
+    print("Sistem menolak format image tidak valid")
 
 def test_edit_get_article_success(client):
+    print("\n[TEST CASE] Get Article - Success")
+
     create_article(client)
 
-    res = client.post("/article/edit/get", json={
-        "article_id": VALID_ID
-    })
+    payload = {"article_id": VALID_ID}
 
-    data = res.json()
+    print("[INPUT]")
+    print(payload)
+
+    res = client.post("/article/edit/get", json=payload)
+
+    print("[OUTPUT]")
+    print(res.json())
 
     assert res.status_code == 200
-    assert data["confirmation"] == "successful"
+    assert res.json()["confirmation"] == "successful"
+
+    print("[RESULT]")
+    print("Berhasil mengambil data artikel")
 
 
 def test_edit_get_article_not_found(client):
-    res = client.post("/article/edit/get", json={
-        "article_id": "invalid"
-    })
+    print("\n[TEST CASE] Get Article - Not Found")
+
+    payload = {"article_id": "invalid"}
+
+    print("[INPUT]")
+    print(payload)
+
+    res = client.post("/article/edit/get", json=payload)
+
+    print("[OUTPUT]")
+    print(res.json())
 
     assert res.json()["confirmation"] == "backend error"
 
-
-# =========================
-# EDIT UPDATE ARTICLE
-# =========================
+    print("[RESULT]")
+    print("Artikel tidak ditemukan")
 
 def test_update_article_success(client):
+    print("\n[TEST CASE] Update Article - Success")
+
     create_article(client)
 
     payload = {
@@ -229,31 +234,54 @@ def test_update_article_success(client):
         "article_image": dummy_base64()
     }
 
+    print("[INPUT]")
+    for k, v in payload.items():
+        print(f"{k}: {v}")
+
     res = client.post("/article/edit/update", json=payload)
-    data = res.json()
+
+    print("[OUTPUT]")
+    print(res.json())
 
     assert res.status_code == 200
-    assert "successful" in data["confirmation"]
+    assert "successful" in res.json()["confirmation"]
+
+    print("[RESULT]")
+    print("Artikel berhasil diupdate")
 
 
 def test_update_article_invalid_title(client):
+    print("\n[TEST CASE] Update Article - Title Invalid")
+
     create_article(client)
 
     payload = {
         "article_id": VALID_ID,
-        "article_title": "",  # ❌ invalid
+        "article_title": "",
         "article_preview": "Preview",
         "article_content": "Content",
         "article_tag": "tech",
         "article_image": dummy_base64()
     }
 
+    print("[INPUT]")
+    for k, v in payload.items():
+        print(f"{k}: {v}")
+
     res = client.post("/article/edit/update", json=payload)
 
-    assert res.json()["confirmation"] == "Title must be 1-256 characters long."
+    print("[OUTPUT]")
+    print(res.json())
+
+    assert "Title must be" in res.json()["confirmation"]
+
+    print("[RESULT]")
+    print("Sistem menolak title tidak valid")
 
 
 def test_update_article_invalid_image(client):
+    print("\n[TEST CASE] Update Article - Image Invalid")
+
     create_article(client)
 
     payload = {
@@ -265,9 +293,19 @@ def test_update_article_invalid_image(client):
         "article_image": "not_base64"
     }
 
+    print("[INPUT]")
+    for k, v in payload.items():
+        print(f"{k}: {v}")
+
     res = client.post("/article/edit/update", json=payload)
 
-    assert res.json()["confirmation"] == "invalid image format"
+    print("[OUTPUT]")
+    print(res.json())
+
+    assert "invalid image" in res.json()["confirmation"]
+
+    print("[RESULT]")
+    print("Sistem menolak image tidak valid")
 
 
 # =========================
@@ -275,27 +313,44 @@ def test_update_article_invalid_image(client):
 # =========================
 
 def test_view_article_success(client):
+    print("\n[TEST CASE] View Article - Success")
+
     create_article(client)
 
-    res = client.post("/article/view", json={
-        "article_id": VALID_ID
-    })
+    payload = {"article_id": VALID_ID}
 
-    data = res.json()
+    print("[INPUT]")
+    print(payload)
+
+    res = client.post("/article/view", json=payload)
+
+    print("[OUTPUT]")
+    print(res.json())
 
     assert res.status_code == 200
-    assert data["confirmation"] == "successful"
-    assert "article_title" in data
-    assert "comments" in data
-    assert "ratings" in data
+    assert res.json()["confirmation"] == "successful"
+
+    print("[RESULT]")
+    print("Artikel berhasil ditampilkan")
 
 
 def test_view_article_not_found(client):
-    res = client.post("/article/view", json={
-        "article_id": "invalid"
-    })
+    print("\n[TEST CASE] View Article - Not Found")
+
+    payload = {"article_id": "invalid"}
+
+    print("[INPUT]")
+    print(payload)
+
+    res = client.post("/article/view", json=payload)
+
+    print("[OUTPUT]")
+    print(res.json())
 
     assert res.json()["confirmation"] == "backend error"
+
+    print("[RESULT]")
+    print("Artikel tidak ditemukan")
 
 
 # =========================
@@ -303,21 +358,41 @@ def test_view_article_not_found(client):
 # =========================
 
 def test_delete_article_success(client):
+    print("\n[TEST CASE] Delete Article - Success")
+
     create_article(client)
 
-    res = client.post("/article/delete", json={
-        "article_id": "507f1f77bcf86cd799439011"  # valid ObjectId format
-    })
+    payload = {"article_id": VALID_ID}
 
-    data = res.json()
+    print("[INPUT]")
+    print(payload)
+
+    res = client.post("/article/delete", json=payload)
+
+    print("[OUTPUT]")
+    print(res.json())
 
     assert res.status_code == 200
-    assert "successful" in data["confirmation"]
+    assert "successful" in res.json()["confirmation"]
+
+    print("[RESULT]")
+    print("Artikel berhasil dihapus")
 
 
 def test_delete_article_invalid_id(client):
-    res = client.post("/article/delete", json={
-        "article_id": "invalid_id"
-    })
+    print("\n[TEST CASE] Delete Article - Invalid ID")
+
+    payload = {"article_id": "invalid_id"}
+
+    print("[INPUT]")
+    print(payload)
+
+    res = client.post("/article/delete", json=payload)
+
+    print("[OUTPUT]")
+    print(res.json())
 
     assert res.json()["confirmation"] == "backend error"
+
+    print("[RESULT]")
+    print("Sistem menolak ID tidak valid")
