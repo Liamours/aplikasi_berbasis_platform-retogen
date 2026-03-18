@@ -3,6 +3,7 @@ import sys
 import os
 from bson import ObjectId
 
+
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
 import pytest
@@ -40,7 +41,12 @@ class FakeArticleCollection:
 
     async def find_one(self, query):
         for article in self.articles:
-            if article.get("_id") == query.get("_id") and article.get("is_deleted") == query.get("is_deleted"):
+            match = True
+            for k, v in query.items():
+                if article.get(k) != v:
+                    match = False
+                    break
+            if match:
                 return article
         return None
     
@@ -98,11 +104,45 @@ class FakeCommentCollection:
         self.comments = []
 
 class FakeRatingCollection:
-    def find(self, *args, **kwargs):
+    def __init__(self):
+        self.ratings = []
+
+    async def insert_one(self, data):
+        data["_id"] = ObjectId()
+        self.ratings.append(data)
+        return type("obj", (), {"inserted_id": data["_id"]})
+
+    async def find_one(self, query):
+        for r in self.ratings:
+            match = True
+            for k, v in query.items():
+                if r.get(k) != v:
+                    match = False
+            if match:
+                return r
+        return None
+
+    def find(self, query):
         class Cursor:
+            def __init__(self, data):
+                self.data = data
+
             async def to_list(self, length=None):
-                return []
-        return Cursor()
+                return self.data
+
+        filtered = [
+            r for r in self.ratings
+            if r.get("article_id") == query.get("article_id")
+        ]
+
+        return Cursor(filtered)
+
+    async def update_one(self, query, update):
+        for r in self.ratings:
+            if r.get("_id") == query.get("_id"):
+                r.update(update.get("$set", {}))
+                return type("obj", (), {"modified_count": 1})
+        return type("obj", (), {"modified_count": 0})
 
 
 class FakeDB:
@@ -121,13 +161,13 @@ class FakeDB:
 @pytest.fixture
 def client():
     fake_db = FakeDB()
-
+    
     # seed admin user
     fake_db.user.users.append({
-        "_id": "fake_admin_id",
-        "email": "admin@mail.com",
-        "username": "admin",
-        "role": "admin"
+    "_id": ObjectId("507f1f77bcf86cd799439012"),
+    "email": "admin@mail.com",
+    "username": "admin",
+    "role": "admin"
     })
 
     # =========================
@@ -140,6 +180,7 @@ def client():
     import routes.comment as comment_route
     import db.connection as db_connection
     import services.rating_service as rating_service
+    import routes.rating as rating_route
 
     rating_service.db = fake_db
     db_connection.db = fake_db
@@ -148,7 +189,8 @@ def client():
     auth_service.db = fake_db
     article_service.db = fake_db
     article_route.db = fake_db   # 🔥 INI YANG KEMARIN KURANG
-
+    rating_route.db = fake_db
+    
     # =========================
     # OVERRIDE AUTH
     # =========================
@@ -163,3 +205,4 @@ def client():
     app.dependency_overrides[get_current_user] = override_get_current_user
 
     return TestClient(app)
+
