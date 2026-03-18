@@ -3,7 +3,6 @@ import sys
 import os
 from bson import ObjectId
 
-
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
 import pytest
@@ -20,13 +19,41 @@ class FakeUserCollection:
 
     async def find_one(self, query):
         for user in self.users:
-            if user.get("email") == query.get("email"):
+            match = True
+            for k, v in query.items():
+                if user.get(k) != v:
+                    match = False
+                    break
+            if match:
                 return user
         return None
 
     async def insert_one(self, data):
+        data["_id"] = ObjectId()
         self.users.append(data)
-        return {"inserted_id": "fake_user_id"}
+        return type("obj", (), {"inserted_id": data["_id"]})
+
+    async def update_one(self, query, update):
+        for user in self.users:
+            if user.get("_id") == query.get("_id"):
+                # handle $inc
+                if "$inc" in update:
+                    for k, v in update["$inc"].items():
+                        user[k] = user.get(k, 0) + v
+
+                # handle $set
+                if "$set" in update:
+                    user.update(update["$set"])
+
+                return type("obj", (), {
+                    "modified_count": 1,
+                    "matched_count": 1
+                })
+
+        return type("obj", (), {
+            "modified_count": 0,
+            "matched_count": 0
+        })
 
 
 class FakeArticleCollection:
@@ -35,7 +62,7 @@ class FakeArticleCollection:
 
     async def insert_one(self, data):
         data["_id"] = ObjectId("507f1f77bcf86cd799439011")
-        data["is_deleted"] = False  # penting juga
+        data["is_deleted"] = False
         self.articles.append(data)
         return type("obj", (), {"inserted_id": data["_id"]})
 
@@ -49,7 +76,7 @@ class FakeArticleCollection:
             if match:
                 return article
         return None
-    
+
     async def update_one(self, query, update):
         return type("obj", (), {"modified_count": 1})
 
@@ -66,7 +93,19 @@ class FakeReportArticleCollection:
             async def to_list(self, length=None):
                 return []
         return Cursor()
-    
+
+
+# 🔥 FIX: report_user collection (WAJIB ADA)
+class FakeReportUserCollection:
+    def __init__(self):
+        self.reports = []
+
+    async def insert_one(self, data):
+        data["_id"] = ObjectId()
+        self.reports.append(data)
+        return type("obj", (), {"inserted_id": data["_id"]})
+
+
 class FakeCommentCollection:
     def __init__(self):
         self.comments = []
@@ -103,6 +142,7 @@ class FakeCommentCollection:
     async def delete_many(self, query):
         self.comments = []
 
+
 class FakeRatingCollection:
     def __init__(self):
         self.ratings = []
@@ -118,6 +158,7 @@ class FakeRatingCollection:
             for k, v in query.items():
                 if r.get(k) != v:
                     match = False
+                    break
             if match:
                 return r
         return None
@@ -150,8 +191,13 @@ class FakeDB:
         self.user = FakeUserCollection()
         self.article = FakeArticleCollection()
         self.report_article = FakeReportArticleCollection()
+        self.report_user = FakeReportUserCollection()  # 🔥 FIX
         self.comment = FakeCommentCollection()
         self.rating = FakeRatingCollection()
+
+    # 🔥 FIX: biar db.command("ping") tidak error
+    async def command(self, *args, **kwargs):
+        return {"ok": 1}
 
 
 # =========================
@@ -161,13 +207,13 @@ class FakeDB:
 @pytest.fixture
 def client():
     fake_db = FakeDB()
-    
+
     # seed admin user
     fake_db.user.users.append({
-    "_id": ObjectId("507f1f77bcf86cd799439012"),
-    "email": "admin@mail.com",
-    "username": "admin",
-    "role": "admin"
+        "_id": ObjectId("507f1f77bcf86cd799439012"),
+        "email": "admin@mail.com",
+        "username": "admin",
+        "role": "admin"
     })
 
     # =========================
@@ -178,19 +224,25 @@ def client():
     import routes.article as article_route
     import services.comment_service as comment_service
     import routes.comment as comment_route
-    import db.connection as db_connection
     import services.rating_service as rating_service
     import routes.rating as rating_route
+    import services.report_user_service as report_user_service
+    import routes.report_user as report_user_route
+    import db.connection as db_connection
 
-    rating_service.db = fake_db
     db_connection.db = fake_db
-    comment_service.db = fake_db
-    comment_route.db = fake_db
+
     auth_service.db = fake_db
     article_service.db = fake_db
-    article_route.db = fake_db   # 🔥 INI YANG KEMARIN KURANG
+    comment_service.db = fake_db
+    rating_service.db = fake_db
+    report_user_service.db = fake_db
+
+    article_route.db = fake_db
+    comment_route.db = fake_db
     rating_route.db = fake_db
-    
+    report_user_route.db = fake_db
+
     # =========================
     # OVERRIDE AUTH
     # =========================
@@ -205,4 +257,3 @@ def client():
     app.dependency_overrides[get_current_user] = override_get_current_user
 
     return TestClient(app)
-
