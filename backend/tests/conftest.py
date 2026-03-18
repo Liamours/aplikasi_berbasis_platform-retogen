@@ -54,6 +54,24 @@ class FakeUserCollection:
             "modified_count": 0,
             "matched_count": 0
         })
+        
+    def find(self, query):
+        class Cursor:
+            def __init__(self, data):
+                self.data = data
+
+            async def to_list(self, length=None):
+                return self.data
+
+        return Cursor(self.users)
+    
+    async def delete_one(self, query):
+        for i, user in enumerate(self.users):
+            if user.get("_id") == query.get("_id"):
+                self.users.pop(i)
+                return type("obj", (), {"deleted_count": 1})
+
+        return type("obj", (), {"deleted_count": 0})
 
 
 class FakeArticleCollection:
@@ -94,7 +112,6 @@ class FakeReportArticleCollection:
                 return []
         return Cursor()
 
-
 # 🔥 FIX: report_user collection (WAJIB ADA)
 class FakeReportUserCollection:
     def __init__(self):
@@ -105,6 +122,26 @@ class FakeReportUserCollection:
         self.reports.append(data)
         return type("obj", (), {"inserted_id": data["_id"]})
 
+    async def delete_many(self, query):
+        self.reports = [
+            r for r in self.reports
+            if r.get("reported_user_id") != query.get("reported_user_id")
+        ]
+        
+    def find(self, query):
+            class Cursor:
+                def __init__(self, data):
+                    self.data = data
+
+                async def to_list(self, length=None):
+                    return self.data
+
+            filtered = [
+                r for r in self.reports
+                if r.get("reported_user_id") == query.get("reported_user_id")
+            ]
+
+            return Cursor(filtered)
 
 class FakeCommentCollection:
     def __init__(self):
@@ -185,6 +222,11 @@ class FakeRatingCollection:
                 return type("obj", (), {"modified_count": 1})
         return type("obj", (), {"modified_count": 0})
 
+    async def delete_many(self, query):
+        self.ratings = [
+            r for r in self.ratings
+            if r.get("owner_id") != query.get("owner_id")
+        ]
 
 class FakeDB:
     def __init__(self):
@@ -208,12 +250,19 @@ class FakeDB:
 def client():
     fake_db = FakeDB()
 
-    # seed admin user
     fake_db.user.users.append({
         "_id": ObjectId("507f1f77bcf86cd799439012"),
         "email": "admin@mail.com",
         "username": "admin",
         "role": "admin"
+    })
+
+    # seed user
+    fake_db.user.users.append({
+        "_id": ObjectId("507f1f77bcf86cd799439013"),
+        "email": "user@mail.com",
+        "username": "user",
+        "role": "user"
     })
 
     # =========================
@@ -229,6 +278,8 @@ def client():
     import services.report_user_service as report_user_service
     import routes.report_user as report_user_route
     import db.connection as db_connection
+    import services.user_service as user_service
+    import routes.user as user_route
 
     db_connection.db = fake_db
 
@@ -237,11 +288,13 @@ def client():
     comment_service.db = fake_db
     rating_service.db = fake_db
     report_user_service.db = fake_db
+    user_service.db = fake_db
 
     article_route.db = fake_db
     comment_route.db = fake_db
     rating_route.db = fake_db
     report_user_route.db = fake_db
+    user_route.db = fake_db
 
     # =========================
     # OVERRIDE AUTH
