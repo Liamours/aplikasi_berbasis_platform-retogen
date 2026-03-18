@@ -60,6 +60,49 @@ class FakeReportArticleCollection:
             async def to_list(self, length=None):
                 return []
         return Cursor()
+    
+class FakeCommentCollection:
+    def __init__(self):
+        self.comments = []
+
+    async def insert_one(self, data):
+        data["_id"] = ObjectId()
+        self.comments.append(data)
+        return type("obj", (), {"inserted_id": data["_id"]})
+
+    def find(self, query):
+        class Cursor:
+            def __init__(self, data):
+                self.data = data
+
+            async def to_list(self, length=None):
+                return self.data
+
+        filtered = [
+            c for c in self.comments
+            if c.get("article_id") == query.get("article_id")
+        ]
+
+        return Cursor(filtered)
+
+    async def find_one(self, query):
+        for c in self.comments:
+            if str(c.get("_id")) == str(query.get("_id")):
+                return c
+        return None
+
+    async def update_one(self, query, update):
+        return type("obj", (), {"acknowledged": True})
+
+    async def delete_many(self, query):
+        self.comments = []
+
+class FakeRatingCollection:
+    def find(self, *args, **kwargs):
+        class Cursor:
+            async def to_list(self, length=None):
+                return []
+        return Cursor()
 
 
 class FakeDB:
@@ -67,6 +110,8 @@ class FakeDB:
         self.user = FakeUserCollection()
         self.article = FakeArticleCollection()
         self.report_article = FakeReportArticleCollection()
+        self.comment = FakeCommentCollection()
+        self.rating = FakeRatingCollection()
 
 
 # =========================
@@ -91,7 +136,15 @@ def client():
     import services.auth_service as auth_service
     import services.article_service as article_service
     import routes.article as article_route
+    import services.comment_service as comment_service
+    import routes.comment as comment_route
+    import db.connection as db_connection
+    import services.rating_service as rating_service
 
+    rating_service.db = fake_db
+    db_connection.db = fake_db
+    comment_service.db = fake_db
+    comment_route.db = fake_db
     auth_service.db = fake_db
     article_service.db = fake_db
     article_route.db = fake_db   # 🔥 INI YANG KEMARIN KURANG
