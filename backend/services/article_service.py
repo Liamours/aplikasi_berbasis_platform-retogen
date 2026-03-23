@@ -2,7 +2,7 @@ import logging
 from db.connection import db
 from bson import ObjectId, Binary
 from utils.image_validator import validate_image_bytes
-from datetime import datetime
+from datetime import datetime, timezone
 
 logger = logging.getLogger(__name__)
 
@@ -37,7 +37,7 @@ class ArticleService:
                 return "invalid_image"
             update_fields["article_image"] = Binary(image_bytes)
 
-        update_fields["updated_at"] = datetime.utcnow()
+        update_fields["updated_at"] = datetime.now(timezone.utc)
 
         try:
             result = await db.article.update_one(
@@ -52,13 +52,13 @@ class ArticleService:
     @staticmethod
     async def add_article(title, preview, content, tag, image_bytes, author_id):
         try:
-            now = datetime.utcnow()
+            now = datetime.now(timezone.utc)
             doc = {
                 "article_title": title,
                 "article_preview": preview,
                 "article_content": content,
                 "article_tag": tag,
-                "article_image": image_bytes,
+                "article_image": Binary(image_bytes) if image_bytes else None,
                 "author_id": author_id,
                 "report_count": 0,
                 "created_at": now,
@@ -71,14 +71,6 @@ class ArticleService:
             return None
         except Exception as e:
             logger.error("add_article error: %s", e)
-            return None
-
-    @staticmethod
-    async def get_ratings(article_id: str):
-        try:
-            return await db.ratings.find({"article_id": article_id}).to_list(None)
-        except Exception as e:
-            logger.error("get_ratings error: %s", e)
             return None
 
     @staticmethod

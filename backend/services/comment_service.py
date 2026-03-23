@@ -1,6 +1,6 @@
 import logging
 from db.connection import db
-from datetime import datetime
+from datetime import datetime, timezone
 from bson import ObjectId
 
 logger = logging.getLogger(__name__)
@@ -15,7 +15,7 @@ class CommentService:
                 "owner_id": owner_id,
                 "parent_comment_id": parent_comment_id,
                 "comment_content": comment_content,
-                "created_at": datetime.utcnow(),
+                "created_at": datetime.now(timezone.utc),
             }
             result = await db.comment.insert_one(data)
             return str(result.inserted_id)

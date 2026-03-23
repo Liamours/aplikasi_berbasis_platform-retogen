@@ -1,6 +1,6 @@
 import logging
 from db.connection import db
-from datetime import datetime
+from datetime import datetime, timezone
 from bson import ObjectId
 
 logger = logging.getLogger(__name__)
@@ -14,7 +14,7 @@ class RatingService:
                 "article_id": article_id,
                 "owner_id": owner_id,
                 "rating_value": rating_value,
-                "created_at": datetime.utcnow()
+                "created_at": datetime.now(timezone.utc)
             })
             return str(result.inserted_id)
         except Exception as e:

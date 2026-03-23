@@ -1,7 +1,7 @@
 import logging
 from db.connection import db
 from bson import ObjectId
-from datetime import datetime
+from datetime import datetime, timezone
 
 logger = logging.getLogger(__name__)
 
@@ -13,7 +13,7 @@ class ReportArticleService:
             data = {
                 "article_id": ObjectId(article_id),
                 "description": description,
-                "created_at": datetime.utcnow()
+                "created_at": datetime.now(timezone.utc)
             }
             result = await db.report_article.insert_one(data)
             await db.article.update_one(

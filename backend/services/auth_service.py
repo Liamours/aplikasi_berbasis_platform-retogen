@@ -1,7 +1,7 @@
 import logging
 from core.security import verify_password, hash_password, create_token
 from db.connection import db
-from datetime import datetime
+from datetime import datetime, timezone
 
 logger = logging.getLogger(__name__)
 
@@ -13,7 +13,7 @@ class AuthService:
             return {"confirmation": "email already registered"}
 
         hashed_pw = hash_password(data.password)
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
 
         new_user = {
             "username": data.username,

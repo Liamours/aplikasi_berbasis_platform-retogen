@@ -18,12 +18,12 @@ router = APIRouter()
 
 @router.post("/edit/get")
 async def edit_get_article(req: EditArticleGetRequest, payload: dict = Depends(get_current_user)):
+    if not AuthService.is_admin(payload):
+        return {"confirmation": "not admin"}
+
     article = await ArticleService.fetch_article(req.article_id)
     if article is None:
         return {"confirmation": "backend error"}
-
-    if not AuthService.is_admin(payload):
-        return {"confirmation": "not admin"}
 
     image_base64 = None
     if article.get("article_image"):
@@ -42,6 +42,9 @@ async def edit_get_article(req: EditArticleGetRequest, payload: dict = Depends(g
 
 @router.post("/edit/update")
 async def edit_update_article(req: EditArticleUpdateRequest, payload: dict = Depends(get_current_user)):
+    if not AuthService.is_admin(payload):
+        return {"confirmation": "not admin"}
+
     article = await ArticleService.fetch_article(req.article_id)
     if article is None:
         return {"confirmation": "backend error"}
@@ -80,9 +83,6 @@ async def view_article(req: ViewArticleRequest, payload: dict = Depends(get_curr
     if article is None:
         return {"confirmation": "backend error"}
 
-    if article.get("is_deleted"):
-        return {"confirmation": "backend error"}
-
     user_email = payload.get("email")
     user = await db.user.find_one({"email": user_email})
     userclass = "admin" if AuthService.is_admin(payload) else "user"
@@ -91,7 +91,7 @@ async def view_article(req: ViewArticleRequest, payload: dict = Depends(get_curr
     if article.get("article_image"):
         try:
             image_base64 = bytes_to_base64(bytes(article["article_image"]))
-        except:
+        except Exception:
             image_base64 = None
 
     comments_raw = await CommentService.get_comments(req.article_id)
@@ -102,7 +102,7 @@ async def view_article(req: ViewArticleRequest, payload: dict = Depends(get_curr
     for c in comments_raw:
         try:
             u = await db.user.find_one({"_id": ObjectId(c["owner_id"])})
-        except:
+        except Exception:
             u = None
         comments.append({
             "comment_id": str(c["_id"]),
@@ -120,7 +120,7 @@ async def view_article(req: ViewArticleRequest, payload: dict = Depends(get_curr
     for r in ratings_raw:
         try:
             u = await db.user.find_one({"_id": ObjectId(r["owner_id"])})
-        except:
+        except Exception:
             u = None
         ratings.append({
             "rating_id": str(r["_id"]),
@@ -166,7 +166,7 @@ async def delete_article(req: DeleteArticleRequest, payload: dict = Depends(get_
             {"_id": article_oid},
             {"$set": {"is_deleted": True}}
         )
-    except:
+    except Exception:
         return {"confirmation": "backend error"}
 
     if result.modified_count == 0:
@@ -196,12 +196,18 @@ async def main_page(req: MainPageRequest, payload: dict = Depends(get_current_us
 
     list_article = []
     for a in articles:
+        image_base64 = None
+        if a.get("article_image"):
+            try:
+                image_base64 = bytes_to_base64(bytes(a["article_image"]))
+            except Exception:
+                image_base64 = None
         list_article.append({
             "article_id": str(a["_id"]),
             "article_title": a.get("article_title"),
             "article_preview": a.get("article_preview"),
             "article_tag": a.get("article_tag"),
-            "article_image": a.get("article_image").decode("latin1") if a.get("article_image") else None
+            "article_image": image_base64
         })
 
     return {
@@ -246,6 +252,10 @@ async def add_article(req: AddArticle, payload: dict = Depends(get_current_user)
         image_bytes = base64_to_bytes(req.article_image)
     except Exception:
         return {"confirmation": "Image format must be valid Base64."}
+
+    from utils.image_validator import validate_image_bytes
+    if image_bytes and not validate_image_bytes(image_bytes):
+        return {"confirmation": "invalid image format"}
 
     article_id = await ArticleService.add_article(
         req.article_title,

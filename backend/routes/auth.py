@@ -10,7 +10,7 @@ def validate_register_input(data: RegisterUser):
     if not re.fullmatch(r"^[A-Za-z0-9]{8,16}$", data.username):
         return {"confirmation": "username length must be 8 - 16 characters, only alphabetic characters and numbers (aA-zZ, 0-9) are allowed"}
     if not re.fullmatch(r"^[A-Za-zA-Z ]{4,32}$", data.fullname):
-        return {"confirmation": "fullname length must be 4 - 32 characters, only alphabetic characters (aA-zZ) are allowed"}
+        return {"confirmation": "fullname length must be 4 - 32 characters, only alphabetic characters and spaces are allowed"}
     password = data.password
     if len(password) < 8 or len(password) > 16:
         return {"confirmation": "password length must be 8 - 16 characters"}
