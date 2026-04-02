@@ -8,5 +8,7 @@ MONGO_URI = os.getenv("MONGO_URI") or os.getenv("MONGO_URL") or "mongodb://local
 
 logger.info(f"Connecting to MongoDB: {MONGO_URI[:20]}...")
 
+MONGO_DB_NAME = os.getenv("MONGO_DB_NAME", "Retogen")
+
 client = AsyncIOMotorClient(MONGO_URI)
-db = client["Retogen"]
+db = client[MONGO_DB_NAME]

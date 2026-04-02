@@ -29,8 +29,8 @@ class ArticleService:
             update_fields["article_preview"] = data.article_preview
         if data.article_content is not None:
             update_fields["article_content"] = data.article_content
-        if data.article_tag is not None:
-            update_fields["article_tag"] = data.article_tag
+        if data.article_tags is not None:
+            update_fields["article_tags"] = [t.strip().lower() for t in data.article_tags]
 
         if image_bytes is not None:
             if not validate_image_bytes(image_bytes):
@@ -50,14 +50,14 @@ class ArticleService:
             return False
 
     @staticmethod
-    async def add_article(title, preview, content, tag, image_bytes, author_id):
+    async def add_article(title, preview, content, tags, image_bytes, author_id):
         try:
             now = datetime.now(timezone.utc)
             doc = {
                 "article_title": title,
                 "article_preview": preview,
                 "article_content": content,
-                "article_tag": tag,
+                "article_tags": [t.strip().lower() for t in tags],
                 "article_image": Binary(image_bytes) if image_bytes else None,
                 "author_id": author_id,
                 "report_count": 0,
@@ -79,7 +79,7 @@ class ArticleService:
             match = {"is_deleted": False}
 
             if tag:
-                match["article_tag"] = tag
+                match["article_tags"] = tag.strip().lower()
             if search:
                 match["article_title"] = {"$regex": search, "$options": "i"}
 
@@ -88,7 +88,7 @@ class ArticleService:
                     "newest": ("created_at", -1),
                     "oldest": ("created_at", 1),
                     "most_reported": ("report_count", -1),
-                    "by_tag": ("article_tag", 1),
+                    "by_tag": ("article_tags", 1),
                     "search_title": ("article_title", 1),
                 }[sort]
 
@@ -105,9 +105,7 @@ class ArticleService:
                         "foreignField": "article_id",
                         "as": "ratings"
                     }},
-                    {"$addFields": {
-                        "avg_rating": {"$avg": "$ratings.rating_value"}
-                    }},
+                    {"$addFields": {"avg_rating": {"$avg": "$ratings.rating_value"}}},
                     {"$sort": {"avg_rating": -1}},
                     {"$project": {"ratings": 0, "article_id_str": 0}}
                 ]
@@ -123,9 +121,7 @@ class ArticleService:
                         "foreignField": "article_id",
                         "as": "comments"
                     }},
-                    {"$addFields": {
-                        "comment_count": {"$size": "$comments"}
-                    }},
+                    {"$addFields": {"comment_count": {"$size": "$comments"}}},
                     {"$sort": {"comment_count": -1}},
                     {"$project": {"comments": 0, "article_id_str": 0}}
                 ]

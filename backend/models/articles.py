@@ -1,9 +1,9 @@
 from pydantic import BaseModel
-from typing import Literal
+from typing import List
 
 class Article(BaseModel):
     article_title: str
     article_preview: str
     article_content: str
-    article_tag: Literal["office", "budget", "gaming", "flagship"]
+    article_tags: List[str]
     article_image: bytes

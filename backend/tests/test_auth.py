@@ -1,11 +1,13 @@
 # ── existing tests ────────────────────────────────────────────────────────────
 
 def test_register_success(client):
+    import uuid
     print("\n[TEST CASE] Register - Data Valid")
+    unique = uuid.uuid4().hex[:8]
     payload = {
-        "username": "testuser1",
+        "username": f"tuser{unique}",
         "fullname": "Test User One",
-        "email": "testuser1@mail.com",
+        "email": f"testuser_{unique}@mail.com",
         "password": "Password1"
     }
     response = client.post("/auth/registration", json=payload)

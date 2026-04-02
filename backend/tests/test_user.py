@@ -50,12 +50,12 @@ def test_get_all_users_no_token(client):
     assert response.status_code == 401
 
 
-def test_get_user_details_own_profile(client, auth_headers_user):
+def test_get_user_details_own_profile(client, auth_headers_user, fresh_user_email):
     print("\n[TEST CASE] Get User Details - Profil Sendiri")
     response = client.post("/user/get_details", json={}, headers=auth_headers_user)
     print(f"    confirmation: {response.json().get('confirmation')}")
     assert response.json()["confirmation"] == "successful"
-    assert response.json()["user"]["email"] == USER_EMAIL_REGULAR
+    assert response.json()["user"]["email"] == fresh_user_email
 
 
 def test_get_user_details_other_user_forbidden(client, auth_headers_user):
@@ -146,11 +146,11 @@ def test_get_user_details_returns_correct_email(client, auth_headers_admin):
     assert response.json()["user"]["email"] == USER_EMAIL_REGULAR
 
 
-def test_get_user_details_user_views_own_no_email_param(client, auth_headers_user):
+def test_get_user_details_user_views_own_no_email_param(client, auth_headers_user, fresh_user_email):
     print("\n[TEST CASE] Get User Details - User Views Own (No Email Param)")
     response = client.post("/user/get_details", json={}, headers=auth_headers_user)
     assert response.json()["confirmation"] == "successful"
-    assert response.json()["user"]["email"] == USER_EMAIL_REGULAR
+    assert response.json()["user"]["email"] == fresh_user_email
 
 
 # ── new tests: make admin ─────────────────────────────────────────────────────

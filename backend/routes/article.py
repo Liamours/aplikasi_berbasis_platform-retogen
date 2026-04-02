@@ -6,7 +6,10 @@ from services.rating_service import RatingService
 from services.comment_service import CommentService
 from services.article_service import ArticleService
 from services.auth_service import AuthService
+from services.subscription_service import SubscriptionService
+from services.notification_service import NotificationService
 from utils.base64_utils import base64_to_bytes, bytes_to_base64
+from utils.image_validator import validate_image_bytes
 from schemas.delete_article_schema import DeleteArticleRequest
 from bson import ObjectId, errors
 from db.connection import db
@@ -15,6 +18,7 @@ from schemas.main_page_schema import MainPageRequest
 from core.dependencies import get_current_user
 
 router = APIRouter()
+
 
 @router.post("/edit/get")
 async def edit_get_article(req: EditArticleGetRequest, payload: dict = Depends(get_current_user)):
@@ -35,7 +39,7 @@ async def edit_get_article(req: EditArticleGetRequest, payload: dict = Depends(g
         "article_title": article["article_title"],
         "article_preview": article["article_preview"],
         "article_content": article["article_content"],
-        "article_tag": article["article_tag"],
+        "article_tags": article.get("article_tags", []),
         "article_image": image_base64
     }
 
@@ -51,15 +55,13 @@ async def edit_update_article(req: EditArticleUpdateRequest, payload: dict = Dep
 
     if not (1 <= len(req.article_title) <= 256):
         return {"confirmation": "Title must be 1-256 characters long."}
-
     if not (1 <= len(req.article_preview) <= 128):
         return {"confirmation": "Preview must be 1-128 characters long."}
-
     if not (1 <= len(req.article_content) <= 65536):
         return {"confirmation": "Content must be 1-65536 characters long."}
 
     try:
-        image_bytes = base64_to_bytes(req.article_image)
+        image_bytes = base64_to_bytes(req.article_image) if req.article_image else None
     except Exception:
         return {"confirmation": "invalid image format"}
 
@@ -67,14 +69,10 @@ async def edit_update_article(req: EditArticleUpdateRequest, payload: dict = Dep
 
     if result == "invalid_image":
         return {"confirmation": "invalid image format"}
-
     if not result:
         return {"confirmation": "backend error"}
 
-    return {
-        "confirmation": "successful: article edited",
-        "article_id": req.article_id
-    }
+    return {"confirmation": "successful: article edited", "article_id": req.article_id}
 
 
 @router.post("/view")
@@ -129,8 +127,11 @@ async def view_article(req: ViewArticleRequest, payload: dict = Depends(get_curr
             "rating_value": r["rating_value"]
         })
 
-    reports_raw = await db.report_article.find({"article_id": ObjectId(req.article_id)}).to_list(None)
-    reports = [{"report_id": str(rep["_id"]), "description": rep["description"], "created_at": rep.get("created_at")} for rep in reports_raw]
+    reports_raw = await db.report_article.find({"article_id": req.article_id}).to_list(None)
+    reports = [
+        {"report_id": str(rep["_id"]), "description": rep["description"], "created_at": rep.get("created_at")}
+        for rep in reports_raw
+    ]
 
     return {
         "confirmation": "successful",
@@ -139,7 +140,7 @@ async def view_article(req: ViewArticleRequest, payload: dict = Depends(get_curr
         "username": user["username"],
         "article_title": article["article_title"],
         "article_content": article["article_content"],
-        "article_tag": article["article_tag"],
+        "article_tags": article.get("article_tags", []),
         "article_image": image_base64,
         "comments": comments,
         "ratings": ratings,
@@ -149,6 +150,9 @@ async def view_article(req: ViewArticleRequest, payload: dict = Depends(get_curr
 
 @router.post("/delete")
 async def delete_article(req: DeleteArticleRequest, payload: dict = Depends(get_current_user)):
+    if not AuthService.is_admin(payload):
+        return {"confirmation": "not admin"}
+
     try:
         article_oid = ObjectId(req.article_id)
     except errors.InvalidId:
@@ -157,9 +161,6 @@ async def delete_article(req: DeleteArticleRequest, payload: dict = Depends(get_
     article = await ArticleService.fetch_article(req.article_id)
     if article is None:
         return {"confirmation": "backend error"}
-
-    if not AuthService.is_admin(payload):
-        return {"confirmation": "not admin"}
 
     try:
         result = await db.article.update_one(
@@ -183,8 +184,6 @@ async def main_page(req: MainPageRequest, payload: dict = Depends(get_current_us
     if not user:
         return {"confirmation": "token invalid"}
 
-    username = user.get("username", "")
-
     articles = await ArticleService.get_articles_filtered(
         sort=req.sort.value,
         tag=req.tag,
@@ -196,23 +195,23 @@ async def main_page(req: MainPageRequest, payload: dict = Depends(get_current_us
 
     list_article = []
     for a in articles:
-        image_base64 = None
+        image = None
         if a.get("article_image"):
             try:
-                image_base64 = bytes_to_base64(bytes(a["article_image"]))
+                image = bytes_to_base64(bytes(a["article_image"]))
             except Exception:
-                image_base64 = None
+                image = None
         list_article.append({
             "article_id": str(a["_id"]),
             "article_title": a.get("article_title"),
             "article_preview": a.get("article_preview"),
-            "article_tag": a.get("article_tag"),
-            "article_image": image_base64
+            "article_tags": a.get("article_tags", []),
+            "article_image": image
         })
 
     return {
         "confirmation": "fetch data successful",
-        "username": username,
+        "username": user.get("username", ""),
         "sort": req.sort.value,
         "tag": req.tag,
         "search": req.search,
@@ -241,32 +240,39 @@ async def add_article(req: AddArticle, payload: dict = Depends(get_current_user)
 
     if not (1 <= len(req.article_title) <= 256):
         return {"confirmation": "Title must be 1-256 characters long."}
-
     if not (1 <= len(req.article_preview) <= 128):
         return {"confirmation": "Preview must be 1-128 characters long."}
-
     if not (1 <= len(req.article_content) <= 65536):
         return {"confirmation": "Content must be 1-65536 characters long."}
+    if not req.article_tags:
+        return {"confirmation": "At least one tag is required."}
 
     try:
         image_bytes = base64_to_bytes(req.article_image)
     except Exception:
         return {"confirmation": "Image format must be valid Base64."}
 
-    from utils.image_validator import validate_image_bytes
-    if image_bytes and not validate_image_bytes(image_bytes):
+    if not validate_image_bytes(image_bytes):
         return {"confirmation": "invalid image format"}
+
+    normalized_tags = [t.strip().lower() for t in req.article_tags]
 
     article_id = await ArticleService.add_article(
         req.article_title,
         req.article_preview,
         req.article_content,
-        req.article_tag,
+        normalized_tags,
         image_bytes,
         author_id
     )
 
     if article_id is None:
         return {"confirmation": "backend error"}
+
+    subscriber_ids = await SubscriptionService.get_subscribers_for_tags(normalized_tags)
+    subscriber_ids = [uid for uid in subscriber_ids if uid != author_id]
+    await NotificationService.create_notifications(
+        subscriber_ids, article_id, req.article_title, normalized_tags
+    )
 
     return {"confirmation": "success: article added"}
