@@ -1,43 +1,51 @@
-import { createRouter, createWebHistory } from 'vue-router'
-import LoginView from '@/views/LoginView.vue'
-import HomeView from '@/views/HomeView.vue'
-import { getToken, isTokenExpired, removeToken } from '@/lib/auth'
+export type LoginPayload = {
+  email: string
+  password: string
+}
 
-const router = createRouter({
-  history: createWebHistory(),
-  routes: [
-    {
-      path: '/',
-      name: 'home',
-      component: HomeView,
-      meta: { requiresAuth: true },
-    },
-    {
-      path: '/login',
-      name: 'login',
-      component: LoginView,
-    },
-  ],
-})
+export type LoginResponse = {
+  confirmation: string
+  token?: string
+}
 
-router.beforeEach((to) => {
-  const token = getToken()
+export type DecodedToken = {
+  email: string
+  role: 'user' | 'admin'
+  exp: number
+}
 
-  if (token && isTokenExpired(token)) {
-    removeToken()
+export function saveToken(token: string) {
+  localStorage.setItem('retogen_token', token)
+}
+
+export function getToken() {
+  return localStorage.getItem('retogen_token')
+}
+
+export function removeToken() {
+  localStorage.removeItem('retogen_token')
+}
+
+export function decodeJwt<T = DecodedToken>(token: string): T | null {
+  try {
+    const parts = token.split('.')
+    if (parts.length !== 3) return null
+
+    const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/')
+    const padded = base64.padEnd(base64.length + ((4 - (base64.length % 4)) % 4), '=')
+    const json = atob(padded)
+
+    return JSON.parse(json) as T
+  } catch {
+    return null
   }
+}
 
-  const validToken = getToken()
+export function isTokenExpired(token: string) {
+  const decoded = decodeJwt(token)
 
-  if (to.meta.requiresAuth && !validToken) {
-    return '/login'
-  }
+  if (!decoded?.exp) return true
 
-  if (to.path === '/login' && validToken) {
-    return '/'
-  }
-
-  return true
-})
-
-export default router
+  const nowInSeconds = Math.floor(Date.now() / 1000)
+  return decoded.exp < nowInSeconds
+}
