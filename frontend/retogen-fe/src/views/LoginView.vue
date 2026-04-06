@@ -94,51 +94,49 @@ async function handleLogin() {
 </script>
 
 <template>
-  <main class="retogen-page min-h-screen px-5 py-10 sm:px-6">
-    <div class="retogen-shell mx-auto grid min-h-[calc(100vh-5rem)] max-w-6xl items-center gap-8 lg:grid-cols-[1.1fr_480px]">
+  <main class="min-h-screen bg-background text-foreground px-5 py-10 sm:px-6">
+    <div class="rounded-2xl border border-border bg-card p-6 shadow-lg">
       <section class="hidden lg:block">
         <div class="max-w-xl">
-          <p class="mb-4 text-sm font-semibold uppercase tracking-[0.35em] text-[var(--primary-cyan)]">
+          <p class="mb-4 text-sm font-semibold uppercase tracking-[0.35em] text-cyan-400">
             RetoGen Platform
           </p>
-          <h1 class="mb-5 text-5xl font-extrabold leading-none tracking-[-0.05em] text-[var(--text-primary)]">
+          <h1 class="mb-5 text-5xl font-extrabold leading-none tracking-tight">
             Masuk untuk membaca review elektronik yang lebih terpercaya
           </h1>
-          <p class="text-[15px] leading-7 text-[var(--text-secondary)]">
+          <p class="text-[15px] leading-7 text-slate-300">
             Masuk ke akunmu untuk melihat artikel, berdiskusi lewat komentar, memberi rating,
             dan menerima update berdasarkan tag yang kamu ikuti.
           </p>
         </div>
       </section>
 
-      <Card class="glass-card border-0 shadow-none">
-        <div class="glass-accent" />
-
+      <Card class="bg-card text-card-foreground border-border">
         <CardHeader class="space-y-2 pb-4">
-          <CardTitle class="text-3xl font-bold tracking-[-0.03em] text-[var(--text-primary)]">
+          <CardTitle class="text-3xl font-bold">
             Login
           </CardTitle>
-          <CardDescription class="text-[15px] leading-6 text-[var(--text-secondary)]">
+          <CardDescription class="text-[15px] leading-6 text-slate-600">
             Gunakan email dan password yang sudah terdaftar.
           </CardDescription>
         </CardHeader>
 
         <CardContent>
           <form class="space-y-5" @submit.prevent="handleLogin">
-            <div class="space-y-2">
-              <Label for="email" class="retogen-label">Email</Label>
+            <div class="space-y-2 rounded-xl bg-muted p-4">
+              <Label for="email">Email</Label>
               <Input
                 id="email"
                 v-model="form.email"
                 type="email"
                 placeholder="nama@email.com"
-                class="retogen-input h-12"
+                class="h-12"
                 autocomplete="email"
               />
             </div>
 
-            <div class="space-y-2">
-              <Label for="password" class="retogen-label">Password</Label>
+            <div class="space-y-2 rounded-xl bg-muted p-4">
+              <Label for="password">Password</Label>
 
               <div class="relative">
                 <Input
@@ -146,12 +144,12 @@ async function handleLogin() {
                   v-model="form.password"
                   :type="showPassword ? 'text' : 'password'"
                   placeholder="Masukkan password"
-                  class="retogen-input h-12 pr-12"
+                  class="h-12 pr-12"
                   autocomplete="current-password"
                 />
                 <button
                   type="button"
-                  class="absolute top-1/2 right-3 -translate-y-1/2 text-[var(--text-secondary)] transition hover:text-[var(--primary-cyan)]"
+                  class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 transition hover:text-slate-700"
                   @click="showPassword = !showPassword"
                 >
                   <Eye v-if="!showPassword" class="h-5 w-5" />
@@ -160,15 +158,16 @@ async function handleLogin() {
               </div>
             </div>
 
-            <Transition name="glass-fade">
-              <div v-if="errorMessage" class="retogen-error-banner">
-                {{ errorMessage }}
-              </div>
-            </Transition>
+            <div
+              v-if="errorMessage"
+              class="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200"
+            >
+              {{ errorMessage }}
+            </div>
 
             <Button
               type="submit"
-              class="retogen-primary-btn h-12 w-full"
+              class="h-12 w-full"
               :disabled="isSubmitting"
             >
               <LoaderCircle v-if="isSubmitting" class="mr-2 h-4 w-4 animate-spin" />

@@ -19,30 +19,32 @@ function logout() {
 </script>
 
 <template>
-  <main class="min-h-screen retogen-page px-6 py-10">
-    <div class="retogen-shell mx-auto max-w-5xl">
-      <section class="glass-card max-w-2xl">
-        <div class="glass-accent" />
+  <main class="min-h-screen bg-background text-foreground px-5 py-10 sm:px-6">
+    
+    <div class="rounded-2xl border border-border bg-card p-6 shadow-lg">
+      
+      <p class="mb-2 text-sm font-semibold uppercase tracking-widest text-cyan-500">
+        RetoGen
+      </p>
 
-        <p class="mb-2 text-sm font-semibold tracking-[0.3em] text-[var(--primary-cyan)] uppercase">
-          RetoGen
-        </p>
-        <h1 class="mb-3 text-4xl font-extrabold tracking-[-0.04em] text-[var(--text-primary)]">
-          Login berhasil
-        </h1>
-        <p class="mb-6 text-[15px] leading-7 text-[var(--text-secondary)]">
-          Ini halaman sementara setelah autentikasi berhasil.
-        </p>
+      <h1 class="mb-3 text-3xl font-bold">
+        Login berhasil
+      </h1>
 
-        <div class="grid gap-4 rounded-2xl bg-white/10 p-4 backdrop-blur-md">
-          <p><span class="font-semibold">Email:</span> {{ user?.email }}</p>
-          <p><span class="font-semibold">Role:</span> {{ user?.role }}</p>
-        </div>
+      <p class="mb-6 text-sm text-slate-600">
+        Ini halaman sementara setelah autentikasi berhasil.
+      </p>
 
-        <div class="mt-6 flex gap-3">
-          <Button class="retogen-primary-btn" @click="logout">Logout</Button>
-        </div>
-      </section>
+      <div class="space-y-2 rounded-xl bg-muted p-4">
+        <p><span class="font-semibold">Email:</span> {{ user?.email }}</p>
+        <p><span class="font-semibold">Role:</span> {{ user?.role }}</p>
+      </div>
+
+      <div class="mt-6">
+        <Button @click="logout">Logout</Button>
+      </div>
+
     </div>
+
   </main>
 </template>
