@@ -36,9 +36,11 @@ const techChips = ['Laptop', 'Smartphone', 'Audio', 'Display']
           </p>
 
           <div class="hero__actions">
-            <BaseButton variant="primary">
-              Mulai Jelajahi
-            </BaseButton>
+            <NuxtLink to="/login">
+              <BaseButton variant="primary">
+                Mulai Jelajahi
+              </BaseButton>
+            </NuxtLink>
 
             <BaseButton variant="ghost">
               Lihat Artikel
@@ -121,9 +123,11 @@ const techChips = ['Laptop', 'Smartphone', 'Audio', 'Display']
             </h2>
           </div>
 
-          <BaseButton variant="primary">
-            Mulai Sekarang
-          </BaseButton>
+          <NuxtLink to="/login">
+            <BaseButton variant="primary">
+              Mulai Sekarang
+            </BaseButton>
+          </NuxtLink>
         </div>
       </BaseGlassCard>
     </section>

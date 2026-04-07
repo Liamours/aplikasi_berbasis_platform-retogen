@@ -24,9 +24,11 @@ const { logout } = useAuth()
         </template>
 
         <template v-else>
-          <BaseButton variant="ghost">
-            Login
-          </BaseButton>
+          <NuxtLink to="/login" class="navbar__link">
+            <BaseButton variant="ghost">
+              Login
+            </BaseButton>
+          </NuxtLink>
         </template>
       </div>
     </div>
@@ -84,6 +86,10 @@ const { logout } = useAuth()
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.navbar__link {
+  display: inline-flex;
 }
 
 @media (max-width: 480px) {
