@@ -8,6 +8,7 @@ services:
       - mongo_data:/data/db
       - ./db/mongo-init.sh:/docker-entrypoint-initdb.d/mongo-init.sh:ro
       - ./db/seed:/docker-entrypoint-initdb.d/seed:ro
+      - ./db/seed:/seed:ro
     environment:
       MONGO_INITDB_DATABASE: Retogen
 
