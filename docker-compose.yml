@@ -1,0 +1,15 @@
+services:
+  mongodb:
+    image: mongo:7
+    container_name: retogen-db
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+      - ./db/mongo-init.sh:/docker-entrypoint-initdb.d/mongo-init.sh:ro
+      - ./db/seed:/docker-entrypoint-initdb.d/seed:ro
+    environment:
+      MONGO_INITDB_DATABASE: Retogen
+
+volumes:
+  mongo_data:

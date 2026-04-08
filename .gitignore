@@ -16,5 +16,8 @@ dist/
 # Test results
 backend/tests/result.json
 
+# Docker
+mongo_data/
+
 # Misc
 .DS_Store
