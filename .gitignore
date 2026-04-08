@@ -1,0 +1,17 @@
+# Claude Code
+.claude/
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+.env
+
+# Node
+node_modules/
+.nuxt/
+.output/
+dist/
+
+# Misc
+.DS_Store
