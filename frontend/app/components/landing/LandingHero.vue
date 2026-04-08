@@ -7,7 +7,7 @@ const techChips = ['Laptop', 'Smartphone', 'Audio', 'Display']
     <div class="hero__content">
       <div class="hero__copy">
         <div class="hero__brand">
-          <img src="/logo.svg" alt="RetoGen logo" class="hero__logo">
+          <img src="/logo.jpg" alt="RetoGen logo" class="hero__logo">
           <span class="hero__brand-name">RetoGen</span>
         </div>
 

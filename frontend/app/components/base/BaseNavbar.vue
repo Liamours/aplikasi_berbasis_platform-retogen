@@ -8,7 +8,7 @@ const { logout } = useAuth()
   <header class="navbar">
     <div class="navbar__inner">
       <NuxtLink to="/" class="navbar__brand">
-        <img src="/logo.svg" alt="RetoGen logo" class="navbar__logo">
+        <img src="/logo.jpg" alt="RetoGen logo" class="navbar__logo">
         <span class="navbar__brand-text">RetoGen</span>
       </NuxtLink>
 

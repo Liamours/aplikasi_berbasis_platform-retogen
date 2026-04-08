@@ -6,7 +6,7 @@
 
     <header class="auth-layout__brand">
       <NuxtLink to="/" class="auth-layout__brand-link" aria-label="Go to homepage">
-        <img src="/logo.svg" alt="RetoGen" class="auth-layout__logo" />
+        <img src="/logo.jpg" alt="RetoGen" class="auth-layout__logo" />
         <span class="auth-layout__brand-text">RetoGen</span>
       </NuxtLink>
     </header>

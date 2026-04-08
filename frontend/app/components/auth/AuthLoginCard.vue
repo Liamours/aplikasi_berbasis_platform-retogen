@@ -6,7 +6,7 @@ const { form, errors, isSubmitting, handleSubmit } = useLoginForm()
   <BaseGlassCard class="login-card">
     <div class="login-card__header">
       <div class="login-card__brand">
-        <img src="/logo.svg" alt="RetoGen logo" class="login-card__logo">
+        <img src="/logo.jpg" alt="RetoGen logo" class="login-card__logo">
         <span class="login-card__brand-text">RetoGen</span>
       </div>
 

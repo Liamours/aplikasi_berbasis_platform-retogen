@@ -1,7 +1,7 @@
 <template>
   <section class="auth-info-panel">
     <NuxtLink to="/" class="brand" aria-label="RetoGen home">
-      <img src="/logo.svg" alt="RetoGen logo" class="brand__logo" />
+      <img src="/logo.jpg" alt="RetoGen logo" class="brand__logo" />
       <div class="brand__text">
         <span class="brand__eyebrow">RetoGen</span>
         <strong class="brand__name">Electronics Review Platform</strong>
