@@ -1,0 +1,83 @@
+/* ============================================
+   RetoGen Design Tokens
+   @nuxtjs/color-mode adds .dark-mode to <html>
+   ============================================ */
+
+:root {
+  /* Brand — muted, not saturated */
+  --primary-cyan: #6AADA8;
+  --primary-red: #B56B52;
+  --hover-cyan: #528E8A;
+  --hover-red: #965748;
+
+  /* Text */
+  --text-primary: #282826;
+  --text-secondary: #636360;
+  --text-muted: #9A9895;
+
+  /* Background — cooler gray-beige, less cream */
+  --bg-page: #EDEAE4;
+  --bg-surface: #F2EFE9;
+
+  /* Glass */
+  --glass-bg: rgba(242, 239, 233, 0.55);
+  --glass-border: rgba(160, 155, 145, 0.18);
+  --glass-edge: rgba(255, 255, 255, 0.6);
+  --glass-shadow: 0 8px 32px 0 rgba(60, 55, 50, 0.07);
+
+  /* Input */
+  --input-bg: rgba(255, 255, 255, 0.45);
+
+  /* Typography */
+  --font-base: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
+
+  /* Spacing */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 40px;
+  --space-2xl: 60px;
+  --space-3xl: 80px;
+
+  /* Layout */
+  --max-width: 1200px;
+  --container-max: 1200px;
+  --auth-max: 440px;
+  --navbar-height: 64px;
+
+  /* Radius */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 24px;
+
+  /* Transitions */
+  --transition-fast: all 0.15s ease;
+  --transition-standard: all 0.25s ease;
+}
+
+.dark-mode {
+  /* Brand — desaturated, cooler */
+  --primary-cyan: #7BBFBA;
+  --primary-red: #C47A62;
+  --hover-cyan: #96CFCA;
+  --hover-red: #AD6452;
+
+  /* Text */
+  --text-primary: #E2DDD6;
+  --text-secondary: #9E9990;
+  --text-muted: #625E58;
+
+  /* Background — near-neutral dark, barely any warmth */
+  --bg-page: #191917;
+  --bg-surface: #201F1D;
+
+  /* Glass */
+  --glass-bg: rgba(30, 29, 27, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.06);
+  --glass-edge: rgba(255, 255, 255, 0.08);
+  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.55);
+
+  /* Input */
+  --input-bg: rgba(255, 255, 255, 0.04);
+}

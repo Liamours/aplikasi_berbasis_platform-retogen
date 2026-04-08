@@ -1,0 +1,35 @@
+A Web App is a collection of computer programs that run independently of one another but present the appearance of a single program by communicating with one other over the web. Web Apps are accessed through a user’s browser (the client) which retrieves files from a remote computer known as the server. Some of the computer programs (also known as scripts) that are involved in a web app run in the client, and others run on the server. Some data can be stored temporarily on the client, but the only place where data can be stored permanently is the server.
+
+Front-end web developers work on the client side of a web app, while back-end web developers work on the server side. Full stack web developers work on both the client and server sides using the “Full Stack” of technologies that make up a web app. This course is an introduction to full stack web development.
+A diagram of the client-server architecture including HTTP messaging between client and server.
+Figure 1: A diagram of communication between the client and server in a client-server web app.
+Client-Side Scripting
+
+For historical reasons, JavaScript has always been the dominant language(opens in new tab) on the client side. All browsers contain a JavaScript interpreter that can execute JavaScript code directly.  Other languages for the client side (such as TypeScript, a popular JavaScript variant) must be compiled or “transpiled” into JavaScript code before they can run in a browser. Knowledge of JavaScript, even for developers working in TypeScript, is likely to remain essential for web developers through the foreseeable future.
+
+The job of client-side scripts is to respond to user interaction and other events on a web page, making the page dynamic. JavaScript code can cause changes to the appearance of the page in real time (unfolding a menu, triggering an animation, updating a roll-over to zoom an image, etc.). JavaScript code can also be used to send requests for more data to the server in order to update the user’s view in real time (for example, loading and displaying more items when the user scrolls to the bottom of a social media feed). This use of JavaScript is known as AJAX. In conjunction with the HTML canvas, client-side scripts can also be used to create games and other more sophisticated interactive content for the user.
+Server-Side Scripting
+
+Server-side scripts are computer programs that run on a web server. You can write server-side scripts using JavaScript, Java, Python, Ruby, or any other language, but the most commonly found language on the server-side(opens in new tab) of web apps is PHP. Server-side scripts are run by the web server in response to an HTTP Request from the client. The job of the script is to help the server create an HTTP Response to send back to the user by filling in the content and meta-data for that response.
+
+When a server receives an HTTP Request from a client, the request is usually to retrieve a particular resource from the server. Servers such as Apache (part of the LAMP stack) will respond based on the type of resource requested. If the requested resource is a flat file (that is, a non-script file) such as HTML, CSS, or an image of some kind, the server will paste the requested file into the HTTP response and send it back to the client.
+
+If the requested resource is a PHP script file, it will create an empty HTTP response, and then run the PHP script, providing it with any data (parameters, cookies, etc.) that was received along with the request. The PHP script then “prints” the content of the web page into the HTTP response object, connecting to a database in the process if necessary. When the script is finished, the server sends the modified HTTP response back to the client.
+
+Server-side scripting is involved in most web apps, but any time you create an account on a web app, server-side scripting must be involved. Your login details are stored in a database on the server along with any other data that is relevant to you (for example, your order history on a shopping site, or your personalized course list on a school’s learning management system). When you log in to the web app, the server-side scripts connect to the database to retrieve content that is customized just for you.
+Three-Tier Architectures
+
+A tier is a piece of an app that represents both a logical and physical separation of some part of the app’s functionality. Traditionally, web apps have been organized into a three-tier structure, as shown in Figure 2 below.
+The Three-tier Architecture
+Figure 2: The Three-tier Architecture
+
+The Presentation Tier is the user interface for the web app. It runs on the user’s computing device using a browser capable of interpreting HTML, CSS, and JavaScript.
+
+The Logic Tier (or Application Tier) is where data processing happens. It runs on a publicly visible server, which is a computing device that is physically separated from the clients’ computing devices. This is the layer that receives HTTP Requests, processes them (using compiled or interpreted scripts in PHP or some other language), and sends HTTP Responses back to the client.
+
+The Data Tier is where the database management system runs. This runs on a separate server that is private to the organization and receives and processes database commands (in SQL or some other database language) from the Logic Tier.
+
+When developing websites for the exercises and projects in this book, you will run all three tiers on your local machine. They will be logically separated but not physically separated (technically, this makes them layers not tiers). But if you upload your work to a server, or host your website on a commercial web hosting site, the Presentation Tier automatically becomes physically separated and the other two tiers are likely to be physically separated as well.
+Microservices vs. Monoliths
+
+The web apps we discuss in this book are monolithic. Monolithic means that we consider all the work at all three tiers to be part of the same project and develop all the code at the same time. Many modern web sites actually have a more complex structure , organized around micro-services. Each micro-service corresponds to a single piece of functionality (logging in, searching, processing payments, making recommendations, and so on) and is implemented and maintained separately from the others. In other words, each of these micro-services has its own (micro) Logic Tier and Data Tier, and there is a central gateway that receives HTTP Requests and then interacts with the appropriate micro-services before sending the HTTP Response.
