@@ -13,5 +13,8 @@ node_modules/
 .output/
 dist/
 
+# Test results
+backend/tests/result.json
+
 # Misc
 .DS_Store
