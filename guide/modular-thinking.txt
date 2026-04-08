@@ -1,0 +1,138 @@
+RETOGEN — MODULAR THINKING GUIDE FOR CLAUDE
+============================================
+Load this file at the start of any coding session to enforce consistent,
+modular architecture across the RetoGen frontend (Nuxt 4 + Vue 3).
+
+─────────────────────────────────────────────
+1. FOLDER RESPONSIBILITIES
+─────────────────────────────────────────────
+
+  types/api.ts
+    • Single source of truth for ALL TypeScript interfaces and types.
+    • Every API request/response shape, domain model, and union type lives here.
+    • Never declare interfaces inside components, composables, or pages.
+
+  composables/
+    • All reactive logic, state, and side-effects live here.
+    • One composable per concern (useAuth, useTheme, useArticleFilter, ...).
+    • Use Nuxt's useState() for state that must be shared between components
+      on the same page without Pinia.
+    • Pages and components must NOT contain business logic — delegate to composables.
+
+  components/base/
+    • Primitive, design-system-level components: BaseButton, BaseGlassCard,
+      BaseInput, BaseNavbar, BasePageShell.
+    • No business logic. Props + slots only.
+    • Never duplicate glass surface CSS — always use BaseGlassCard.
+
+  components/<feature>/
+    • Feature-specific components grouped by domain (main/, landing/, auth/, ...).
+    • Prefix matches the feature: MainArticleCard, LandingHero, AuthLoginCard.
+    • Each component handles ONE piece of UI. No 200+ line components.
+    • Call the relevant composable internally — do not prop-drill state
+      when a shared composable (useState key) is available.
+
+  layouts/
+    • Provides page shell (navbar, background blobs, dark-mode class).
+    • default.vue is the standard shell for all authenticated/public pages.
+    • auth.vue is the shell for login/register pages.
+    • Never add page-specific markup to layouts.
+
+  pages/
+    • Thin routing entry points ONLY.
+    • Allowed content: definePageMeta(), layout selection, and a <template>
+      that composes feature components.
+    • No business logic, no inline styles, no direct API calls.
+    • Target: ≤ 15 lines per page file.
+
+  stores/
+    • Pinia stores for global, persistent state (auth token, user profile).
+    • Do not create a store for UI state local to one page — use useState.
+
+  middleware/
+    • Route guards only. No data fetching or business logic.
+
+  assets/
+    • tokens.css  — CSS custom properties. NEVER redeclare tokens elsewhere.
+    • main.css    — global resets, animations, layout helpers.
+    • Do not add page-specific or component-specific CSS here.
+
+─────────────────────────────────────────────
+2. CSS RULES
+─────────────────────────────────────────────
+
+  • All color, spacing, radius, and shadow values come from CSS custom
+    properties defined in tokens.css. Never hardcode these values.
+  • Component styles are <style scoped>. One style block per component.
+  • Glass surface (backdrop-filter + border + shadow) is defined in
+    BaseGlassCard. Reproduce it only when the layout makes BaseGlassCard
+    unsuitable (e.g., image-to-edge cards) — and document why in a comment.
+  • Responsive breakpoints: 1024px (grid), 850px (layout), 640px (flex),
+    480px (font/spacing). Always add breakpoints inside the same scoped block.
+  • Dark mode is automatic via .dark-mode class on the layout wrapper.
+    Never write separate dark-mode logic in components.
+
+─────────────────────────────────────────────
+3. COMPONENT AUTHORING RULES
+─────────────────────────────────────────────
+
+  • Always use <script setup lang="ts">.
+  • Define props with defineProps<{...}>() — no Options API.
+  • Prefer named exports in composables; default exports in components.
+  • Do not import { ref, computed } explicitly — Nuxt auto-imports them.
+  • Do not import composables explicitly — Nuxt auto-imports from composables/.
+  • Do not import base components explicitly — Nuxt auto-imports from components/.
+  • Use <TransitionGroup name="glass-list"> for list animations.
+    The keyframes are already defined in main.css.
+  • Use <Transition name="glass-modal"> for modal enter/leave.
+
+─────────────────────────────────────────────
+4. NAMING CONVENTIONS
+─────────────────────────────────────────────
+
+  Components  : PascalCase, prefix = folder  (MainArticleCard, AuthLoginCard)
+  Composables : camelCase, prefix "use"      (useArticleFilter, useMockArticles)
+  Types       : PascalCase, suffix role      (ArticleCard, SortOption, UserProfile)
+  CSS classes : BEM kebab-case, prefix = component  (.article-card__footer)
+  useState keys: kebab-case, prefix = feature  ('mp-search', 'mp-sort')
+
+─────────────────────────────────────────────
+5. ADDING A NEW FEATURE — CHECKLIST
+─────────────────────────────────────────────
+
+  [ ] Add request/response types to types/api.ts
+  [ ] Create composable in composables/use<Feature>.ts
+  [ ] Create components in components/<feature>/
+      — one component per distinct UI block
+      — reuse BaseGlassCard, BaseButton, BaseInput wherever possible
+  [ ] Create page in pages/<featureName>.vue (≤ 15 lines)
+  [ ] Add route middleware only if access control is required
+  [ ] All styles scoped; all tokens from variables; no inline styles
+
+─────────────────────────────────────────────
+6. WHAT NOT TO DO
+─────────────────────────────────────────────
+
+  ✗ Do not put logic in pages/ — move it to a composable.
+  ✗ Do not redeclare CSS tokens inside components or pages.
+  ✗ Do not recreate glass surface CSS inline — use BaseGlassCard or document exception.
+  ✗ Do not create a 300+ line component — split it.
+  ✗ Do not prop-drill more than one level — use useState or a store.
+  ✗ Do not write a new composable that duplicates an existing one.
+  ✗ Do not place mock data inside a component — use useMockArticles pattern.
+  ✗ Do not use <style> without scoped (except in assets/).
+  ✗ Do not add global middleware without explicit route opt-in.
+
+─────────────────────────────────────────────
+7. QUICK REFERENCE — KEY FILES
+─────────────────────────────────────────────
+
+  Design tokens         app/assets/tokens.css
+  Global styles/anim    app/assets/main.css
+  All types             app/types/api.ts
+  Theme toggle          app/composables/useTheme.ts
+  Auth state            app/stores/auth.ts  +  app/composables/useAuth.ts
+  Glass card primitive  app/components/base/BaseGlassCard.vue
+  Default layout        app/layouts/default.vue
+  Article filter state  app/composables/useArticleFilter.ts
+  Mock article data     app/composables/useMockArticles.ts

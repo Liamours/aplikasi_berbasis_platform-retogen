@@ -35,12 +35,21 @@ export interface UserDetailsResponse extends ApiBaseResponse {
   user: UserProfile
 }
 
+export type SortOption = 'newest' | 'oldest' | 'highest_rated' | 'most_commented'
+
 export interface ArticleListItem {
   article_id: string
   article_title: string
   article_preview: string
   article_tags: string[]
   article_image: string | null
+}
+
+/** Extends ArticleListItem with display-only fields used by mock data and the main page card. */
+export interface ArticleCard extends ArticleListItem {
+  rating_avg: number
+  comment_count: number
+  created_at: string
 }
 
 export interface MainPageRequest {
