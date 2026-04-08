@@ -1,0 +1,27 @@
+<script setup lang="ts">
+definePageMeta({ middleware: 'guest' })
+</script>
+
+<template>
+  <BasePageShell>
+    <section class="register-page">
+      <AuthRegisterCard />
+    </section>
+  </BasePageShell>
+</template>
+
+<style scoped>
+.register-page {
+  min-height: calc(100vh - var(--navbar-height));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 0;
+}
+
+@media (max-width: 480px) {
+  .register-page {
+    padding: 16px 0;
+  }
+}
+</style>
