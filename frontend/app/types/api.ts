@@ -99,3 +99,46 @@ export interface ArticleViewResponse extends ApiBaseResponse {
   ratings: ArticleRating[]
   reports?: ArticleReport[]
 }
+
+// Article detail page types
+export interface DetailPriceEntry {
+  id: string
+  store: string
+  price: number
+  shippingNote: string
+  url: string
+  updatedAt: string
+  trend: 'down' | 'up' | 'stable'
+}
+
+export interface DetailRating {
+  rating_id: string
+  owner: string
+  user_email: string
+  rating_value: number
+}
+
+export interface DetailComment {
+  comment_id: string
+  parent_comment_id: string | null
+  owner: string
+  user_email: string
+  comment_content: string
+  created_at: string
+}
+
+export interface DetailCommentTree extends DetailComment {
+  children: DetailCommentTree[]
+}
+
+export interface DetailArticle {
+  article_id: string
+  article_title: string
+  article_preview: string
+  article_content: string
+  article_tags: string[]
+  article_image: string | null
+  prices: DetailPriceEntry[]
+  comments: DetailComment[]
+  ratings: DetailRating[]
+}

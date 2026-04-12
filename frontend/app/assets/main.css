@@ -18,10 +18,6 @@ html {
 
 body {
   min-height: 100vh;
-  background-image:
-    linear-gradient(rgba(122, 191, 184, 0.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(122, 191, 184, 0.04) 1px, transparent 1px);
-  background-size: 50px 50px;
 }
 
 a {
@@ -97,51 +93,6 @@ img {
   min-height: 100vh;
 }
 
-.app-shell__grid {
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  background-image:
-    linear-gradient(rgba(0, 206, 209, 0.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0, 206, 209, 0.04) 1px, transparent 1px);
-  background-size: 50px 50px;
-}
-
-.dark-mode .app-shell__grid {
-  background-image:
-    linear-gradient(rgba(93, 215, 218, 0.05) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(93, 215, 218, 0.05) 1px, transparent 1px);
-}
-
-.app-shell__blob {
-  position: fixed;
-  z-index: 0;
-  width: 420px;
-  height: 420px;
-  border-radius: 999px;
-  filter: blur(140px);
-  opacity: 0.28;
-  pointer-events: none;
-  animation: float 22s alternate infinite ease-in-out;
-}
-
-.dark-mode .app-shell__blob {
-  opacity: 0.25;
-}
-
-.app-shell__blob--red {
-  top: -120px;
-  left: -80px;
-  background: rgba(227, 66, 52, 0.45);
-}
-
-.app-shell__blob--cyan {
-  right: -120px;
-  top: 180px;
-  background: rgba(0, 206, 209, 0.4);
-  animation-delay: 2s;
-}
 
 /* ── Page container ──────────────────────── */
 

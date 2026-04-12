@@ -1,0 +1,7 @@
+rifqi and dzaky guide to reduce ai fingerpring on ui from vibe-coded frontend.
+
+1. reduce gradient, most objects don't need gradient coloring, just keep it flat and it is fine
+2. reduce rounding on tabs or components, too curvy of corners can make the page look non-conformative
+3. minimize empty space, but don't fill with made-up shapes, instead use temporary frame that can be filled by images. showing the developer there is potential to put here
+4. do not made up new shapes unless asked by the developer, the additional shapes can be distracting and used to fill empty space, but images or other asets can be better suited
+5. no more default emoji, not professional, keep using the current framework emoji library instead

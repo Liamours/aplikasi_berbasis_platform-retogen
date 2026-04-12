@@ -47,9 +47,9 @@
   --navbar-height: 64px;
 
   /* Radius */
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 24px;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
 
   /* Transitions */
   --transition-fast: all 0.15s ease;

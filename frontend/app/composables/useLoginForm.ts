@@ -41,7 +41,7 @@ export const useLoginForm = () => {
       const response = await login({ email: form.email.trim(), password: form.password })
 
       if (response.confirmation === 'login successful') {
-        await navigateTo('/')
+        await navigateTo('/main')
         return
       }
       if (response.confirmation === "email doesn't exist") {
