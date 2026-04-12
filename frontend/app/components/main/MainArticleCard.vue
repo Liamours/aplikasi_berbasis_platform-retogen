@@ -3,7 +3,6 @@ import type { ArticleCard } from '~/types/api'
 
 defineProps<{ article: ArticleCard }>()
 
-/** Cycles tag color between red and cyan for visual variety. */
 const TAG_COLORS: Record<string, 'red' | 'cyan'> = {
   smartphone: 'red',  laptop: 'cyan',  audio: 'red',   display: 'cyan',
   gaming: 'red',      processor: 'cyan', kamera: 'red', tws: 'cyan',
@@ -24,13 +23,11 @@ function formatDate(dateStr: string) {
 </script>
 
 <template>
+  <NuxtLink :to="`/articles/${article.article_id}`" class="article-card-link">
   <article class="article-card">
-    <div class="article-card__accent" aria-hidden="true" />
-
-    <!-- Image / placeholder -->
+    <!-- Image placeholder frame -->
     <div class="article-card__image" aria-hidden="true">
       <span class="article-card__image-label">{{ article.article_tags[0] }}</span>
-      <div class="article-card__image-glow" />
     </div>
 
     <!-- Body -->
@@ -53,70 +50,51 @@ function formatDate(dateStr: string) {
           <span class="article-card__rating-value">{{ article.rating_avg.toFixed(1) }}</span>
         </div>
         <div class="article-card__meta">
-          <span title="Komentar">💬 {{ article.comment_count }}</span>
+          <span>{{ article.comment_count }} komentar</span>
           <time :datetime="article.created_at">{{ formatDate(article.created_at) }}</time>
         </div>
       </footer>
     </div>
   </article>
+  </NuxtLink>
 </template>
 
 <style scoped>
-/* Glass surface — follows BaseGlassCard pattern, applied here because
-   the article card has a unique image-then-body layout that requires
-   overflow:hidden and no top padding on the image section. */
+.article-card-link {
+  display: contents;
+  text-decoration: none;
+  color: inherit;
+}
+
 .article-card {
   position: relative;
   background: var(--glass-bg);
   backdrop-filter: blur(24px) saturate(180%);
   -webkit-backdrop-filter: blur(24px) saturate(180%);
   border: 1px solid var(--glass-border);
-  border-radius: 24px;
+  border-radius: var(--radius-lg);
   box-shadow: var(--glass-shadow);
   overflow: hidden;
   display: flex;
   flex-direction: column;
   cursor: pointer;
-  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.3s ease;
-}
-
-/* Edge highlight (light-catcher) */
-.article-card::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  padding: 1px;
-  border-radius: 24px;
-  background: linear-gradient(135deg, var(--glass-edge), transparent 50%);
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  mask-composite: exclude;
-  pointer-events: none;
-  z-index: 1;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .article-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 16px 48px 0 rgba(60, 55, 50, 0.14);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px 0 rgba(60, 55, 50, 0.12);
 }
 
-/* Gradient accent bar */
-.article-card__accent {
-  position: absolute;
-  top: 0; left: 0;
-  width: 100%; height: 4px;
-  background: linear-gradient(90deg, var(--primary-red), var(--primary-cyan));
-  z-index: 2;
-}
-
-/* Image placeholder */
+/* Image placeholder frame — dashed border signals "image goes here" */
 .article-card__image {
   position: relative;
   height: 140px;
-  background: linear-gradient(135deg, rgba(181,107,82,0.12), rgba(106,173,168,0.10));
+  background: var(--bg-surface);
+  border-bottom: 1px dashed var(--glass-border);
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow: hidden;
   flex-shrink: 0;
 }
 
@@ -126,18 +104,6 @@ function formatDate(dateStr: string) {
   letter-spacing: 1.5px;
   text-transform: uppercase;
   color: var(--text-muted);
-  position: relative;
-  z-index: 1;
-}
-
-.article-card__image-glow {
-  position: absolute;
-  inset: auto -30px -40px auto;
-  width: 160px; height: 160px;
-  border-radius: 999px;
-  background: rgba(106, 173, 168, 0.18);
-  filter: blur(50px);
-  pointer-events: none;
 }
 
 /* Body */
@@ -157,8 +123,8 @@ function formatDate(dateStr: string) {
 }
 
 .article-tag {
-  padding: 4px 10px;
-  border-radius: 20px;
+  padding: 3px 8px;
+  border-radius: var(--radius-sm);
   font-size: 11px;
   font-weight: 600;
 }

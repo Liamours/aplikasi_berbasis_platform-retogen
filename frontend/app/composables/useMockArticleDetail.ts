@@ -1,46 +1,6 @@
-export type DetailPriceEntry = {
-  id: string
-  store: string
-  price: number
-  shippingNote: string
-  url: string
-  updatedAt: string
-  trend: 'down' | 'up' | 'stable'
-}
+import type { DetailArticle } from '~/types/api'
 
-export type DetailRating = {
-  rating_id: string
-  owner: string
-  user_email: string
-  rating_value: number
-}
-
-export type DetailComment = {
-  comment_id: string
-  parent_comment_id: string | null
-  owner: string
-  user_email: string
-  comment_content: string
-  created_at: string
-}
-
-export type DetailCommentTree = DetailComment & {
-  children: DetailCommentTree[]
-}
-
-export type DetailArticle = {
-  article_id: string
-  article_title: string
-  article_preview: string
-  article_content: string
-  article_tags: string[]
-  article_image: string | null
-  prices: DetailPriceEntry[]
-  comments: DetailComment[]
-  ratings: DetailRating[]
-}
-
-export const createDummyArticleDetail = (articleId: string): DetailArticle => ({
+export const useMockArticleDetail = (articleId: string): DetailArticle => ({
   article_id: articleId,
   article_title: 'Sony WH-1000XM5',
   article_preview:
@@ -86,24 +46,9 @@ Jika fokus utama Anda adalah headphone wireless premium dengan pengalaman serba 
     }
   ],
   ratings: [
-    {
-      rating_id: 'rating-1',
-      owner: 'Aldo',
-      user_email: 'aldo@example.com',
-      rating_value: 5
-    },
-    {
-      rating_id: 'rating-2',
-      owner: 'Nadia',
-      user_email: 'nadia@example.com',
-      rating_value: 4
-    },
-    {
-      rating_id: 'rating-3',
-      owner: 'Raka',
-      user_email: 'raka@example.com',
-      rating_value: 5
-    }
+    { rating_id: 'rating-1', owner: 'Aldo', user_email: 'aldo@example.com', rating_value: 5 },
+    { rating_id: 'rating-2', owner: 'Nadia', user_email: 'nadia@example.com', rating_value: 4 },
+    { rating_id: 'rating-3', owner: 'Raka', user_email: 'raka@example.com', rating_value: 5 }
   ],
   comments: [
     {
@@ -111,8 +56,7 @@ Jika fokus utama Anda adalah headphone wireless premium dengan pengalaman serba 
       parent_comment_id: null,
       owner: 'Nadia',
       user_email: 'nadia@example.com',
-      comment_content:
-        'ANC-nya terasa sangat stabil buat kerja di kafe. Mic juga jauh lebih aman untuk meeting dibanding beberapa model lain di kelas harga yang sama.',
+      comment_content: 'ANC-nya terasa sangat stabil buat kerja di kafe. Mic juga jauh lebih aman untuk meeting dibanding beberapa model lain di kelas harga yang sama.',
       created_at: '2026-03-12T09:10:00.000Z'
     },
     {
@@ -120,8 +64,7 @@ Jika fokus utama Anda adalah headphone wireless premium dengan pengalaman serba 
       parent_comment_id: 'comment-1',
       owner: 'Raka',
       user_email: 'raka@example.com',
-      comment_content:
-        'Setuju. Buat call quality memang salah satu yang paling konsisten. Saya juga suka karena dipakai lama tetap nyaman.',
+      comment_content: 'Setuju. Buat call quality memang salah satu yang paling konsisten. Saya juga suka karena dipakai lama tetap nyaman.',
       created_at: '2026-03-12T10:25:00.000Z'
     },
     {
@@ -129,8 +72,7 @@ Jika fokus utama Anda adalah headphone wireless premium dengan pengalaman serba 
       parent_comment_id: null,
       owner: 'Aldo',
       user_email: 'aldo@example.com',
-      comment_content:
-        'Karakter suaranya aman untuk banyak genre. Tidak terlalu fun, tapi justru enak buat dipakai harian.',
+      comment_content: 'Karakter suaranya aman untuk banyak genre. Tidak terlalu fun, tapi justru enak buat dipakai harian.',
       created_at: '2026-03-13T07:40:00.000Z'
     }
   ]

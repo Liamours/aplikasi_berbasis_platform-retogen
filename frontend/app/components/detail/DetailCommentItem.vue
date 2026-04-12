@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import DetailReportMenu from '~/components/article-detail/DetailReportMenu.vue'
-import type { DetailCommentTree } from '~/temp/article-detail'
+import type { DetailCommentTree } from '~/types/api'
 defineOptions({
   name: 'DetailCommentItem'
 })
@@ -101,7 +100,7 @@ const initials = computed(() => props.comment.owner.slice(0, 1).toUpperCase())
 <style scoped>
 .comment-item {
   padding: 16px;
-  border-radius: 16px;
+  border-radius: var(--radius-md);
   background: rgba(255, 255, 255, 0.22);
   border: 1px solid var(--glass-border);
 }
@@ -123,11 +122,11 @@ const initials = computed(() => props.comment.owner.slice(0, 1).toUpperCase())
 .comment-item__avatar {
   width: 40px;
   height: 40px;
-  border-radius: 999px;
+  border-radius: var(--radius-sm);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, rgba(181, 107, 82, 0.14), rgba(106, 173, 168, 0.16));
+  background: var(--bg-surface);
   border: 1px solid var(--glass-border);
   color: var(--text-primary);
   font-weight: 700;
@@ -174,7 +173,7 @@ const initials = computed(() => props.comment.owner.slice(0, 1).toUpperCase())
 .comment-item__reply-box {
   margin-top: 14px;
   padding: 12px;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   background: rgba(106, 173, 168, 0.06);
   border: 1px solid rgba(106, 173, 168, 0.12);
 }
@@ -183,7 +182,7 @@ const initials = computed(() => props.comment.owner.slice(0, 1).toUpperCase())
   width: 100%;
   resize: vertical;
   min-height: 92px;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   border: 1px solid var(--glass-border);
   background: var(--input-bg);
   color: var(--text-primary);

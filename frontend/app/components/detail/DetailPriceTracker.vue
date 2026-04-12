@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { DetailPriceEntry } from '~/temp/article-detail'
+import type { DetailPriceEntry } from '~/types/api'
 
 defineProps<{
   prices: DetailPriceEntry[]
