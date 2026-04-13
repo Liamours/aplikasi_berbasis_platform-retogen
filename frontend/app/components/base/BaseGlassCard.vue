@@ -25,11 +25,6 @@ defineProps({
   box-shadow: var(--glass-shadow);
   position: relative;
   overflow: hidden;
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
-}
-
-.glass-card:hover {
-  transform: translateY(-2px);
 }
 
 .glass-card--account {
