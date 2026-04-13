@@ -32,13 +32,13 @@ const { allTags, activeTag, setTag } = useArticleFilter()
 }
 
 .tag-filter__pill {
-  padding: 7px 16px;
+  padding: 5px 10px;
   border-radius: 20px;
   border: 1px solid var(--glass-border);
   background: var(--glass-bg);
   color: var(--text-secondary);
   font-family: var(--font-base);
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 600;
   cursor: pointer;
   backdrop-filter: blur(8px);
