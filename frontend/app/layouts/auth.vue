@@ -1,5 +1,11 @@
+<script setup lang="ts">
+const { isDark } = useTheme()
+</script>
+
 <template>
-  <div class="auth-layout">
+  <div class="auth-layout" :class="{ 'dark-mode': isDark }">
+    <BaseBackground />
+
     <header class="auth-layout__brand">
       <NuxtLink to="/" class="auth-layout__brand-link" aria-label="Go to homepage">
         <img src="/logo.jpg" alt="RetoGen" class="auth-layout__logo" />
@@ -22,6 +28,8 @@
 }
 
 .auth-layout__brand {
+  position: relative;
+  z-index: 2;
   padding: 24px 24px 0;
 }
 
@@ -47,6 +55,8 @@
 }
 
 .auth-layout__content {
+  position: relative;
+  z-index: 2;
   min-height: calc(100vh - 58px);
   display: flex;
   align-items: center;
@@ -55,12 +65,7 @@
 }
 
 @media (max-width: 480px) {
-  .auth-layout__brand {
-    padding: 20px 20px 0;
-  }
-
-  .auth-layout__content {
-    padding: 20px;
-  }
+  .auth-layout__brand { padding: 20px 20px 0; }
+  .auth-layout__content { padding: 20px; }
 }
 </style>
