@@ -33,7 +33,7 @@ const { allTags, activeTag, setTag } = useArticleFilter()
 
 .tag-filter__pill {
   padding: 5px 10px;
-  border-radius: 20px;
+  border-radius: 10px;
   border: 1px solid var(--glass-border);
   background: var(--glass-bg);
   color: var(--text-secondary);
