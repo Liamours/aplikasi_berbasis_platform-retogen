@@ -6,10 +6,11 @@ from datetime import datetime, timedelta, timezone
 
 logger = logging.getLogger(__name__)
 
-JWT_SECRET = os.getenv("JWT_SECRET", "default_secret")
-if JWT_SECRET == "default_secret":
-    logger.warning("JWT_SECRET is not set — using insecure default. Set the JWT_SECRET environment variable.")
-JWT_ALGO = os.getenv("JWT_ALGO", "HS256")
+JWT_SECRET = os.getenv("JWT_SECRET")
+if not JWT_SECRET:
+    logger.warning("JWT_SECRET is not set — using insecure default. Set the JWT_SECRET environment variable in production.")
+    JWT_SECRET = "dev_only_insecure_default_do_not_use_in_prod"
+JWT_ALGO = "HS256"  # pinned — never allow caller to override algorithm
 
 def hash_password(password: str) -> str:
     hashed = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt())

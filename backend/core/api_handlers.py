@@ -9,11 +9,8 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 
     for err in errors:
         custom_errors.append({
-            "type": err.get("type"),
             "loc": err.get("loc"),
             "confirmation": err.get("msg"),
-            "input": err.get("input"),
-            "ctx": err.get("ctx"),
         })
 
     return JSONResponse(
