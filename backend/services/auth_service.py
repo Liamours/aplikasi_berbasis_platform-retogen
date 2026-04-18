@@ -38,11 +38,14 @@ class AuthService:
             return {"confirmation": "backend error"}
 
         if not user:
+            logger.warning("[AUTH] Login failed — email not found: %s", data.email)
             return {"confirmation": "email doesn't exist"}
 
         if not verify_password(data.password, user["password"]):
+            logger.warning("[AUTH] Login failed — wrong password for: %s", data.email)
             return {"confirmation": "password incorrect"}
 
+        logger.info("[AUTH] Login successful: %s", data.email)
         token = create_token({"email": user["email"], "role": user.get("role", "user")})
         return {"confirmation": "login successful", "token": token}
 

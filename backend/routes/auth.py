@@ -1,7 +1,8 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 from schemas.login_schema import LoginUser
 from schemas.register_schema import RegisterUser
 from services.auth_service import AuthService
+from core.limiter import limiter
 import re
 
 router = APIRouter()
@@ -32,14 +33,16 @@ def validate_login_input(data: LoginUser):
     return None
 
 @router.post("/registration")
-async def register(data: RegisterUser):
+@limiter.limit("5/minute")
+async def register(request: Request, data: RegisterUser):
     validate_error = validate_register_input(data)
     if validate_error:
         return validate_error
     return await AuthService.register(data)
 
 @router.post("/login")
-async def login(data: LoginUser):
+@limiter.limit("10/minute")
+async def login(request: Request, data: LoginUser):
     validate_error = validate_login_input(data)
     if validate_error:
         return validate_error

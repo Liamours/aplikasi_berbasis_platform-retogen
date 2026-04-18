@@ -2,18 +2,12 @@ from fastapi import APIRouter, Depends
 from schemas.get_user_profile_schema import GetUserProfileRequest
 from schemas.report_user_schema import ReportUserRequest
 from services.report_user_service import ReportUserService
-from db.connection import db
 from core.dependencies import get_current_user
 
 router = APIRouter()
 
 @router.post("/get_user_profile")
 async def get_user_profile(req: GetUserProfileRequest, payload: dict = Depends(get_current_user)):
-    try:
-        await db.command("ping")
-    except Exception as e:
-        return {"confirmation": "backend error"}
-
     try:
         user = await db.user.find_one({"email": req.user_email})
     except Exception as e:
@@ -43,11 +37,6 @@ async def get_user_profile(req: GetUserProfileRequest, payload: dict = Depends(g
 
 @router.post("/report_user")
 async def report_user(req: ReportUserRequest, payload: dict = Depends(get_current_user)):
-    try:
-        await db.command("ping")
-    except Exception as e:
-        return {"confirmation": "backend error"}
-
     reporter_email = payload.get("email")
     if reporter_email is None:
         return {"confirmation": "token invalid"}
