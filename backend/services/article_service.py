@@ -1,3 +1,4 @@
+import re
 import logging
 from db.connection import db
 from bson import ObjectId, Binary
@@ -81,7 +82,7 @@ class ArticleService:
             if tag:
                 match["article_tags"] = tag.strip().lower()
             if search:
-                match["article_title"] = {"$regex": search, "$options": "i"}
+                match["article_title"] = {"$regex": re.escape(search.strip()), "$options": "i"}
 
             if sort in ("newest", "oldest", "most_reported", "by_tag", "search_title"):
                 sort_field = {
