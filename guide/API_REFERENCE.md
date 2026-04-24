@@ -662,6 +662,62 @@ Possible confirmation values: `successful: user deleted`, `user not found`, `can
 
 ---
 
+## Monitor Harga
+
+### POST /monitor/search
+
+Auth required. Rate limited: 20 requests/minute per IP.
+
+Searches Tokopedia for a product and returns top listings with price and rating. Uses Tokopedia internal GraphQL API — no browser required.
+
+Request:
+```json
+{
+  "product_name": "string",
+  "limit": 10
+}
+```
+
+Rules:
+- product_name: 1–200 chars
+- limit: integer 1–50, default 10
+
+Response:
+```json
+{
+  "results": [
+    {
+      "product": "string",
+      "store": "string or null",
+      "price": 17999000,
+      "rating": 5.0
+    }
+  ],
+  "errors": ["string"],
+  "total": 10
+}
+```
+
+- `price` is IDR integer (e.g. `17999000` = Rp17.999.000)
+- `rating` is float 0.0–5.0, or null if no reviews
+- `errors` lists any per-item parse failures — empty array means all items parsed cleanly
+- `total` is count of successfully parsed results
+
+Possible HTTP errors: `401` token missing/invalid, `429` rate limit exceeded, `502` Tokopedia unreachable.
+
+---
+
+### GET /monitor/health
+
+No auth required.
+
+Response:
+```json
+{ "status": "ok" }
+```
+
+---
+
 ## General Error Responses
 
 Any protected endpoint returns HTTP 401 when the token is missing or invalid. The backend does not return 401 in the response body — it returns it as the HTTP status code directly.
