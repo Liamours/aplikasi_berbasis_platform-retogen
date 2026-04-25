@@ -21,11 +21,16 @@ const emit = defineEmits<{
 const {
   activeEditId,
   editDraft,
+  isAdmin,
+  canEditComment,
+  canDeleteComment,
   isOwnComment,
+  getUserRatingValue,
   startEditComment,
   updateEditDraft,
   cancelEditComment,
-  saveEditComment
+  saveEditComment,
+  openDeleteComment
 } = useArticleDetail()
 
 const formatCommentTime = (value: string) => {
@@ -43,8 +48,13 @@ const formatCommentTime = (value: string) => {
 const replyValue = computed(() => props.replyDrafts[props.comment.comment_id] ?? '')
 const isReplying = computed(() => props.activeReplyId === props.comment.comment_id)
 const isEditing = computed(() => activeEditId.value === props.comment.comment_id)
-const isEditable = computed(() => isOwnComment(props.comment))
 const initials = computed(() => props.comment.owner.slice(0, 1).toUpperCase())
+
+const commentUserRating = computed(() => getUserRatingValue(props.comment.user_email))
+
+const showEditAction = computed(() => canEditComment(props.comment) && !isEditing.value)
+const showDeleteAction = computed(() => canDeleteComment(props.comment))
+const showReportAction = computed(() => !isOwnComment(props.comment) && !isAdmin.value)
 </script>
 
 <template>
@@ -56,7 +66,14 @@ const initials = computed(() => props.comment.owner.slice(0, 1).toUpperCase())
         </div>
 
         <div class="comment-item__meta">
-          <strong class="comment-item__name">{{ comment.owner }}</strong>
+          <div class="comment-item__name-row">
+            <strong class="comment-item__name">{{ comment.owner }}</strong>
+
+            <span v-if="commentUserRating" class="comment-item__rating">
+              {{ commentUserRating }}/5
+            </span>
+          </div>
+
           <span class="comment-item__time">
             {{ formatCommentTime(comment.created_at) }}
             <span v-if="comment.updated_at" class="comment-item__edited">Diedit</span>
@@ -75,10 +92,14 @@ const initials = computed(() => props.comment.owner.slice(0, 1).toUpperCase())
         </button>
 
         <DetailReportMenu
-          :show-edit="isEditable"
-          report-label="Laporkan komentar"
+          :show-edit="showEditAction"
+          :show-delete="showDeleteAction"
+          :show-report="showReportAction"
           edit-label="Edit komentar"
+          delete-label="Hapus komentar"
+          report-label="Laporkan komentar"
           @edit="startEditComment(comment.comment_id)"
+          @remove="openDeleteComment(comment.comment_id)"
           @report="$emit('openReport', comment.comment_id)"
         />
       </div>
@@ -99,6 +120,7 @@ const initials = computed(() => props.comment.owner.slice(0, 1).toUpperCase())
           <BaseButton variant="ghost" @click="cancelEditComment">
             Batal
           </BaseButton>
+
           <BaseButton @click="saveEditComment">
             Simpan perubahan
           </BaseButton>
@@ -124,6 +146,7 @@ const initials = computed(() => props.comment.owner.slice(0, 1).toUpperCase())
           <BaseButton variant="ghost" @click="$emit('toggleReply', comment.comment_id)">
             Batal
           </BaseButton>
+
           <BaseButton @click="$emit('submitReply', comment.comment_id)">
             Kirim balasan
           </BaseButton>
@@ -189,12 +212,33 @@ const initials = computed(() => props.comment.owner.slice(0, 1).toUpperCase())
   flex-direction: column;
 }
 
+.comment-item__name-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
 .comment-item__name {
   font-size: 14px;
   color: var(--text-primary);
 }
 
+.comment-item__rating {
+  display: inline-flex;
+  align-items: center;
+  min-height: 22px;
+  padding: 3px 7px;
+  border-radius: 10px;
+  background: rgba(106, 173, 168, 0.1);
+  color: var(--primary-cyan);
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
 .comment-item__time {
+  margin-top: 2px;
   font-size: 12px;
   color: var(--text-secondary);
 }
@@ -218,6 +262,10 @@ const initials = computed(() => props.comment.owner.slice(0, 1).toUpperCase())
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
+}
+
+.comment-item__reply-btn:hover {
+  text-decoration: underline;
 }
 
 .comment-item__body {

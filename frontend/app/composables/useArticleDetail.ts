@@ -1,7 +1,11 @@
 import type { DetailArticle, DetailComment, DetailCommentTree } from '~/types/api'
 
 export const useArticleDetail = () => {
-  const currentUser = { username: 'You', user_email: 'you@retogen.local' }
+  const currentUser = {
+    username: 'You',
+    user_email: 'you@retogen.local',
+    role: 'admin' as 'user' | 'admin'
+  }
 
   const article = useState<DetailArticle>('ad-article', () => ({} as DetailArticle))
   const tracked = useState('ad-tracked', () => false)
@@ -13,12 +17,21 @@ export const useArticleDetail = () => {
   const replyDrafts = useState<Record<string, string>>('ad-reply-drafts', () => ({}))
   const activeEditId = useState<string | null>('ad-active-edit-id', () => null)
   const editDraft = useState('ad-edit-draft', () => '')
+
   const reportState = useState('ad-report-state', () => ({
     open: false,
     type: 'article' as 'article' | 'comment',
     targetId: '',
     description: ''
   }))
+
+  const deleteCommentState = useState('ad-delete-comment-state', () => ({
+    open: false,
+    targetId: '',
+    targetOwner: ''
+  }))
+
+  const isAdmin = computed(() => currentUser.role === 'admin')
 
   const averageRating = computed(() => {
     const ratings = article.value.ratings ?? []
@@ -100,6 +113,12 @@ export const useArticleDetail = () => {
     )?.rating_value ?? 0
   }
 
+  function getUserRatingValue(userEmail: string) {
+    return article.value.ratings?.find(
+      (rating) => rating.user_email === userEmail
+    )?.rating_value ?? null
+  }
+
   function resetPageState(articleId: string) {
     article.value = useMockArticleDetail(articleId)
     tracked.value = false
@@ -110,6 +129,7 @@ export const useArticleDetail = () => {
     replyDrafts.value = {}
     activeEditId.value = null
     editDraft.value = ''
+    deleteCommentState.value = { open: false, targetId: '', targetOwner: '' }
     ratingDraft.value = getCurrentUserRating()
   }
 
@@ -186,9 +206,17 @@ export const useArticleDetail = () => {
     return comment.user_email === currentUser.user_email
   }
 
+  function canEditComment(comment: Pick<DetailComment, 'user_email'>) {
+    return isOwnComment(comment)
+  }
+
+  function canDeleteComment(comment: Pick<DetailComment, 'user_email'>) {
+    return isAdmin.value || isOwnComment(comment)
+  }
+
   function startEditComment(commentId: string) {
     const comment = findCommentById(commentId)
-    if (!comment || !isOwnComment(comment)) return
+    if (!comment || !canEditComment(comment)) return
 
     activeReplyId.value = null
     activeEditId.value = commentId
@@ -211,7 +239,8 @@ export const useArticleDetail = () => {
     if (!text) return
 
     const comment = findCommentById(activeEditId.value)
-    if (!comment || !isOwnComment(comment)) {
+
+    if (!comment || !canEditComment(comment)) {
       cancelEditComment()
       return
     }
@@ -220,6 +249,80 @@ export const useArticleDetail = () => {
     comment.updated_at = new Date().toISOString()
 
     cancelEditComment()
+  }
+
+  function collectCommentAndChildrenIds(commentId: string) {
+    const comments = article.value.comments ?? []
+    const ids = new Set<string>([commentId])
+    let changed = true
+
+    while (changed) {
+      changed = false
+
+      comments.forEach((comment) => {
+        if (
+          comment.parent_comment_id
+          && ids.has(comment.parent_comment_id)
+          && !ids.has(comment.comment_id)
+        ) {
+          ids.add(comment.comment_id)
+          changed = true
+        }
+      })
+    }
+
+    return ids
+  }
+
+  function openDeleteComment(commentId: string) {
+    const comment = findCommentById(commentId)
+    if (!comment || !canDeleteComment(comment)) return
+
+    deleteCommentState.value = {
+      open: true,
+      targetId: comment.comment_id,
+      targetOwner: comment.owner
+    }
+  }
+
+  function closeDeleteComment() {
+    deleteCommentState.value = {
+      open: false,
+      targetId: '',
+      targetOwner: ''
+    }
+  }
+
+  function confirmDeleteComment() {
+    const targetId = deleteCommentState.value.targetId
+    if (!targetId) return
+
+    const comment = findCommentById(targetId)
+
+    if (!comment || !canDeleteComment(comment)) {
+      closeDeleteComment()
+      return
+    }
+
+    const deletedIds = collectCommentAndChildrenIds(targetId)
+
+    article.value.comments = (article.value.comments ?? []).filter(
+      (item) => !deletedIds.has(item.comment_id)
+    )
+
+    deletedIds.forEach((id) => {
+      delete replyDrafts.value[id]
+    })
+
+    if (activeReplyId.value && deletedIds.has(activeReplyId.value)) {
+      activeReplyId.value = null
+    }
+
+    if (activeEditId.value && deletedIds.has(activeEditId.value)) {
+      cancelEditComment()
+    }
+
+    closeDeleteComment()
   }
 
   function toggleTrackPrice() {
@@ -241,6 +344,7 @@ export const useArticleDetail = () => {
 
   return {
     currentUser,
+    isAdmin,
     article,
     tracked,
     ratingDraft,
@@ -252,6 +356,7 @@ export const useArticleDetail = () => {
     activeEditId,
     editDraft,
     reportState,
+    deleteCommentState,
     averageRating,
     totalComments,
     articleParagraphs,
@@ -261,15 +366,21 @@ export const useArticleDetail = () => {
     ratingSummaryLabel,
     resetPageState,
     formatPrice,
+    getUserRatingValue,
     setRating,
     submitComment,
     toggleReply,
     updateReplyDraft,
     isOwnComment,
+    canEditComment,
+    canDeleteComment,
     startEditComment,
     updateEditDraft,
     cancelEditComment,
     saveEditComment,
+    openDeleteComment,
+    closeDeleteComment,
+    confirmDeleteComment,
     toggleTrackPrice,
     openReport,
     closeReport,
