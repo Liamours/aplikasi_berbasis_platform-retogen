@@ -35,7 +35,14 @@ export interface UserDetailsResponse extends ApiBaseResponse {
   user: UserProfile
 }
 
-export type SortOption = 'newest' | 'oldest' | 'highest_rated' | 'most_commented'
+export type SortOption =
+  | 'newest'
+  | 'oldest'
+  | 'highest_rated'
+  | 'most_commented'
+  | 'most_reported'
+  | 'by_tag'
+  | 'search_title'
 
 export interface ArticleListItem {
   article_id: string
@@ -100,15 +107,40 @@ export interface ArticleViewResponse extends ApiBaseResponse {
   reports?: ArticleReport[]
 }
 
-// Article detail page types
-export interface DetailPriceEntry {
-  id: string
-  store: string
+// Monitor harga API types
+export interface MonitorSearchRequest {
+  product_name: string
+  limit?: number
+}
+
+export interface MonitorPriceResult {
+  product: string
+  store: string | null
   price: number
-  shippingNote: string
-  url: string
-  updatedAt: string
-  trend: 'down' | 'up' | 'stable'
+  rating: number | null
+}
+
+export interface MonitorSearchResponse {
+  results: MonitorPriceResult[]
+  errors: string[]
+  total: number
+}
+
+// Article detail page types
+export type DetailPriceTrend = 'down' | 'up' | 'stable'
+
+export interface DetailPriceEntry extends MonitorPriceResult {
+  id: string
+  logo?: string
+
+  /**
+   * Optional display fields kept for backward compatibility with older mock/detail UI.
+   * Backend /monitor/search does not need to return these fields.
+   */
+  shippingNote?: string
+  url?: string
+  updatedAt?: string
+  trend?: DetailPriceTrend
 }
 
 export interface DetailRating {
@@ -125,6 +157,7 @@ export interface DetailComment {
   user_email: string
   comment_content: string
   created_at: string
+  updated_at?: string
 }
 
 export interface DetailCommentTree extends DetailComment {

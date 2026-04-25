@@ -6,7 +6,6 @@ const { commentTree, activeReplyId, replyDrafts, openReport, toggleReply, update
   <section class="article-comments">
     <div class="article-comments__header">
       <h2 class="article-comments__title">Diskusi</h2>
-      <p class="article-comments__subtitle">Komentar dan balasan tampil dalam satu alur yang rapi.</p>
     </div>
 
     <div class="article-comments__list">
@@ -41,12 +40,6 @@ const { commentTree, activeReplyId, replyDrafts, openReport, toggleReply, update
   line-height: 1.1;
   font-weight: 700;
   color: var(--text-primary);
-}
-
-.article-comments__subtitle {
-  margin-top: 6px;
-  color: var(--text-secondary);
-  font-size: 14px;
 }
 
 .article-comments__list {
