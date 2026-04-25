@@ -1,23 +1,32 @@
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 
-withDefaults(defineProps<{
+const props = withDefaults(defineProps<{
   showEdit?: boolean
+  showDelete?: boolean
+  showReport?: boolean
   reportLabel?: string
   editLabel?: string
+  deleteLabel?: string
 }>(), {
   showEdit: false,
+  showDelete: false,
+  showReport: true,
   reportLabel: 'Laporkan artikel',
-  editLabel: 'Edit'
+  editLabel: 'Edit',
+  deleteLabel: 'Hapus'
 })
 
 const emit = defineEmits<{
   report: []
   edit: []
+  remove: []
 }>()
 
 const isOpen = ref(false)
 const menuRef = ref<HTMLElement | null>(null)
+
+const hasActions = computed(() => props.showEdit || props.showDelete || props.showReport)
 
 const toggleMenu = () => {
   isOpen.value = !isOpen.value
@@ -47,6 +56,11 @@ const handleEdit = () => {
   closeMenu()
 }
 
+const handleRemove = () => {
+  emit('remove')
+  closeMenu()
+}
+
 onMounted(() => {
   document.addEventListener('click', handleDocumentClick)
 })
@@ -57,7 +71,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div ref="menuRef" class="report-menu">
+  <div v-if="hasActions" ref="menuRef" class="report-menu">
     <button
       type="button"
       class="report-menu__trigger"
@@ -79,6 +93,16 @@ onBeforeUnmount(() => {
         </button>
 
         <button
+          v-if="showDelete"
+          type="button"
+          class="report-menu__action report-menu__action--delete"
+          @click="handleRemove"
+        >
+          {{ deleteLabel }}
+        </button>
+
+        <button
+          v-if="showReport"
           type="button"
           class="report-menu__action report-menu__action--report"
           @click="handleReport"
@@ -153,10 +177,12 @@ onBeforeUnmount(() => {
   background: rgba(106, 173, 168, 0.1);
 }
 
+.report-menu__action--delete,
 .report-menu__action--report {
   color: var(--primary-red);
 }
 
+.report-menu__action--delete:hover,
 .report-menu__action--report:hover {
   background: rgba(181, 107, 82, 0.1);
 }

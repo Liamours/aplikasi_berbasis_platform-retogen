@@ -19,8 +19,8 @@ watch(() => route.params.id, (id) => {
           <section class="detail-card__main">
             <DetailArticleReview />
             <DetailArticleRating />
-            <DetailArticleComposer />
           </section>
+
           <DetailTrackingStatus />
         </div>
 
@@ -28,6 +28,7 @@ watch(() => route.params.id, (id) => {
       </BaseGlassCard>
 
       <DetailReportModal />
+      <DetailDeleteCommentModal />
     </div>
   </BasePageShell>
 </template>
@@ -57,10 +58,14 @@ watch(() => route.params.id, (id) => {
 }
 
 @media (max-width: 1024px) {
-  .detail-card__grid { grid-template-columns: 1fr; }
+  .detail-card__grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 640px) {
-  .detail-card { padding: 28px 20px; }
+  .detail-card {
+    padding: 28px 20px;
+  }
 }
 </style>
