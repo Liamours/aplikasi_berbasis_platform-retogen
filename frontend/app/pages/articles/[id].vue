@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import DetailDeleteArticleModal from '~/components/detail/DetailDeleteArticleModal.vue'
+import DetailDeleteCommentModal from '~/components/detail/DetailDeleteCommentModal.vue'
+
 definePageMeta({ layout: 'default' })
 
 const route = useRoute()
@@ -28,7 +31,11 @@ watch(() => route.params.id, (id) => {
       </BaseGlassCard>
 
       <DetailReportModal />
-      <DetailDeleteCommentModal />
+
+      <ClientOnly>
+        <DetailDeleteCommentModal />
+        <DetailDeleteArticleModal />
+      </ClientOnly>
     </div>
   </BasePageShell>
 </template>
@@ -52,9 +59,14 @@ watch(() => route.params.id, (id) => {
   align-items: start;
 }
 
+.detail-card__grid > * {
+  min-width: 0;
+}
+
 .detail-card__main {
   display: grid;
   gap: 18px;
+  min-width: 0;
 }
 
 @media (max-width: 1024px) {

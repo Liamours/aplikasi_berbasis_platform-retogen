@@ -78,7 +78,7 @@ onBeforeUnmount(() => {
       aria-label="Menu aksi"
       @click="toggleMenu"
     >
-      <span aria-hidden="true">⋯</span>
+      <span aria-hidden="true">...</span>
     </button>
 
     <Transition name="glass-fade">
@@ -127,7 +127,7 @@ onBeforeUnmount(() => {
   background: rgba(255, 255, 255, 0.08);
   color: var(--text-primary);
   cursor: pointer;
-  font-size: 22px;
+  font-size: 18px;
   line-height: 1;
   display: inline-flex;
   align-items: center;

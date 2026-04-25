@@ -7,6 +7,7 @@ export const useArticleDetail = () => {
     role: 'admin' as 'user' | 'admin'
   }
 
+  const articleDrafts = useState<Record<string, DetailArticle>>('ad-article-drafts', () => ({}))
   const article = useState<DetailArticle>('ad-article', () => ({} as DetailArticle))
   const tracked = useState('ad-tracked', () => false)
   const ratingDraft = useState('ad-rating-draft', () => 0)
@@ -29,6 +30,12 @@ export const useArticleDetail = () => {
     open: false,
     targetId: '',
     targetOwner: ''
+  }))
+
+  const deleteArticleState = useState('ad-delete-article-state', () => ({
+    open: false,
+    targetId: '',
+    title: ''
   }))
 
   const isAdmin = computed(() => currentUser.role === 'admin')
@@ -120,7 +127,8 @@ export const useArticleDetail = () => {
   }
 
   function resetPageState(articleId: string) {
-    article.value = useMockArticleDetail(articleId)
+    article.value = articleDrafts.value[articleId] ?? useMockArticleDetail(articleId)
+
     tracked.value = false
     ratingFeedback.value = ''
     hoverRating.value = 0
@@ -130,6 +138,7 @@ export const useArticleDetail = () => {
     activeEditId.value = null
     editDraft.value = ''
     deleteCommentState.value = { open: false, targetId: '', targetOwner: '' }
+    deleteArticleState.value = { open: false, targetId: '', title: '' }
     ratingDraft.value = getCurrentUserRating()
   }
 
@@ -325,6 +334,34 @@ export const useArticleDetail = () => {
     closeDeleteComment()
   }
 
+  function openDeleteArticle(articleId: string) {
+    if (!isAdmin.value || !articleId) return
+
+    deleteArticleState.value = {
+      open: true,
+      targetId: articleId,
+      title: article.value.article_title
+    }
+  }
+
+  function closeDeleteArticle() {
+    deleteArticleState.value = {
+      open: false,
+      targetId: '',
+      title: ''
+    }
+  }
+
+  async function confirmDeleteArticle() {
+    const targetId = deleteArticleState.value.targetId
+    if (!targetId || !isAdmin.value) return
+
+    delete articleDrafts.value[targetId]
+
+    closeDeleteArticle()
+    await navigateTo('/main')
+  }
+
   function toggleTrackPrice() {
     tracked.value = !tracked.value
   }
@@ -357,6 +394,7 @@ export const useArticleDetail = () => {
     editDraft,
     reportState,
     deleteCommentState,
+    deleteArticleState,
     averageRating,
     totalComments,
     articleParagraphs,
@@ -381,6 +419,9 @@ export const useArticleDetail = () => {
     openDeleteComment,
     closeDeleteComment,
     confirmDeleteComment,
+    openDeleteArticle,
+    closeDeleteArticle,
+    confirmDeleteArticle,
     toggleTrackPrice,
     openReport,
     closeReport,
