@@ -107,6 +107,51 @@ export interface ArticleViewResponse extends ApiBaseResponse {
   reports?: ArticleReport[]
 }
 
+// Admin article API types
+export interface ArticleAddRequest {
+  article_title: string
+  article_preview: string
+  article_content: string
+  article_tags: string[]
+  article_image: string
+}
+
+export interface ArticleAddResponse extends ApiBaseResponse {}
+
+export interface ArticleEditGetRequest {
+  article_id: string
+}
+
+export interface ArticleEditGetResponse extends ApiBaseResponse {
+  article_id: string
+  article_title: string
+  article_preview: string
+  article_content: string
+  article_tags: string[]
+  article_image: string | null
+}
+
+export interface ArticleEditUpdateRequest extends ArticleAddRequest {
+  article_id: string
+}
+
+export interface ArticleEditUpdateResponse extends ApiBaseResponse {}
+
+export interface ArticleDeleteRequest {
+  article_id: string
+}
+
+export interface ArticleDeleteResponse extends ApiBaseResponse {}
+
+export interface ArticleFormData {
+  article_id?: string
+  article_title: string
+  article_preview: string
+  article_content: string
+  article_tags: string[]
+  article_image: string | null
+}
+
 // Monitor harga API types
 export interface MonitorSearchRequest {
   product_name: string

@@ -4,7 +4,7 @@ export const useMockArticleDetail = (articleId: string): DetailArticle => ({
   article_id: articleId,
   article_title: 'Sony WH-1000XM5',
   article_preview:
-    'Headphone ANC premium dengan karakter suara seimbang, kenyamanan tinggi, dan pengalaman harian yang konsisten untuk kerja, hiburan, dan perjalanan.',
+  'Headphone ANC premium dengan suara seimbang, nyaman dipakai lama, dan cocok untuk kerja, hiburan, serta perjalanan.',
   article_content: `Sony WH-1000XM5 menawarkan kombinasi yang matang antara active noise cancelling, kualitas mikrofon, dan kenyamanan untuk penggunaan jangka panjang.
 
 Untuk kebutuhan harian, tuning suaranya terasa aman dan modern. Vokal cukup jelas, bass hadir tanpa terasa berlebihan, dan detail di frekuensi tinggi tetap terjaga untuk musik, podcast, maupun video conference.
