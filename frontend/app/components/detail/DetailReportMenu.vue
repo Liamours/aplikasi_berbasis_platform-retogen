@@ -1,8 +1,19 @@
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 
+withDefaults(defineProps<{
+  showEdit?: boolean
+  reportLabel?: string
+  editLabel?: string
+}>(), {
+  showEdit: false,
+  reportLabel: 'Laporkan artikel',
+  editLabel: 'Edit'
+})
+
 const emit = defineEmits<{
   report: []
+  edit: []
 }>()
 
 const isOpen = ref(false)
@@ -20,6 +31,7 @@ const handleDocumentClick = (event: MouseEvent) => {
   const target = event.target as Node | null
 
   if (!menuRef.value || !target) return
+
   if (!menuRef.value.contains(target)) {
     closeMenu()
   }
@@ -27,6 +39,11 @@ const handleDocumentClick = (event: MouseEvent) => {
 
 const handleReport = () => {
   emit('report')
+  closeMenu()
+}
+
+const handleEdit = () => {
+  emit('edit')
   closeMenu()
 }
 
@@ -41,14 +58,32 @@ onBeforeUnmount(() => {
 
 <template>
   <div ref="menuRef" class="report-menu">
-    <button type="button" class="report-menu__trigger" aria-label="More actions" @click="toggleMenu">
-      ⋯
+    <button
+      type="button"
+      class="report-menu__trigger"
+      aria-label="Menu aksi"
+      @click="toggleMenu"
+    >
+      <span aria-hidden="true">⋯</span>
     </button>
 
     <Transition name="glass-fade">
       <div v-if="isOpen" class="report-menu__dropdown">
-        <button type="button" class="report-menu__action" @click="handleReport">
-          Report
+        <button
+          v-if="showEdit"
+          type="button"
+          class="report-menu__action report-menu__action--edit"
+          @click="handleEdit"
+        >
+          {{ editLabel }}
+        </button>
+
+        <button
+          type="button"
+          class="report-menu__action report-menu__action--report"
+          @click="handleReport"
+        >
+          {{ reportLabel }}
         </button>
       </div>
     </Transition>
@@ -79,15 +114,15 @@ onBeforeUnmount(() => {
 }
 
 .report-menu__trigger:hover {
-  background: rgba(181, 107, 82, 0.12);
-  border-color: rgba(181, 107, 82, 0.22);
+  background: rgba(106, 173, 168, 0.1);
+  border-color: rgba(106, 173, 168, 0.22);
 }
 
 .report-menu__dropdown {
   position: absolute;
   right: 0;
   top: calc(100% + 8px);
-  min-width: 132px;
+  min-width: 172px;
   padding: 8px;
   border-radius: 14px;
   background: var(--glass-bg);
@@ -102,7 +137,6 @@ onBeforeUnmount(() => {
   width: 100%;
   border: none;
   background: transparent;
-  color: var(--primary-red);
   text-align: left;
   padding: 10px 12px;
   border-radius: 10px;
@@ -111,7 +145,19 @@ onBeforeUnmount(() => {
   transition: var(--transition-fast);
 }
 
-.report-menu__action:hover {
+.report-menu__action--edit {
+  color: var(--primary-cyan);
+}
+
+.report-menu__action--edit:hover {
+  background: rgba(106, 173, 168, 0.1);
+}
+
+.report-menu__action--report {
+  color: var(--primary-red);
+}
+
+.report-menu__action--report:hover {
   background: rgba(181, 107, 82, 0.1);
 }
 </style>

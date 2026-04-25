@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { DetailCommentTree } from '~/types/api'
+
 defineOptions({
   name: 'DetailCommentItem'
 })
@@ -17,6 +18,16 @@ const emit = defineEmits<{
   submitReply: [parentId: string]
 }>()
 
+const {
+  activeEditId,
+  editDraft,
+  isOwnComment,
+  startEditComment,
+  updateEditDraft,
+  cancelEditComment,
+  saveEditComment
+} = useArticleDetail()
+
 const formatCommentTime = (value: string) => {
   const date = new Date(value)
 
@@ -31,6 +42,8 @@ const formatCommentTime = (value: string) => {
 
 const replyValue = computed(() => props.replyDrafts[props.comment.comment_id] ?? '')
 const isReplying = computed(() => props.activeReplyId === props.comment.comment_id)
+const isEditing = computed(() => activeEditId.value === props.comment.comment_id)
+const isEditable = computed(() => isOwnComment(props.comment))
 const initials = computed(() => props.comment.owner.slice(0, 1).toUpperCase())
 </script>
 
@@ -44,25 +57,61 @@ const initials = computed(() => props.comment.owner.slice(0, 1).toUpperCase())
 
         <div class="comment-item__meta">
           <strong class="comment-item__name">{{ comment.owner }}</strong>
-          <span class="comment-item__time">{{ formatCommentTime(comment.created_at) }}</span>
+          <span class="comment-item__time">
+            {{ formatCommentTime(comment.created_at) }}
+            <span v-if="comment.updated_at" class="comment-item__edited">Diedit</span>
+          </span>
         </div>
       </div>
 
       <div class="comment-item__actions">
-        <button type="button" class="comment-item__reply-btn" @click="$emit('toggleReply', comment.comment_id)">
+        <button
+          v-if="!isEditing"
+          type="button"
+          class="comment-item__reply-btn"
+          @click="$emit('toggleReply', comment.comment_id)"
+        >
           {{ isReplying ? 'Tutup' : 'Balas' }}
         </button>
 
-        <DetailReportMenu @report="$emit('openReport', comment.comment_id)" />
+        <DetailReportMenu
+          :show-edit="isEditable"
+          report-label="Laporkan komentar"
+          edit-label="Edit komentar"
+          @edit="startEditComment(comment.comment_id)"
+          @report="$emit('openReport', comment.comment_id)"
+        />
       </div>
     </div>
 
-    <p class="comment-item__body">
-      {{ comment.comment_content }}
-    </p>
+    <Transition name="glass-fade" mode="out-in">
+      <div v-if="isEditing" class="comment-item__edit-box">
+        <textarea
+          :value="editDraft"
+          class="comment-item__textarea"
+          rows="4"
+          placeholder="Edit komentar"
+          @input="updateEditDraft(($event.target as HTMLTextAreaElement).value)"
+          @keydown.ctrl.enter.prevent="saveEditComment"
+        />
+
+        <div class="comment-item__reply-actions">
+          <BaseButton variant="ghost" @click="cancelEditComment">
+            Batal
+          </BaseButton>
+          <BaseButton @click="saveEditComment">
+            Simpan perubahan
+          </BaseButton>
+        </div>
+      </div>
+
+      <p v-else class="comment-item__body">
+        {{ comment.comment_content }}
+      </p>
+    </Transition>
 
     <Transition name="glass-fade">
-      <div v-if="isReplying" class="comment-item__reply-box">
+      <div v-if="isReplying && !isEditing" class="comment-item__reply-box">
         <textarea
           :value="replyValue"
           class="comment-item__textarea"
@@ -70,6 +119,7 @@ const initials = computed(() => props.comment.owner.slice(0, 1).toUpperCase())
           placeholder="Tulis balasan singkat..."
           @input="$emit('updateReplyDraft', { commentId: comment.comment_id, value: ($event.target as HTMLTextAreaElement).value })"
         />
+
         <div class="comment-item__reply-actions">
           <BaseButton variant="ghost" @click="$emit('toggleReply', comment.comment_id)">
             Batal
@@ -149,6 +199,12 @@ const initials = computed(() => props.comment.owner.slice(0, 1).toUpperCase())
   color: var(--text-secondary);
 }
 
+.comment-item__edited {
+  margin-left: 6px;
+  color: var(--primary-cyan);
+  font-weight: 600;
+}
+
 .comment-item__actions {
   display: flex;
   align-items: center;
@@ -170,7 +226,8 @@ const initials = computed(() => props.comment.owner.slice(0, 1).toUpperCase())
   line-height: 1.65;
 }
 
-.comment-item__reply-box {
+.comment-item__reply-box,
+.comment-item__edit-box {
   margin-top: 14px;
   padding: 12px;
   border-radius: var(--radius-md);
@@ -191,6 +248,10 @@ const initials = computed(() => props.comment.owner.slice(0, 1).toUpperCase())
   font: inherit;
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
+}
+
+.comment-item__textarea:focus {
+  border-color: rgba(106, 173, 168, 0.34);
 }
 
 .comment-item__reply-actions {
