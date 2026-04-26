@@ -17,7 +17,7 @@ const isMainPage = computed(() => route.path === '/main')
       <div class="navbar__actions">
         <!-- Main page: admin add-article + profile -->
         <template v-if="isMainPage">
-          <MainAddArticleButton />
+          <MainAdminMenu/>
         </template>
         <!-- Theme toggle — always visible -->
         <BaseButton variant="icon" aria-label="Toggle theme" @click="toggleTheme">
