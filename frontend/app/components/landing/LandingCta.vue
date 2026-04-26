@@ -4,7 +4,7 @@
       <div class="cta__content">
         <div>
           <p class="cta__label">Get started</p>
-          <h2 class="cta__title">Satu tempat untuk membaca, menilai, dan memantau.</h2>
+          <h2 class="cta__title">Cari, bandingkan, dan pantau harga produk elektronik dengan mudah.</h2>
         </div>
 
         <NuxtLink to="/login">
