@@ -60,7 +60,8 @@ const search = ref('')
 const isLoading = ref(false)
 const actionLoadingId = ref<string | null>(null)
 const selectedBanUser = ref<ManagedUser | null>(null)
-const statusMessage = ref('')
+const showSuccessPopup = ref(false)
+const successMessage = ref('')
 const errorMessage = ref('')
 
 const filteredUsers = computed(() => {
@@ -87,8 +88,14 @@ const userCount = computed(() => {
 })
 
 const clearFeedback = () => {
-  statusMessage.value = ''
+  showSuccessPopup.value = false
+  successMessage.value = ''
   errorMessage.value = ''
+}
+
+const closeSuccessPopup = () => {
+  showSuccessPopup.value = false
+  successMessage.value = ''
 }
 
 const fetchUsers = async () => {
@@ -120,19 +127,28 @@ const makeAdmin = async (user: ManagedUser) => {
   actionLoadingId.value = user.user_id
 
   try {
-    const response = await api.post<ActionResponse>(
-      '/user/make_admin',
-      { user_id: user.user_id },
-      true
-    )
+    // --- MOCK UI ---
+    // const response = await api.post<ActionResponse>(
+    //   '/user/make_admin',
+    //   { user_id: user.user_id },
+    //   true
+    // )
 
-    if (response.confirmation === 'successful: role updated to admin') {
-      statusMessage.value = `${user.username} sekarang admin.`
-      await fetchUsers()
-      return
+    // if (response.confirmation === 'successful: role updated to admin') { ...
+
+    // Simulasi proses delay
+    await new Promise(resolve => setTimeout(resolve, 800))
+
+    // Update data lokal
+    const index = users.value.findIndex(u => u.user_id === user.user_id)
+    if (index !== -1) {
+      users.value[index].role = 'admin'
     }
 
-    errorMessage.value = response.confirmation || 'Gagal mengubah role user.'
+    successMessage.value = `${user.username} berhasil diubah menjadi admin.`
+    showSuccessPopup.value = true
+    // await fetchUsers()
+    // -----------------
   } catch {
     errorMessage.value = 'Gagal mengubah role user.'
   } finally {
@@ -156,20 +172,26 @@ const banUser = async () => {
   actionLoadingId.value = selectedBanUser.value.user_id
 
   try {
-    const response = await api.post<ActionResponse>(
-      '/user/delete',
-      { user_id: selectedBanUser.value.user_id },
-      true
-    )
+    // --- MOCK UI ---
+    // const response = await api.post<ActionResponse>(
+    //   '/user/delete',
+    //   { user_id: selectedBanUser.value.user_id },
+    //   true
+    // )
 
-    if (response.confirmation === 'successful: user deleted') {
-      statusMessage.value = `${selectedBanUser.value.username} berhasil diban.`
-      selectedBanUser.value = null
-      await fetchUsers()
-      return
-    }
+    // if (response.confirmation === 'successful: user deleted') { ...
+    
+    // Simulasi proses delay
+    await new Promise(resolve => setTimeout(resolve, 800))
 
-    errorMessage.value = response.confirmation || 'Gagal memproses ban user.'
+    // Update data lokal
+    users.value = users.value.filter(u => u.user_id !== selectedBanUser.value!.user_id)
+    
+    successMessage.value = `${selectedBanUser.value.username} berhasil diban.`
+    showSuccessPopup.value = true
+    selectedBanUser.value = null
+    // await fetchUsers()
+    // -----------------
   } catch {
     errorMessage.value = 'Gagal memproses ban user.'
   } finally {
@@ -246,11 +268,7 @@ const formatDate = (value: string) => {
         <template v-else> -->
         <div>
 
-          <Transition name="glass-fade">
-            <p v-if="statusMessage" class="success-banner">
-              {{ statusMessage }}
-            </p>
-          </Transition>
+
 
           <Transition name="glass-fade">
             <p v-if="errorMessage" class="error-banner">
@@ -349,6 +367,21 @@ const formatDate = (value: string) => {
       </BaseGlassCard>
     </div>
   </BasePageShell>
+
+  <Teleport to="body">
+    <Transition name="glass-fade">
+      <div v-if="showSuccessPopup" class="popup-overlay" @click.self="closeSuccessPopup">
+        <div class="popup-content">
+          <div class="popup-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-check-circle"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+          </div>
+          <h3>Berhasil!</h3>
+          <p>{{ successMessage }}</p>
+          <BaseButton @click="closeSuccessPopup">Tutup</BaseButton>
+        </div>
+      </div>
+    </Transition>
+  </Teleport>
 </template>
 
 <style scoped>
@@ -429,13 +462,57 @@ const formatDate = (value: string) => {
   align-items: end;
 }
 
-.success-banner {
-  border: 1px solid rgba(106, 173, 168, 0.3);
-  background: rgba(106, 173, 168, 0.1);
+.popup-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.popup-content {
+  background: rgba(20, 20, 20, 0.95);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  padding: 32px;
+  width: min(90%, 400px);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+}
+
+.popup-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: rgba(106, 173, 168, 0.15);
   color: var(--primary-cyan);
-  border-radius: var(--radius-md);
-  padding: 12px 14px;
-  margin-bottom: 14px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.popup-icon svg {
+  width: 32px;
+  height: 32px;
+}
+
+.popup-content h3 {
+  font-size: 24px;
+  margin: 0;
+  color: white;
+}
+
+.popup-content p {
+  color: var(--text-secondary);
+  font-size: 15px;
+  margin-bottom: 8px;
 }
 
 .confirm-panel {
