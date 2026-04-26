@@ -59,7 +59,7 @@ const targetOwnerLabel = computed(() => {
   position: fixed;
   inset: 0;
   z-index: 99999;
-  background: rgba(20, 20, 20, 0.42);
+  background: rgba(0, 0, 0, 0.4);
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
   display: flex;
@@ -72,9 +72,8 @@ const targetOwnerLabel = computed(() => {
   width: min(100%, 420px);
   border-radius: 16px;
   border: 1px solid rgba(255, 255, 255, 0.72);
-  background:
-    linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(255, 255, 255, 0.88));
-  box-shadow: 0 18px 50px rgba(31, 38, 135, 0.18);
+  background: var(--bg-surface);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.18);
   padding: 28px;
   backdrop-filter: blur(24px) saturate(180%);
   -webkit-backdrop-filter: blur(24px) saturate(180%);
@@ -122,8 +121,8 @@ const targetOwnerLabel = computed(() => {
 }
 
 .delete-modal__button--ghost {
-  border: 1px solid rgba(100, 100, 100, 0.16);
-  background: rgba(255, 255, 255, 0.56);
+  border: 1px solid var(--glass-border);
+  background: var(--input-bg);
   color: var(--text-primary);
 }
 
@@ -141,26 +140,7 @@ const targetOwnerLabel = computed(() => {
   background: #c73629;
 }
 
-/* Kalau dark-mode class ada di body/html/root global, ini ikut aktif. */
-:global(.dark-mode) .delete-modal {
-  background: rgba(0, 0, 0, 0.56);
-}
-
-:global(.dark-mode) .delete-modal__panel {
-  border-color: rgba(255, 255, 255, 0.1);
-  background:
-    linear-gradient(135deg, rgba(42, 42, 42, 0.96), rgba(24, 24, 24, 0.92));
-  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.62);
-}
-
-:global(.dark-mode) .delete-modal__button--ghost {
-  border-color: rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.06);
-}
-
-:global(.dark-mode) .delete-modal__button--ghost:hover {
-  background: rgba(255, 255, 255, 0.1);
-}
+/* Di bawah ini sudah tidak diperlukan karena variabel otomatis adaptif */
 
 @media (max-width: 480px) {
   .delete-modal {
