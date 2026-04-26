@@ -1,5 +1,25 @@
 <script setup lang="ts">
-const { article, averageRating, totalComments, lowestPrice, formatPrice, openReport } = useArticleDetail()
+const {
+  article,
+  isAdmin,
+  averageRating,
+  totalComments,
+  lowestPrice,
+  formatPrice,
+  openReport,
+  openDeleteArticle
+} = useArticleDetail()
+
+const goToEditArticle = () => {
+  if (!article.value.article_id) return
+
+  return navigateTo({
+    path: '/articles/edit',
+    query: {
+      id: article.value.article_id
+    }
+  })
+}
 </script>
 
 <template>
@@ -10,7 +30,18 @@ const { article, averageRating, totalComments, lowestPrice, formatPrice, openRep
         <span>/</span>
         <span>Article</span>
       </div>
-      <DetailReportMenu @report="openReport('article', article.article_id)" />
+
+      <DetailReportMenu
+        :show-edit="isAdmin"
+        :show-delete="isAdmin"
+        :show-report="!isAdmin"
+        edit-label="Edit artikel"
+        delete-label="Hapus artikel"
+        report-label="Laporkan artikel"
+        @edit="goToEditArticle"
+        @remove="openDeleteArticle(article.article_id)"
+        @report="openReport('article', article.article_id)"
+      />
     </div>
 
     <div class="hero__headline">
@@ -24,26 +55,50 @@ const { article, averageRating, totalComments, lowestPrice, formatPrice, openRep
 
       <div class="hero__summary">
         <p class="hero__eyebrow">Electronic review</p>
-        <h1 class="hero__title">{{ article.article_title }}</h1>
-        <p class="hero__preview">{{ article.article_preview }}</p>
+
+        <h1 class="hero__title">
+          {{ article.article_title }}
+        </h1>
+
+        <p class="hero__preview">
+          {{ article.article_preview }}
+        </p>
 
         <div class="hero__tags">
-          <span v-for="tag in article.article_tags" :key="tag" class="hero__tag">{{ tag }}</span>
+          <span
+            v-for="tag in article.article_tags"
+            :key="tag"
+            class="hero__tag"
+          >
+            {{ tag }}
+          </span>
         </div>
 
-        <div class="hero__stats">
-          <div class="hero__stat">
-            <span class="hero__stat-label">Rating</span>
-            <strong class="hero__stat-value">{{ averageRating }}/5</strong>
-          </div>
-          <div class="hero__stat">
-            <span class="hero__stat-label">Komentar</span>
-            <strong class="hero__stat-value">{{ totalComments }}</strong>
-          </div>
-          <div class="hero__stat">
-            <span class="hero__stat-label">Harga terbaik</span>
-            <strong class="hero__stat-value">{{ lowestPrice ? formatPrice(lowestPrice.price) : '-' }}</strong>
-          </div>
+        <div class="hero__meta" aria-label="Ringkasan artikel">
+          <span class="hero__meta-item">
+            <strong>{{ averageRating }}/5</strong>
+            Rating
+          </span>
+
+          <span class="hero__meta-separator" aria-hidden="true">/</span>
+
+          <span class="hero__meta-item">
+            <strong>{{ totalComments }}</strong>
+            Komentar
+          </span>
+
+          <span
+            v-if="lowestPrice"
+            class="hero__meta-separator"
+            aria-hidden="true"
+          >
+            /
+          </span>
+
+          <span v-if="lowestPrice" class="hero__meta-item">
+            <strong>{{ formatPrice(lowestPrice.price) }}</strong>
+            Harga terbaik
+          </span>
         </div>
       </div>
     </div>
@@ -56,6 +111,7 @@ const { article, averageRating, totalComments, lowestPrice, formatPrice, openRep
   flex-direction: column;
   gap: 24px;
   margin-bottom: 32px;
+  min-width: 0;
 }
 
 .hero__topbar {
@@ -63,6 +119,7 @@ const { article, averageRating, totalComments, lowestPrice, formatPrice, openRep
   align-items: center;
   justify-content: space-between;
   gap: 16px;
+  min-width: 0;
 }
 
 .hero__breadcrumbs {
@@ -71,15 +128,23 @@ const { article, averageRating, totalComments, lowestPrice, formatPrice, openRep
   gap: 8px;
   color: var(--text-secondary);
   font-size: 13px;
+  min-width: 0;
 }
 
-.hero__crumb { color: var(--text-secondary); }
+.hero__crumb {
+  color: var(--text-secondary);
+}
+
+.hero__crumb:hover {
+  color: var(--primary-cyan);
+}
 
 .hero__headline {
   display: grid;
   grid-template-columns: 260px minmax(0, 1fr);
   gap: 28px;
   align-items: center;
+  min-width: 0;
 }
 
 .hero__image-wrap {
@@ -89,11 +154,22 @@ const { article, averageRating, totalComments, lowestPrice, formatPrice, openRep
   border: 1px dashed var(--glass-border);
   background: var(--bg-surface);
   min-height: 260px;
+  min-width: 0;
 }
 
-.hero__image { width: 100%; height: 100%; object-fit: cover; }
+.hero__image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
 
-.hero__summary { display: flex; flex-direction: column; gap: 16px; }
+.hero__summary {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+  max-width: 100%;
+}
 
 .hero__eyebrow {
   font-size: 12px;
@@ -103,60 +179,112 @@ const { article, averageRating, totalComments, lowestPrice, formatPrice, openRep
 }
 
 .hero__title {
+  max-width: 100%;
+  min-width: 0;
   font-size: clamp(30px, 4vw, 44px);
   line-height: 1.08;
   font-weight: 800;
   letter-spacing: -1px;
   color: var(--text-primary);
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .hero__preview {
   max-width: 64ch;
+  min-width: 0;
   color: var(--text-secondary);
   font-size: 15px;
   line-height: 1.7;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
-.hero__tags { display: flex; flex-wrap: wrap; gap: 10px; }
+.hero__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  min-width: 0;
+  max-width: 100%;
+}
 
 .hero__tag {
+  max-width: 100%;
   padding: 4px 8px;
   border-radius: var(--radius-sm);
   font-size: 12px;
   font-weight: 600;
   background: rgba(181, 107, 82, 0.1);
   color: var(--primary-red);
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
-.hero__stats {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
-}
-
-.hero__stat {
-  padding: 16px;
-  border-radius: var(--radius-md);
-  background: rgba(255, 255, 255, 0.18);
-  border: 1px solid var(--glass-border);
-}
-
-.hero__stat-label {
-  display: block;
-  font-size: 12px;
+.hero__meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 10px;
+  padding-top: 2px;
   color: var(--text-secondary);
-  margin-bottom: 4px;
+  font-size: 13px;
+  line-height: 1.5;
+  min-width: 0;
 }
 
-.hero__stat-value {
-  font-size: 18px;
+.hero__meta-item {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.hero__meta-item strong {
   color: var(--text-primary);
   font-weight: 700;
 }
 
+.hero__meta-separator {
+  color: var(--text-muted);
+}
+
 @media (max-width: 850px) {
-  .hero__headline { grid-template-columns: 1fr; }
-  .hero__image-wrap { min-height: 220px; }
-  .hero__stats { grid-template-columns: 1fr; }
+  .hero__headline {
+    grid-template-columns: 1fr;
+  }
+
+  .hero__image-wrap {
+    min-height: 220px;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero {
+    gap: 20px;
+  }
+
+  .hero__topbar {
+    align-items: flex-start;
+  }
+
+  .hero__headline {
+    gap: 22px;
+  }
+
+  .hero__summary {
+    gap: 14px;
+  }
+
+  .hero__meta {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .hero__meta-separator {
+    display: none;
+  }
 }
 </style>

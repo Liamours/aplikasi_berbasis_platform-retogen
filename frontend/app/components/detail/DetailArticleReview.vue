@@ -5,14 +5,23 @@ const { articleParagraphs } = useArticleDetail()
 <template>
   <div class="content-block">
     <h2 class="content-block__title">Review</h2>
+
     <div class="content-block__body">
-      <p v-for="(paragraph, index) in articleParagraphs" :key="index">{{ paragraph }}</p>
+      <p
+        v-for="(paragraph, index) in articleParagraphs"
+        :key="index"
+        class="content-block__paragraph"
+      >
+        {{ paragraph }}
+      </p>
     </div>
   </div>
 </template>
 
 <style scoped>
 .content-block {
+  min-width: 0;
+  overflow: hidden;
   border-radius: 20px;
   border: 1px solid var(--glass-border);
   background: rgba(255, 255, 255, 0.14);
@@ -27,15 +36,25 @@ const { articleParagraphs } = useArticleDetail()
 }
 
 .content-block__body {
+  min-width: 0;
   margin-top: 14px;
   display: grid;
   gap: 14px;
   color: var(--text-secondary);
 }
 
-.content-block__body p { line-height: 1.75; }
+.content-block__paragraph {
+  max-width: 100%;
+  min-width: 0;
+  line-height: 1.75;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
 
 @media (max-width: 640px) {
-  .content-block { padding: 18px; }
+  .content-block {
+    padding: 18px;
+  }
 }
 </style>

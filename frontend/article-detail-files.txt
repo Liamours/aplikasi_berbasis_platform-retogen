@@ -1,0 +1,1182 @@
+﻿
+
+--- app/pages/articles/[id].vue ---
+<script setup lang="ts">
+definePageMeta({ layout: 'default' })
+
+const route = useRoute()
+const { resetPageState } = useArticleDetail()
+
+watch(() => route.params.id, (id) => {
+  resetPageState(String(id || 'demo-article'))
+}, { immediate: true })
+</script>
+
+<template>
+  <BasePageShell>
+    <div class="detail-page">
+      <BaseGlassCard class="detail-card">
+        <DetailArticleHero />
+
+        <div class="detail-card__grid">
+          <section class="detail-card__main">
+            <DetailArticleReview />
+            <DetailArticleRating />
+            <DetailArticleComposer />
+          </section>
+          <DetailTrackingStatus />
+        </div>
+
+        <DetailArticleDiscussion />
+      </BaseGlassCard>
+
+      <DetailReportModal />
+    </div>
+  </BasePageShell>
+</template>
+
+<style scoped>
+.detail-page {
+  display: flex;
+  justify-content: center;
+  padding: 8px 0 40px;
+}
+
+.detail-card {
+  width: min(100%, 1080px);
+  margin: 0 auto;
+}
+
+.detail-card__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(300px, 0.8fr);
+  gap: 24px;
+  align-items: start;
+}
+
+.detail-card__main {
+  display: grid;
+  gap: 18px;
+}
+
+@media (max-width: 1024px) {
+  .detail-card__grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 640px) {
+  .detail-card { padding: 28px 20px; }
+}
+</style>
+
+
+
+--- app/components/detail/DetailPriceTracker.vue ---
+<script setup lang="ts">
+import type { DetailPriceEntry } from '~/types/api'
+
+defineProps<{
+  prices: DetailPriceEntry[]
+  tracked: boolean
+}>()
+
+defineEmits<{
+  toggleTrack: []
+}>()
+
+const formatPrice = (value: number) => {
+  return new Intl.NumberFormat('id-ID', {
+    style: 'currency',
+    currency: 'IDR',
+    maximumFractionDigits: 0
+  }).format(value)
+}
+
+const trendLabelMap: Record<DetailPriceEntry['trend'], string> = {
+  down: 'Turun',
+  up: 'Naik',
+  stable: 'Stabil'
+}
+</script>
+
+<template>
+  <section class="price-tracker">
+    <div class="price-tracker__head">
+      <div>
+        <p class="price-tracker__eyebrow">Price tracking</p>
+        <h2 class="price-tracker__title">Pantau harga</h2>
+      </div>
+
+      <button type="button" class="price-tracker__follow" :class="{ 'is-active': tracked }" @click="$emit('toggleTrack')">
+        {{ tracked ? 'Tracked' : 'Track price' }}
+      </button>
+    </div>
+
+    <div class="price-tracker__list">
+      <article v-for="item in prices" :key="item.id" class="price-tracker__item">
+        <div class="price-tracker__store-row">
+          <strong class="price-tracker__store">{{ item.store }}</strong>
+          <span class="price-tracker__trend" :class="`is-${item.trend}`">
+            {{ trendLabelMap[item.trend] }}
+          </span>
+        </div>
+
+        <div class="price-tracker__price">
+          {{ formatPrice(item.price) }}
+        </div>
+
+        <div class="price-tracker__meta">
+          <span>{{ item.updatedAt }}</span>
+        </div>
+      </article>
+    </div>
+  </section>
+</template>
+
+<style scoped>
+.price-tracker {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.price-tracker__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.price-tracker__eyebrow {
+  font-size: 12px;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.price-tracker__title {
+  font-size: 20px;
+  line-height: 1.1;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.price-tracker__follow {
+  border: 1px solid rgba(106, 173, 168, 0.24);
+  background: rgba(106, 173, 168, 0.08);
+  color: var(--primary-cyan);
+  border-radius: 999px;
+  padding: 10px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition-fast);
+  white-space: nowrap;
+}
+
+.price-tracker__follow:hover,
+.price-tracker__follow.is-active {
+  background: rgba(106, 173, 168, 0.16);
+}
+
+.price-tracker__list {
+  display: grid;
+  gap: 12px;
+}
+
+.price-tracker__item {
+  padding: 16px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.18);
+  border: 1px solid var(--glass-border);
+}
+
+.price-tracker__store-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.price-tracker__store {
+  font-size: 14px;
+  color: var(--text-primary);
+}
+
+.price-tracker__trend {
+  border-radius: 999px;
+  padding: 5px 10px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.price-tracker__trend.is-down {
+  background: rgba(106, 173, 168, 0.14);
+  color: var(--primary-cyan);
+}
+
+.price-tracker__trend.is-up {
+  background: rgba(181, 107, 82, 0.12);
+  color: var(--primary-red);
+}
+
+.price-tracker__trend.is-stable {
+  background: rgba(99, 99, 96, 0.12);
+  color: var(--text-secondary);
+}
+
+.price-tracker__price {
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--text-primary);
+  margin-bottom: 6px;
+}
+
+.price-tracker__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+@media (max-width: 480px) {
+  .price-tracker__head {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .price-tracker__follow {
+    width: 100%;
+  }
+}
+</style>
+
+
+--- app/components/detail/DetailTrackingStatus.vue ---
+<script setup lang="ts">
+const { article, tracked, lowestPrice, toggleTrackPrice } = useArticleDetail()
+</script>
+
+<template>
+  <aside class="article-detail-side">
+    <div class="side-block">
+      <DetailPriceTracker
+        :prices="article.prices ?? []"
+        :tracked="tracked"
+        @toggle-track="toggleTrackPrice"
+      />
+    </div>
+
+    <div class="side-block">
+      <h2 class="side-block__title">Status tracking</h2>
+      <p class="side-block__description">
+        {{ tracked
+          ? 'Harga sedang dipantau. Anda bisa lanjutkan integrasi notifikasi di tahap berikutnya.'
+          : 'Aktifkan tracking untuk menandai artikel ini ke daftar pantauan harga.' }}
+      </p>
+
+      <div class="side-block__status-row">
+        <span class="side-block__status-chip" :class="{ 'is-active': tracked }">
+          {{ tracked ? 'Tracking aktif' : 'Belum aktif' }}
+        </span>
+        <span v-if="lowestPrice" class="side-block__status-note">
+          Update terakhir: {{ lowestPrice.updatedAt }}
+        </span>
+      </div>
+    </div>
+  </aside>
+</template>
+
+<style scoped>
+.article-detail-side {
+  display: grid;
+  gap: 18px;
+}
+
+.side-block {
+  border-radius: var(--radius-md);
+  border: 1px solid var(--glass-border);
+  background: rgba(255, 255, 255, 0.14);
+  padding: 22px;
+}
+
+.side-block__title {
+  font-size: 20px;
+  line-height: 1.1;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.side-block__description {
+  margin-top: 10px;
+  color: var(--text-secondary);
+  line-height: 1.7;
+}
+
+.side-block__status-row {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.side-block__status-chip {
+  align-self: flex-start;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  background: rgba(99, 99, 96, 0.12);
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.side-block__status-chip.is-active {
+  background: rgba(106, 173, 168, 0.14);
+  color: var(--primary-cyan);
+}
+
+.side-block__status-note {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+@media (max-width: 640px) {
+  .side-block { padding: 18px; }
+}
+</style>
+
+
+
+--- app/components/detail/DetailCommentItem.vue ---
+<script setup lang="ts">
+import type { DetailCommentTree } from '~/types/api'
+defineOptions({
+  name: 'DetailCommentItem'
+})
+
+const props = defineProps<{
+  comment: DetailCommentTree
+  activeReplyId: string | null
+  replyDrafts: Record<string, string>
+}>()
+
+const emit = defineEmits<{
+  openReport: [commentId: string]
+  toggleReply: [commentId: string]
+  updateReplyDraft: [{ commentId: string, value: string }]
+  submitReply: [parentId: string]
+}>()
+
+const formatCommentTime = (value: string) => {
+  const date = new Date(value)
+
+  return new Intl.DateTimeFormat('id-ID', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  }).format(date)
+}
+
+const replyValue = computed(() => props.replyDrafts[props.comment.comment_id] ?? '')
+const isReplying = computed(() => props.activeReplyId === props.comment.comment_id)
+const initials = computed(() => props.comment.owner.slice(0, 1).toUpperCase())
+</script>
+
+<template>
+  <article class="comment-item">
+    <div class="comment-item__header">
+      <div class="comment-item__author">
+        <div class="comment-item__avatar">
+          {{ initials }}
+        </div>
+
+        <div class="comment-item__meta">
+          <strong class="comment-item__name">{{ comment.owner }}</strong>
+          <span class="comment-item__time">{{ formatCommentTime(comment.created_at) }}</span>
+        </div>
+      </div>
+
+      <div class="comment-item__actions">
+        <button type="button" class="comment-item__reply-btn" @click="$emit('toggleReply', comment.comment_id)">
+          {{ isReplying ? 'Tutup' : 'Balas' }}
+        </button>
+
+        <DetailReportMenu @report="$emit('openReport', comment.comment_id)" />
+      </div>
+    </div>
+
+    <p class="comment-item__body">
+      {{ comment.comment_content }}
+    </p>
+
+    <Transition name="glass-fade">
+      <div v-if="isReplying" class="comment-item__reply-box">
+        <textarea
+          :value="replyValue"
+          class="comment-item__textarea"
+          rows="3"
+          placeholder="Tulis balasan singkat..."
+          @input="$emit('updateReplyDraft', { commentId: comment.comment_id, value: ($event.target as HTMLTextAreaElement).value })"
+        />
+        <div class="comment-item__reply-actions">
+          <BaseButton variant="ghost" @click="$emit('toggleReply', comment.comment_id)">
+            Batal
+          </BaseButton>
+          <BaseButton @click="$emit('submitReply', comment.comment_id)">
+            Kirim balasan
+          </BaseButton>
+        </div>
+      </div>
+    </Transition>
+
+    <div v-if="comment.children.length" class="comment-item__children">
+      <DetailCommentItem
+        v-for="child in comment.children"
+        :key="child.comment_id"
+        :comment="child"
+        :active-reply-id="activeReplyId"
+        :reply-drafts="replyDrafts"
+        @open-report="$emit('openReport', $event)"
+        @toggle-reply="$emit('toggleReply', $event)"
+        @update-reply-draft="$emit('updateReplyDraft', $event)"
+        @submit-reply="$emit('submitReply', $event)"
+      />
+    </div>
+  </article>
+</template>
+
+<style scoped>
+.comment-item {
+  padding: 16px;
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.22);
+  border: 1px solid var(--glass-border);
+}
+
+.comment-item__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.comment-item__author {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.comment-item__avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-sm);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-surface);
+  border: 1px solid var(--glass-border);
+  color: var(--text-primary);
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.comment-item__meta {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.comment-item__name {
+  font-size: 14px;
+  color: var(--text-primary);
+}
+
+.comment-item__time {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.comment-item__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.comment-item__reply-btn {
+  border: none;
+  background: transparent;
+  color: var(--primary-cyan);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.comment-item__body {
+  margin-top: 12px;
+  color: var(--text-secondary);
+  line-height: 1.65;
+}
+
+.comment-item__reply-box {
+  margin-top: 14px;
+  padding: 12px;
+  border-radius: var(--radius-md);
+  background: rgba(106, 173, 168, 0.06);
+  border: 1px solid rgba(106, 173, 168, 0.12);
+}
+
+.comment-item__textarea {
+  width: 100%;
+  resize: vertical;
+  min-height: 92px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--glass-border);
+  background: var(--input-bg);
+  color: var(--text-primary);
+  padding: 14px;
+  outline: none;
+  font: inherit;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.comment-item__reply-actions {
+  margin-top: 12px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.comment-item__children {
+  margin-top: 16px;
+  margin-left: 24px;
+  padding-left: 16px;
+  border-left: 2px solid rgba(106, 173, 168, 0.2);
+  display: grid;
+  gap: 12px;
+}
+
+@media (max-width: 480px) {
+  .comment-item__header {
+    flex-direction: column;
+  }
+
+  .comment-item__actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .comment-item__children {
+    margin-left: 12px;
+    padding-left: 12px;
+  }
+
+  .comment-item__reply-actions {
+    flex-direction: column;
+  }
+}
+</style>
+
+
+--- app/components/detail/DetailReportMenu.vue ---
+<script setup lang="ts">
+import { onBeforeUnmount, onMounted, ref } from 'vue'
+
+const emit = defineEmits<{
+  report: []
+}>()
+
+const isOpen = ref(false)
+const menuRef = ref<HTMLElement | null>(null)
+
+const toggleMenu = () => {
+  isOpen.value = !isOpen.value
+}
+
+const closeMenu = () => {
+  isOpen.value = false
+}
+
+const handleDocumentClick = (event: MouseEvent) => {
+  const target = event.target as Node | null
+
+  if (!menuRef.value || !target) return
+  if (!menuRef.value.contains(target)) {
+    closeMenu()
+  }
+}
+
+const handleReport = () => {
+  emit('report')
+  closeMenu()
+}
+
+onMounted(() => {
+  document.addEventListener('click', handleDocumentClick)
+})
+
+onBeforeUnmount(() => {
+  document.removeEventListener('click', handleDocumentClick)
+})
+</script>
+
+<template>
+  <div ref="menuRef" class="report-menu">
+    <button type="button" class="report-menu__trigger" aria-label="More actions" @click="toggleMenu">
+      â‹¯
+    </button>
+
+    <Transition name="glass-fade">
+      <div v-if="isOpen" class="report-menu__dropdown">
+        <button type="button" class="report-menu__action" @click="handleReport">
+          Report
+        </button>
+      </div>
+    </Transition>
+  </div>
+</template>
+
+<style scoped>
+.report-menu {
+  position: relative;
+}
+
+.report-menu__trigger {
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  border: 1px solid var(--glass-border);
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-primary);
+  cursor: pointer;
+  font-size: 22px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition-fast);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.report-menu__trigger:hover {
+  background: rgba(181, 107, 82, 0.12);
+  border-color: rgba(181, 107, 82, 0.22);
+}
+
+.report-menu__dropdown {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  min-width: 132px;
+  padding: 8px;
+  border-radius: 14px;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  z-index: 20;
+}
+
+.report-menu__action {
+  width: 100%;
+  border: none;
+  background: transparent;
+  color: var(--primary-red);
+  text-align: left;
+  padding: 10px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: var(--transition-fast);
+}
+
+.report-menu__action:hover {
+  background: rgba(181, 107, 82, 0.1);
+}
+</style>
+
+
+--- app/components/detail/DetailArticleRating.vue ---
+<script setup lang="ts">
+const { article, averageRating, visibleStars, ratingSummaryLabel, ratingDraft, hoverRating, setRating } = useArticleDetail()
+</script>
+
+<template>
+  <div class="content-block">
+    <div class="content-block__header">
+      <div>
+        <h2 class="content-block__title">Rating pengguna</h2>
+        <p class="content-block__helper">{{ ratingSummaryLabel }}</p>
+      </div>
+      <div class="content-block__score">
+        <span class="content-block__score-value">{{ averageRating }}</span>
+        <span class="content-block__score-meta">dari {{ article.ratings?.length ?? 0 }} rating</span>
+      </div>
+    </div>
+
+    <div class="content-block__rating-row">
+      <DetailRatingStars
+        :model-value="visibleStars"
+        size="lg"
+        @update:model-value="setRating"
+        @hover="hoverRating = $event"
+        @leave="hoverRating = 0"
+      />
+      <span v-if="ratingDraft" class="content-block__chosen-rating">{{ ratingDraft }}/5</span>
+    </div>
+  </div>
+</template>
+
+<style scoped>
+.content-block {
+  border-radius: 20px;
+  border: 1px solid var(--glass-border);
+  background: rgba(255, 255, 255, 0.14);
+  padding: 22px;
+}
+
+.content-block__title {
+  font-size: 20px;
+  line-height: 1.1;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.content-block__header {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+  margin-bottom: 14px;
+}
+
+.content-block__helper { margin-top: 6px; color: var(--text-secondary); font-size: 13px; }
+
+.content-block__score { text-align: right; }
+
+.content-block__score-value {
+  display: block;
+  font-size: 28px;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--text-primary);
+}
+
+.content-block__score-meta { font-size: 12px; color: var(--text-secondary); }
+
+.content-block__rating-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.content-block__chosen-rating {
+  border-radius: 999px;
+  padding: 7px 12px;
+  background: rgba(181, 107, 82, 0.1);
+  color: var(--primary-red);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+@media (max-width: 640px) {
+  .content-block { padding: 18px; }
+  .content-block__header { flex-direction: column; align-items: stretch; }
+  .content-block__score { text-align: left; }
+}
+</style>
+
+
+
+--- app/composables/useArticleDetail.ts ---
+import type { DetailArticle, DetailComment, DetailCommentTree } from '~/types/api'
+
+export const useArticleDetail = () => {
+  const currentUser = { username: 'You', user_email: 'you@retogen.local' }
+
+  const article      = useState<DetailArticle>('ad-article', () => ({} as DetailArticle))
+  const tracked      = useState('ad-tracked', () => false)
+  const ratingDraft  = useState('ad-rating-draft', () => 0)
+  const hoverRating  = useState('ad-hover-rating', () => 0)
+  const commentDraft = useState('ad-comment-draft', () => '')
+  const activeReplyId = useState<string | null>('ad-active-reply-id', () => null)
+  const replyDrafts  = useState<Record<string, string>>('ad-reply-drafts', () => ({}))
+  const reportState  = useState('ad-report-state', () => ({
+    open: false,
+    type: 'article' as 'article' | 'comment',
+    targetId: '',
+    description: ''
+  }))
+
+  const averageRating = computed(() => {
+    const ratings = article.value.ratings ?? []
+    if (!ratings.length) return '0.0'
+    const total = ratings.reduce((sum, r) => sum + r.rating_value, 0)
+    return (total / ratings.length).toFixed(1)
+  })
+
+  const totalComments = computed(() => article.value.comments?.length ?? 0)
+
+  const articleParagraphs = computed(() =>
+    (article.value.article_content ?? '')
+      .split('\n\n')
+      .map((p) => p.trim())
+      .filter(Boolean)
+  )
+
+  const lowestPrice = computed(() =>
+    [...(article.value.prices ?? [])].sort((a, b) => a.price - b.price)[0]
+  )
+
+  const visibleStars = computed(() => hoverRating.value || ratingDraft.value)
+
+  const commentTree = computed<DetailCommentTree[]>(() =>
+    buildCommentTree(article.value.comments ?? [])
+  )
+
+  const ratingSummaryLabel = computed(() => {
+    if (!ratingDraft.value) return 'Pilih rating untuk artikel ini'
+    const labels: Record<number, string> = {
+      1: 'Kurang memuaskan',
+      2: 'Masih di bawah ekspektasi',
+      3: 'Cukup baik',
+      4: 'Solid dan layak',
+      5: 'Sangat direkomendasikan'
+    }
+    return labels[ratingDraft.value] ?? 'Pilih rating'
+  })
+
+  function buildCommentTree(comments: DetailComment[]): DetailCommentTree[] {
+    const map = new Map<string, DetailCommentTree>()
+    const roots: DetailCommentTree[] = []
+    comments.forEach((c) => map.set(c.comment_id, { ...c, children: [] }))
+    map.forEach((c) => {
+      if (c.parent_comment_id) {
+        const parent = map.get(c.parent_comment_id)
+        if (parent) { parent.children.push(c); return }
+      }
+      roots.push(c)
+    })
+    return roots
+  }
+
+  function formatPrice(value: number) {
+    return new Intl.NumberFormat('id-ID', {
+      style: 'currency', currency: 'IDR', maximumFractionDigits: 0
+    }).format(value)
+  }
+
+  function getCurrentUserRating() {
+    return article.value.ratings?.find((r) => r.user_email === currentUser.user_email)?.rating_value ?? 0
+  }
+
+  function resetPageState(articleId: string) {
+    article.value     = useMockArticleDetail(articleId)
+    tracked.value     = false
+    hoverRating.value = 0
+    commentDraft.value = ''
+    activeReplyId.value = null
+    replyDrafts.value = {}
+    ratingDraft.value = getCurrentUserRating()
+  }
+
+  function setRating(value: number) {
+    ratingDraft.value = value
+    const existing = article.value.ratings.find((r) => r.user_email === currentUser.user_email)
+    if (existing) { existing.rating_value = value; return }
+    article.value.ratings.push({
+      rating_id: `rating-${Date.now()}`,
+      owner: currentUser.username,
+      user_email: currentUser.user_email,
+      rating_value: value
+    })
+  }
+
+  function submitComment(parentId: string | null = null) {
+    const text = (parentId ? (replyDrafts.value[parentId] ?? '') : commentDraft.value).trim()
+    if (!text) return
+    article.value.comments.unshift({
+      comment_id: `comment-${Date.now()}`,
+      parent_comment_id: parentId,
+      owner: currentUser.username,
+      user_email: currentUser.user_email,
+      comment_content: text,
+      created_at: new Date().toISOString()
+    })
+    if (parentId) { replyDrafts.value[parentId] = ''; activeReplyId.value = null; return }
+    commentDraft.value = ''
+  }
+
+  function toggleReply(commentId: string) {
+    activeReplyId.value = activeReplyId.value === commentId ? null : commentId
+  }
+
+  function updateReplyDraft(payload: { commentId: string; value: string }) {
+    replyDrafts.value[payload.commentId] = payload.value
+  }
+
+  function toggleTrackPrice() { tracked.value = !tracked.value }
+
+  function openReport(type: 'article' | 'comment', targetId: string) {
+    reportState.value = { open: true, type, targetId, description: '' }
+  }
+
+  function closeReport() {
+    reportState.value = { ...reportState.value, open: false, description: '', targetId: '' }
+  }
+
+  function submitReport() {
+    if (!reportState.value.description.trim()) return
+    closeReport()
+  }
+
+  return {
+    article, tracked, ratingDraft, hoverRating, commentDraft,
+    activeReplyId, replyDrafts, reportState,
+    averageRating, totalComments, articleParagraphs, lowestPrice,
+    visibleStars, commentTree, ratingSummaryLabel,
+    resetPageState, formatPrice, setRating, submitComment,
+    toggleReply, updateReplyDraft, toggleTrackPrice,
+    openReport, closeReport, submitReport
+  }
+}
+
+
+
+--- app/composables/useMockArticleDetail.ts ---
+import type { DetailArticle } from '~/types/api'
+
+export const useMockArticleDetail = (articleId: string): DetailArticle => ({
+  article_id: articleId,
+  article_title: 'Sony WH-1000XM5',
+  article_preview:
+    'Headphone ANC premium dengan karakter suara seimbang, kenyamanan tinggi, dan pengalaman harian yang konsisten untuk kerja, hiburan, dan perjalanan.',
+  article_content: `Sony WH-1000XM5 menawarkan kombinasi yang matang antara active noise cancelling, kualitas mikrofon, dan kenyamanan untuk penggunaan jangka panjang.
+
+Untuk kebutuhan harian, tuning suaranya terasa aman dan modern. Vokal cukup jelas, bass hadir tanpa terasa berlebihan, dan detail di frekuensi tinggi tetap terjaga untuk musik, podcast, maupun video conference.
+
+Desainnya ringan dan bersih. Clamp force nyaman, ear cup terasa luas, dan pengalaman pemakaian beberapa jam tetap stabil tanpa cepat melelahkan.
+
+Nilai utamanya ada pada konsistensi. Performa ANC, call quality, dan integrasi aplikasi membuat produk ini cocok untuk user yang ingin perangkat audio premium yang praktis dipakai setiap hari.
+
+Jika fokus utama Anda adalah headphone wireless premium dengan pengalaman serba seimbang, model ini tetap relevan sebagai pilihan kuat di kelasnya.`,
+  article_tags: ['audio', 'headphone', 'wireless', 'premium'],
+  article_image: '/logo.jpg',
+  prices: [
+    {
+      id: 'price-1',
+      store: 'Tokopedia',
+      price: 5299000,
+      shippingNote: 'Gratis ongkir kota besar',
+      url: '#',
+      updatedAt: '10 menit lalu',
+      trend: 'down'
+    },
+    {
+      id: 'price-2',
+      store: 'Shopee',
+      price: 5345000,
+      shippingNote: 'Voucher toko tersedia',
+      url: '#',
+      updatedAt: '18 menit lalu',
+      trend: 'stable'
+    },
+    {
+      id: 'price-3',
+      store: 'Bukalapak',
+      price: 5489000,
+      shippingNote: 'Pengiriman same day terbatas',
+      url: '#',
+      updatedAt: '32 menit lalu',
+      trend: 'up'
+    }
+  ],
+  ratings: [
+    { rating_id: 'rating-1', owner: 'Aldo', user_email: 'aldo@example.com', rating_value: 5 },
+    { rating_id: 'rating-2', owner: 'Nadia', user_email: 'nadia@example.com', rating_value: 4 },
+    { rating_id: 'rating-3', owner: 'Raka', user_email: 'raka@example.com', rating_value: 5 }
+  ],
+  comments: [
+    {
+      comment_id: 'comment-1',
+      parent_comment_id: null,
+      owner: 'Nadia',
+      user_email: 'nadia@example.com',
+      comment_content: 'ANC-nya terasa sangat stabil buat kerja di kafe. Mic juga jauh lebih aman untuk meeting dibanding beberapa model lain di kelas harga yang sama.',
+      created_at: '2026-03-12T09:10:00.000Z'
+    },
+    {
+      comment_id: 'comment-2',
+      parent_comment_id: 'comment-1',
+      owner: 'Raka',
+      user_email: 'raka@example.com',
+      comment_content: 'Setuju. Buat call quality memang salah satu yang paling konsisten. Saya juga suka karena dipakai lama tetap nyaman.',
+      created_at: '2026-03-12T10:25:00.000Z'
+    },
+    {
+      comment_id: 'comment-3',
+      parent_comment_id: null,
+      owner: 'Aldo',
+      user_email: 'aldo@example.com',
+      comment_content: 'Karakter suaranya aman untuk banyak genre. Tidak terlalu fun, tapi justru enak buat dipakai harian.',
+      created_at: '2026-03-13T07:40:00.000Z'
+    }
+  ]
+})
+
+
+
+--- app/types/api.ts ---
+export interface ApiBaseResponse {
+  confirmation: string
+}
+
+export interface LoginRequest {
+  email: string
+  password: string
+}
+
+export interface LoginResponse extends ApiBaseResponse {
+  token?: string
+}
+
+export interface RegisterRequest {
+  username: string
+  fullname: string
+  email: string
+  password: string
+}
+
+export interface RegisterResponse extends ApiBaseResponse {}
+
+export interface UserProfile {
+  user_id: string
+  username: string
+  email: string
+  fullname: string
+  role: string
+  created_at: string
+  updated_at?: string
+  reports?: unknown[]
+}
+
+export interface UserDetailsResponse extends ApiBaseResponse {
+  user: UserProfile
+}
+
+export type SortOption = 'newest' | 'oldest' | 'highest_rated' | 'most_commented'
+
+export interface ArticleListItem {
+  article_id: string
+  article_title: string
+  article_preview: string
+  article_tags: string[]
+  article_image: string | null
+}
+
+/** Extends ArticleListItem with display-only fields used by mock data and the main page card. */
+export interface ArticleCard extends ArticleListItem {
+  rating_avg: number
+  comment_count: number
+  created_at: string
+}
+
+export interface MainPageRequest {
+  sort?: string
+  tag?: string
+  search?: string
+}
+
+export interface MainPageResponse extends ApiBaseResponse {
+  username: string
+  sort: string
+  tag: string
+  search: string
+  list_article: ArticleListItem[]
+}
+
+export interface ArticleComment {
+  comment_id: string
+  parent_comment_id: string | null
+  owner: string
+  user_email: string
+  comment_content: string
+}
+
+export interface ArticleRating {
+  rating_id: string
+  owner: string
+  user_email: string
+  rating_value: number
+}
+
+export interface ArticleReport {
+  report_id: string
+  description: string
+  created_at: string
+}
+
+export interface ArticleViewResponse extends ApiBaseResponse {
+  userclass: 'user' | 'admin'
+  user_email: string
+  username: string
+  article_title: string
+  article_content: string
+  article_tags: string[]
+  article_image: string | null
+  comments: ArticleComment[]
+  ratings: ArticleRating[]
+  reports?: ArticleReport[]
+}
+
+// Article detail page types
+export interface DetailPriceEntry {
+  id: string
+  store: string
+  price: number
+  shippingNote: string
+  url: string
+  updatedAt: string
+  trend: 'down' | 'up' | 'stable'
+}
+
+export interface DetailRating {
+  rating_id: string
+  owner: string
+  user_email: string
+  rating_value: number
+}
+
+export interface DetailComment {
+  comment_id: string
+  parent_comment_id: string | null
+  owner: string
+  user_email: string
+  comment_content: string
+  created_at: string
+}
+
+export interface DetailCommentTree extends DetailComment {
+  children: DetailCommentTree[]
+}
+
+export interface DetailArticle {
+  article_id: string
+  article_title: string
+  article_preview: string
+  article_content: string
+  article_tags: string[]
+  article_image: string | null
+  prices: DetailPriceEntry[]
+  comments: DetailComment[]
+  ratings: DetailRating[]
+}

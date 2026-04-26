@@ -1,15 +1,30 @@
 <script setup lang="ts">
-const { commentTree, activeReplyId, replyDrafts, openReport, toggleReply, updateReplyDraft, submitComment } = useArticleDetail()
+const {
+  commentTree,
+  totalComments,
+  activeReplyId,
+  replyDrafts,
+  openReport,
+  toggleReply,
+  updateReplyDraft,
+  submitComment
+} = useArticleDetail()
 </script>
 
 <template>
   <section class="article-comments">
     <div class="article-comments__header">
-      <h2 class="article-comments__title">Diskusi</h2>
-      <p class="article-comments__subtitle">Komentar dan balasan tampil dalam satu alur yang rapi.</p>
+      <div>
+        <h2 class="article-comments__title">Diskusi pengguna</h2>
+        <p class="article-comments__subtitle">
+          {{ totalComments }} komentar
+        </p>
+      </div>
     </div>
 
-    <div class="article-comments__list">
+    <DetailArticleComposer />
+
+    <div v-if="commentTree.length" class="article-comments__list">
       <DetailCommentItem
         v-for="comment in commentTree"
         :key="comment.comment_id"
@@ -22,6 +37,10 @@ const { commentTree, activeReplyId, replyDrafts, openReport, toggleReply, update
         @submit-reply="submitComment"
       />
     </div>
+
+    <div v-else class="article-comments__empty">
+      Belum ada komentar. Jadilah yang pertama memulai diskusi.
+    </div>
   </section>
 </template>
 
@@ -33,7 +52,7 @@ const { commentTree, activeReplyId, replyDrafts, openReport, toggleReply, update
 }
 
 .article-comments__header {
-  margin-bottom: 18px;
+  margin-bottom: 16px;
 }
 
 .article-comments__title {
@@ -46,11 +65,22 @@ const { commentTree, activeReplyId, replyDrafts, openReport, toggleReply, update
 .article-comments__subtitle {
   margin-top: 6px;
   color: var(--text-secondary);
-  font-size: 14px;
+  font-size: 13px;
 }
 
 .article-comments__list {
+  margin-top: 16px;
   display: grid;
   gap: 14px;
+}
+
+.article-comments__empty {
+  margin-top: 16px;
+  padding: 16px;
+  border-radius: var(--radius-md);
+  border: 1px dashed var(--glass-border);
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 1.6;
 }
 </style>
