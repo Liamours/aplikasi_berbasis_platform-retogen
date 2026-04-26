@@ -6,10 +6,6 @@ const techChips = ['Laptop', 'Smartphone', 'Audio', 'Display']
   <section class="hero">
     <div class="hero__content">
       <div class="hero__copy">
-        <div class="hero__brand">
-          <img src="/logo.jpg" alt="RetoGen logo" class="hero__logo">
-          <span class="hero__brand-name">RetoGen</span>
-        </div>
 
         <h1 class="page-title">
           Review elektronik yang lebih tenang untuk dibaca.
@@ -23,7 +19,6 @@ const techChips = ['Laptop', 'Smartphone', 'Audio', 'Display']
           <NuxtLink to="/login">
             <BaseButton variant="primary">Mulai Jelajahi</BaseButton>
           </NuxtLink>
-          <BaseButton variant="ghost">Lihat Artikel</BaseButton>
         </div>
       </div>
 
@@ -248,7 +243,7 @@ const techChips = ['Laptop', 'Smartphone', 'Audio', 'Display']
 }
 
 .hero-float--price { top: 26px; right: 0; }
-.hero-float--rating { bottom: 34px; left: 0; }
+.hero-float--rating { bottom: 26px; right: 0; }
 
 .hero-float__label {
   margin: 0 0 6px;

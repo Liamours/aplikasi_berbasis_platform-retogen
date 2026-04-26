@@ -1,7 +1,9 @@
 <script setup lang="ts">
 const { isDark, toggleTheme } = useTheme()
-const authStore = useAuthStore()
-const { logout } = useAuth()
+const route = useRoute()
+
+// Profile + add-article only on the main article listing page
+const isMainPage = computed(() => route.path === '/main')
 </script>
 
 <template>
@@ -13,21 +15,24 @@ const { logout } = useAuth()
       </NuxtLink>
 
       <div class="navbar__actions">
+        <!-- Main page: admin add-article + profile -->
+        <template v-if="isMainPage">
+          <MainAddArticleButton />
+        </template>
+        <!-- Theme toggle — always visible -->
         <BaseButton variant="icon" aria-label="Toggle theme" @click="toggleTheme">
           <span>{{ isDark ? '☀' : '☾' }}</span>
         </BaseButton>
 
-        <template v-if="authStore.isAuthenticated">
-          <BaseButton variant="ghost" @click="logout">
-            Logout
-          </BaseButton>
+        <!-- Main page: admin add-article + profile -->
+        <template v-if="isMainPage">
+          <MainProfileDropdown />
         </template>
 
+        <!-- All other pages: login link -->
         <template v-else>
-          <NuxtLink to="/login" class="navbar__link">
-            <BaseButton variant="ghost">
-              Login
-            </BaseButton>
+          <NuxtLink to="/login">
+            <BaseButton variant="ghost">Login</BaseButton>
           </NuxtLink>
         </template>
       </div>
@@ -86,10 +91,6 @@ const { logout } = useAuth()
   display: flex;
   align-items: center;
   gap: 8px;
-}
-
-.navbar__link {
-  display: inline-flex;
 }
 
 @media (max-width: 480px) {
