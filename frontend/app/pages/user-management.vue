@@ -26,8 +26,7 @@ definePageMeta({
 const api = useApi()
 const authStore = useAuthStore()
 
-// const users = ref<ManagedUser[]>([])
-const users = ref<ManagedUser[]>([
+const dummyData: ManagedUser[] = [
   {
     user_id: '1',
     username: 'rafiqlabib',
@@ -55,7 +54,10 @@ const users = ref<ManagedUser[]>([
     report_count: 7,
     created_at: '2026-02-18'
   }
-])
+]
+
+// const users = ref<ManagedUser[]>([])
+const users = ref<ManagedUser[]>(JSON.parse(JSON.stringify(dummyData)))
 const search = ref('')
 const isLoading = ref(false)
 const actionLoadingId = ref<string | null>(null)
@@ -103,15 +105,23 @@ const fetchUsers = async () => {
   isLoading.value = true
 
   try {
-    const response = await api.post<GetUsersResponse>('/user/get_all', {}, true)
-
-    if (response.confirmation !== 'successful') {
-      errorMessage.value = response.confirmation || 'Gagal memuat data user.'
-      users.value = []
-      return
-    }
-
-    users.value = response.users ?? []
+    // --- MOCK UI ---
+    // const response = await api.post<GetUsersResponse>('/user/get_all', {}, true)
+    // 
+    // if (response.confirmation !== 'successful') {
+    //   errorMessage.value = response.confirmation || 'Gagal memuat data user.'
+    //   users.value = []
+    //   return
+    // }
+    // 
+    // users.value = response.users ?? []
+    
+    // Simulasi loading 800ms
+    await new Promise(resolve => setTimeout(resolve, 800))
+    
+    // Reset data menggunakan copy dari dummy
+    users.value = JSON.parse(JSON.stringify(dummyData))
+    // ----------------
   } catch {
     errorMessage.value = 'Gagal terhubung ke server.'
     users.value = []
