@@ -6,7 +6,6 @@ import { useUserManagement } from '~/composables/useUserManagement'
 import UMHeader from '~/components/user-management/UMHeader.vue'
 import UMBanConfirmPanel from '~/components/user-management/UMBanConfirmPanel.vue'
 import UMUserRow from '~/components/user-management/UMUserRow.vue'
-import UMSuccessPopup from '~/components/user-management/UMSuccessPopup.vue'
 
 definePageMeta({
   layout: 'default',
@@ -87,7 +86,7 @@ onMounted(() => {
     </div>
   </BasePageShell>
 
-  <UMSuccessPopup
+  <BaseSuccessPopup
     v-if="showSuccessPopup"
     :message="successMessage"
     @close="closeSuccessPopup"

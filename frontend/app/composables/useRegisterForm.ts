@@ -28,6 +28,7 @@ export const useRegisterForm = () => {
 
   const isSubmitting = ref(false)
   const isSuccess = ref(false)
+  const successMessage = ref('')
 
   const clearErrors = () => {
     errors.username = ''
@@ -144,12 +145,9 @@ export const useRegisterForm = () => {
 
       if (response.confirmation === 'register successful') {
         isSuccess.value = true
+        successMessage.value = 'Registrasi berhasil. Silakan masuk.'
         clearErrors()
         resetForm()
-
-        setTimeout(() => {
-          navigateTo('/login')
-        }, 900)
 
         return
       }
@@ -167,11 +165,18 @@ export const useRegisterForm = () => {
     }
   }
 
+  const handleCloseSuccess = () => {
+    isSuccess.value = false
+    navigateTo('/login')
+  }
+
   return {
     form,
     errors,
     isSubmitting,
     isSuccess,
-    handleSubmit
+    successMessage,
+    handleSubmit,
+    handleCloseSuccess
   }
 }
