@@ -4,6 +4,13 @@ const route = useRoute()
 
 // Profile + add-article only on the main article listing page
 const isMainPage = computed(() => route.path === '/main')
+
+const authButton = computed(() => {
+  if (route.path === '/login') {
+    return { text: 'Register', link: '/register' }
+  }
+  return { text: 'Login', link: '/login' }
+})
 </script>
 
 <template>
@@ -29,10 +36,10 @@ const isMainPage = computed(() => route.path === '/main')
           <MainProfileDropdown />
         </template>
 
-        <!-- All other pages: login link -->
+        <!-- Auth pages: toggle between login/register -->
         <template v-else>
-          <NuxtLink to="/login">
-            <BaseButton variant="ghost">Login</BaseButton>
+          <NuxtLink :to="authButton.link">
+            <BaseButton variant="ghost">{{ authButton.text }}</BaseButton>
           </NuxtLink>
         </template>
       </div>
