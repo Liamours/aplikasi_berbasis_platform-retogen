@@ -2,8 +2,8 @@
 .claude/
 
 # Python
-__pycache__/
-*.pyc
+!backend/**/__pycache__/
+!backend/**/*.pyc
 .pytest_cache/
 .env
 
@@ -21,5 +21,3 @@ mongo_data/
 
 # Misc
 .DS_Store
-**/__pycache__/ 
-**/*.pyc 
