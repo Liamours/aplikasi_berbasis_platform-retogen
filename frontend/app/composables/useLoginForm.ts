@@ -48,7 +48,7 @@ export const useLoginForm = () => {
         errors.general = 'Email tidak terdaftar.'
         return
       }
-      if (response.confirmation === 'password incorrect') {
+      if (response.confirmation === 'password incorrect' || response.confirmation === 'password is incorrect') {
         errors.general = 'Password yang Anda masukkan salah.'
         return
       }
