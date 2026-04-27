@@ -6,6 +6,8 @@ export const useLoginForm = () => {
   const form = reactive<LoginRequest>({ email: '', password: '' })
   const errors = reactive({ email: '', password: '', general: '' })
   const isSubmitting = ref(false)
+  const isSuccess = ref(false)
+  const successMessage = ref('')
 
   const clearErrors = () => {
     errors.email = ''
@@ -41,7 +43,8 @@ export const useLoginForm = () => {
       const response = await login({ email: form.email.trim(), password: form.password })
 
       if (response.confirmation === 'login successful') {
-        await navigateTo('/main')
+        isSuccess.value = true
+        successMessage.value = 'Login berhasil.'
         return
       }
       if (response.confirmation === "email doesn't exist") {
@@ -60,5 +63,10 @@ export const useLoginForm = () => {
     }
   }
 
-  return { form, errors, isSubmitting, handleSubmit }
+  const handleCloseSuccess = () => {
+    isSuccess.value = false
+    navigateTo('/main')
+  }
+
+  return { form, errors, isSubmitting, isSuccess, successMessage, handleSubmit, handleCloseSuccess }
 }

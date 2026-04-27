@@ -4,6 +4,8 @@ const {
   errors,
   isSubmitting,
   isSuccess,
+  successMessage,
+  handleCloseSuccess,
   handleSubmit
 } = useRegisterForm()
 </script>
@@ -17,23 +19,13 @@ const {
       </div>
 
       <div class="register-card__title-wrap">
-        <p class="register-card__eyebrow">Create your account</p>
         <h1 class="card-title">Buat akun baru</h1>
-        <p class="register-card__description">
-          Simpan preferensi Anda, ikuti topik yang relevan, dan mulai berinteraksi dengan review elektronik yang lebih rapi.
-        </p>
       </div>
     </div>
 
     <form class="register-form" @submit.prevent="handleSubmit">
       <Transition name="glass-fade">
         <div v-if="errors.general" class="error-banner">{{ errors.general }}</div>
-      </Transition>
-
-      <Transition name="glass-fade">
-        <div v-if="isSuccess" class="success-banner">
-          Registrasi berhasil. Mengarahkan ke halaman masuk...
-        </div>
       </Transition>
 
       <BaseInput
@@ -80,6 +72,12 @@ const {
       </p>
     </div>
   </BaseGlassCard>
+
+  <BaseSuccessPopup
+    v-if="isSuccess"
+    :message="successMessage"
+    @close="handleCloseSuccess"
+  />
 </template>
 
 <style scoped>
@@ -146,14 +144,6 @@ const {
   display: flex;
   flex-direction: column;
   gap: 18px;
-}
-
-.success-banner {
-  border: 1px solid rgba(0, 206, 209, 0.24);
-  background: rgba(0, 206, 209, 0.1);
-  color: var(--primary-cyan);
-  border-radius: 8px;
-  padding: 12px 14px;
 }
 
 .register-card__footer {

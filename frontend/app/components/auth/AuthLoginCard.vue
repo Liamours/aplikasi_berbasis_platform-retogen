@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const { form, errors, isSubmitting, handleSubmit } = useLoginForm()
+const { form, errors, isSubmitting, isSuccess, successMessage, handleCloseSuccess, handleSubmit } = useLoginForm()
 </script>
 
 <template>
@@ -11,11 +11,7 @@ const { form, errors, isSubmitting, handleSubmit } = useLoginForm()
       </div>
 
       <div class="login-card__title-wrap">
-        <p class="login-card__eyebrow">Secure login access</p>
         <h1 class="card-title">Masuk ke akun Anda</h1>
-        <p class="login-card__description">
-          Lanjutkan untuk membaca review, memberi rating, dan mengikuti update produk.
-        </p>
       </div>
     </div>
 
@@ -52,6 +48,12 @@ const { form, errors, isSubmitting, handleSubmit } = useLoginForm()
       </p>
     </div>
   </BaseGlassCard>
+
+  <BaseSuccessPopup
+    v-if="isSuccess"
+    :message="successMessage"
+    @close="handleCloseSuccess"
+  />
 </template>
 
 <style scoped>
