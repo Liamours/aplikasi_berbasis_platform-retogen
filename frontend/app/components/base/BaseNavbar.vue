@@ -4,15 +4,28 @@ const route = useRoute()
 
 // Profile + add-article only on the main article listing page
 const isMainPage = computed(() => route.path === '/main')
+
+const authButton = computed(() => {
+  if (route.path === '/login') {
+    return { text: 'Register', link: '/register' }
+  }
+  return { text: 'Login', link: '/login' }
+})
+
+const refreshPage = () => {
+  if (import.meta.client) {
+    window.location.reload()
+  }
+}
 </script>
 
 <template>
   <header class="navbar">
     <div class="navbar__inner">
-      <NuxtLink to="/" class="navbar__brand">
+      <div class="navbar__brand" @click="refreshPage" style="cursor: pointer;">
         <img src="/logo.jpg" alt="RetoGen logo" class="navbar__logo">
         <span class="navbar__brand-text">RetoGen</span>
-      </NuxtLink>
+      </div>
 
       <div class="navbar__actions">
         <!-- Main page: admin add-article + profile -->
@@ -29,10 +42,10 @@ const isMainPage = computed(() => route.path === '/main')
           <MainProfileDropdown />
         </template>
 
-        <!-- All other pages: login link -->
+        <!-- Auth pages: toggle between login/register -->
         <template v-else>
-          <NuxtLink to="/login">
-            <BaseButton variant="ghost">Login</BaseButton>
+          <NuxtLink :to="authButton.link">
+            <BaseButton variant="ghost">{{ authButton.text }}</BaseButton>
           </NuxtLink>
         </template>
       </div>

@@ -29,7 +29,11 @@ export const useAuth = () => {
   }
 
   const fetchSelf = async () => {
-    const response = await post<UserDetailsResponse>('/user/get_details', {}, true)
+    const response = await post<UserDetailsResponse>(
+      '/user/get_details',
+      { user_email: '' },
+      true
+    )
 
     if (response.confirmation === 'successful') {
       authStore.setUser({
