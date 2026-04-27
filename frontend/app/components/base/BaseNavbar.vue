@@ -11,15 +11,21 @@ const authButton = computed(() => {
   }
   return { text: 'Login', link: '/login' }
 })
+
+const refreshPage = () => {
+  if (import.meta.client) {
+    window.location.reload()
+  }
+}
 </script>
 
 <template>
   <header class="navbar">
     <div class="navbar__inner">
-      <NuxtLink to="/" class="navbar__brand">
+      <div class="navbar__brand" @click="refreshPage" style="cursor: pointer;">
         <img src="/logo.jpg" alt="RetoGen logo" class="navbar__logo">
         <span class="navbar__brand-text">RetoGen</span>
-      </NuxtLink>
+      </div>
 
       <div class="navbar__actions">
         <!-- Main page: admin add-article + profile -->

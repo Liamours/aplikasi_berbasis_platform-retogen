@@ -11,7 +11,7 @@ const emit = defineEmits<{
 <template>
   <Teleport to="body">
     <Transition name="glass-fade">
-      <div class="popup-overlay" @click.self="emit('close')">
+      <div class="popup-overlay">
         <div class="popup-content">
           <div class="popup-icon">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -21,7 +21,7 @@ const emit = defineEmits<{
           </div>
           <h3>Berhasil!</h3>
           <p>{{ message }}</p>
-          <BaseButton @click="emit('close')">Tutup</BaseButton>
+          <BaseButton @click="emit('close')">OK</BaseButton>
         </div>
       </div>
     </Transition>
@@ -41,7 +41,7 @@ const emit = defineEmits<{
 }
 
 .popup-content {
-  background: rgba(20, 20, 20, 0.95);
+  background: var(--bg-surface);
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-lg);
   padding: 32px;
@@ -51,7 +51,7 @@ const emit = defineEmits<{
   flex-direction: column;
   align-items: center;
   gap: 16px;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+  box-shadow: var(--glass-shadow);
 }
 
 .popup-icon {
@@ -73,7 +73,7 @@ const emit = defineEmits<{
 .popup-content h3 {
   font-size: 24px;
   margin: 0;
-  color: white;
+  color: var(--text-primary);
 }
 
 .popup-content p {
