@@ -3,6 +3,7 @@ from schemas.add_comment_schema import AddCommentRequest
 from schemas.edit_comment_update_schema import EditCommentRequest
 from schemas.edit_comment_get_schema import EditCommentGetRequest
 from services.comment_service import CommentService
+from services.report_article_service import ReportArticleService
 from services.article_service import ArticleService
 from services.auth_service import AuthService
 from db.connection import db
@@ -51,7 +52,8 @@ async def add_comment(req: AddCommentRequest, payload: dict = Depends(get_curren
     if not new_comment_id:
         return {"confirmation": "backend error"}
 
-    userclass = "admin" if AuthService.is_admin(payload) else "user"
+    is_admin = AuthService.is_admin(payload)
+    userclass = "admin" if is_admin else "user"
 
     image_base64 = None
     if article.get("article_image"):
@@ -98,19 +100,29 @@ async def add_comment(req: AddCommentRequest, payload: dict = Depends(get_curren
     reports_raw = await db.report_article.find({"article_id": ObjectId(req.article_id)}).to_list(None)
     reports = [{"report_id": str(rep["_id"]), "description": rep["description"], "created_at": rep.get("created_at")} for rep in reports_raw]
 
-    return {
+    response = {
         "confirmation": "successful",
         "userclass": userclass,
-        "username": user["username"],
         "user_email": payload.get("email"),
+        "username": user["username"],
         "article_title": article["article_title"],
         "article_content": article["article_content"],
         "article_tags": article.get("article_tags", []),
         "article_image": image_base64,
         "comments": comments,
-        "ratings": ratings,
-        "reports": reports
+        "ratings": ratings
     }
+
+    if is_admin:
+        reports = await ReportArticleService.get_reports_by_article(req.article_id)
+
+        if reports is None:
+            return {"confirmation": "backend error"}
+
+        response["report_count"] = article.get("report_count", 0)
+        response["reports"] = reports
+
+    return response
 
 
 @router.post("/edit/update")
@@ -142,7 +154,8 @@ async def edit_comment(req: EditCommentRequest, payload: dict = Depends(get_curr
     if not article:
         return {"confirmation": "backend error"}
 
-    userclass = "admin" if AuthService.is_admin(payload) else "user"
+    is_admin = AuthService.is_admin(payload)
+    userclass = "admin" if is_admin else "user"
 
     try:
         image_base64 = bytes_to_base64(bytes(article.get("article_image"))) if article.get("article_image") else None
@@ -187,19 +200,29 @@ async def edit_comment(req: EditCommentRequest, payload: dict = Depends(get_curr
     reports_raw = await db.report_article.find({"article_id": ObjectId(req.article_id)}).to_list(None)
     reports = [{"report_id": str(rep["_id"]), "description": rep["description"], "created_at": rep.get("created_at")} for rep in reports_raw]
 
-    return {
+    response = {
         "confirmation": "successful",
         "userclass": userclass,
-        "username": user["username"],
         "user_email": user_email,
+        "username": user["username"],
         "article_title": article["article_title"],
         "article_content": article["article_content"],
         "article_tags": article.get("article_tags", []),
         "article_image": image_base64,
         "comments": comments,
-        "ratings": ratings,
-        "reports": reports
+        "ratings": ratings
     }
+
+    if is_admin:
+        reports = await ReportArticleService.get_reports_by_article(req.article_id)
+
+        if reports is None:
+            return {"confirmation": "backend error"}
+
+        response["report_count"] = article.get("report_count", 0)
+        response["reports"] = reports
+
+    return response
 
 
 @router.post("/edit/get")
@@ -315,16 +338,26 @@ async def delete_comment(req: DeleteCommentRequest, payload: dict = Depends(get_
     reports_raw = await db.report_article.find({"article_id": ObjectId(article_id)}).to_list(None)
     reports = [{"report_id": str(rep["_id"]), "description": rep["description"], "created_at": rep.get("created_at")} for rep in reports_raw]
 
-    return {
+    response = {
         "confirmation": "successful",
         "userclass": userclass,
-        "username": user["username"],
         "user_email": user["email"],
+        "username": user["username"],
         "article_title": article["article_title"],
         "article_content": article["article_content"],
         "article_tags": article.get("article_tags", []),
         "article_image": image_base64,
         "comments": comments,
-        "ratings": ratings,
-        "reports": reports
+        "ratings": ratings
     }
+
+    if is_admin:
+        reports = await ReportArticleService.get_reports_by_article(article_id)
+
+        if reports is None:
+            return {"confirmation": "backend error"}
+
+        response["report_count"] = article.get("report_count", 0)
+        response["reports"] = reports
+
+    return response
