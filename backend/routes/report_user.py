@@ -3,6 +3,7 @@ from schemas.get_user_profile_schema import GetUserProfileRequest
 from schemas.report_user_schema import ReportUserRequest
 from services.report_user_service import ReportUserService
 from core.dependencies import get_current_user
+from db.connection import db
 
 router = APIRouter()
 
