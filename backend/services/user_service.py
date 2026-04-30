@@ -2,6 +2,7 @@ import logging
 from db.connection import db
 from bson import ObjectId
 from services.comment_service import CommentService
+from services.report_article_service import ReportArticleService
 
 logger = logging.getLogger(__name__)
 
@@ -43,6 +44,7 @@ class UserService:
                 await CommentService.delete_comment_and_children(str(c["_id"]))
 
             await db.rating.delete_many({"owner_id": user_id})
+            await ReportArticleService.delete_reports_by_owner(user_id)
             await db.report_user.delete_many({"reported_user_id": user_oid})
 
             result = await db.user.delete_one({"_id": user_oid})
