@@ -3,6 +3,7 @@ from schemas.edit_article_get_schema import EditArticleGetRequest
 from schemas.edit_article_update_schema import EditArticleUpdateRequest
 from schemas.view_article_schema import ViewArticleRequest
 from services.rating_service import RatingService
+from services.report_article_service import ReportArticleService
 from services.comment_service import CommentService
 from services.article_service import ArticleService
 from services.auth_service import AuthService
@@ -83,7 +84,8 @@ async def view_article(req: ViewArticleRequest, payload: dict = Depends(get_curr
 
     user_email = payload.get("email")
     user = await db.user.find_one({"email": user_email})
-    userclass = "admin" if AuthService.is_admin(payload) else "user"
+    is_admin = AuthService.is_admin(payload)
+    userclass = "admin" if is_admin else "user"
 
     image_base64 = None
     if article.get("article_image"):
@@ -127,13 +129,8 @@ async def view_article(req: ViewArticleRequest, payload: dict = Depends(get_curr
             "rating_value": r["rating_value"]
         })
 
-    reports_raw = await db.report_article.find({"article_id": req.article_id}).to_list(None)
-    reports = [
-        {"report_id": str(rep["_id"]), "description": rep["description"], "created_at": rep.get("created_at")}
-        for rep in reports_raw
-    ]
 
-    return {
+    response = {
         "confirmation": "successful",
         "userclass": userclass,
         "user_email": user_email,
@@ -143,9 +140,19 @@ async def view_article(req: ViewArticleRequest, payload: dict = Depends(get_curr
         "article_tags": article.get("article_tags", []),
         "article_image": image_base64,
         "comments": comments,
-        "ratings": ratings,
-        "reports": reports
+        "ratings": ratings
     }
+
+    if is_admin:
+        reports = await ReportArticleService.get_reports_by_article(req.article_id)
+
+        if reports is None:
+            return {"confirmation": "backend error"}
+
+        response["report_count"] = article.get("report_count", 0)
+        response["reports"] = reports
+
+    return response
 
 
 @router.post("/delete")
