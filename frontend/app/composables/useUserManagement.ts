@@ -19,40 +19,12 @@ interface ActionResponse {
   confirmation: string
 }
 
-const dummyData: ManagedUser[] = [
-  {
-    user_id: '1',
-    username: 'rafiqlabib',
-    email: 'rafiq@mail.com',
-    fullname: 'Rafiq Labib',
-    role: 'admin',
-    report_count: 0,
-    created_at: '2025-12-12'
-  },
-  {
-    user_id: '2',
-    username: 'dzakydev',
-    email: 'dzaky@mail.com',
-    fullname: 'Dzaky Pratama',
-    role: 'user',
-    report_count: 3,
-    created_at: '2026-01-08'
-  },
-  {
-    user_id: '3',
-    username: 'rifqitech',
-    email: 'rifqi@mail.com',
-    fullname: 'Rifqi Akbar',
-    role: 'user',
-    report_count: 7,
-    created_at: '2026-02-18'
-  }
-]
+
 
 export function useUserManagement() {
   const api = useApi()
 
-  const users = ref<ManagedUser[]>(JSON.parse(JSON.stringify(dummyData)))
+  const users = ref<ManagedUser[]>([])
   const search = ref('')
   const isLoading = ref(false)
   const actionLoadingId = ref<string | null>(null)
@@ -89,16 +61,13 @@ export function useUserManagement() {
     clearFeedback()
     isLoading.value = true
     try {
-      // const response = await api.post<GetUsersResponse>('/user/get_all', {}, true)
-      // if (response.confirmation !== 'successful') {
-      //   errorMessage.value = response.confirmation || 'Gagal memuat data user.'
-      //   users.value = []
-      //   return
-      // }
-      // users.value = response.users ?? []
-
-      await new Promise((resolve) => setTimeout(resolve, 800))
-      users.value = JSON.parse(JSON.stringify(dummyData))
+      const response = await api.post<GetUsersResponse>('/user/get_all', {}, true)
+      if (response.confirmation !== 'successful') {
+        errorMessage.value = response.confirmation || 'Gagal memuat data user.'
+        users.value = []
+        return
+      }
+      users.value = response.users ?? []
     } catch {
       errorMessage.value = 'Gagal terhubung ke server.'
       users.value = []
@@ -112,14 +81,15 @@ export function useUserManagement() {
     clearFeedback()
     actionLoadingId.value = user.user_id
     try {
-      // const response = await api.post<ActionResponse>('/user/make_admin', { user_id: user.user_id }, true)
-      // if (response.confirmation === 'successful: role updated to admin') { ... }
-
-      await new Promise((resolve) => setTimeout(resolve, 800))
-      const index = users.value.findIndex((u) => u.user_id === user.user_id)
-      if (index !== -1) users.value[index].role = 'admin'
-      successMessage.value = `${user.username} berhasil diubah menjadi admin.`
-      showSuccessPopup.value = true
+      const response = await api.post<ActionResponse>('/user/make_admin', { user_id: user.user_id }, true)
+      if (response.confirmation === 'successful: role updated to admin' || response.confirmation === 'successful') {
+        const index = users.value.findIndex((u) => u.user_id === user.user_id)
+        if (index !== -1) users.value[index].role = 'admin'
+        successMessage.value = `${user.username} berhasil diubah menjadi admin.`
+        showSuccessPopup.value = true
+      } else {
+        errorMessage.value = response.confirmation || 'Gagal mengubah role user.'
+      }
     } catch {
       errorMessage.value = 'Gagal mengubah role user.'
     } finally {
@@ -141,14 +111,15 @@ export function useUserManagement() {
     clearFeedback()
     actionLoadingId.value = selectedBanUser.value.user_id
     try {
-      // const response = await api.post<ActionResponse>('/user/delete', { user_id: selectedBanUser.value.user_id }, true)
-      // if (response.confirmation === 'successful: user deleted') { ... }
-
-      await new Promise((resolve) => setTimeout(resolve, 800))
-      users.value = users.value.filter((u) => u.user_id !== selectedBanUser.value!.user_id)
-      successMessage.value = `${selectedBanUser.value.username} berhasil diban.`
-      showSuccessPopup.value = true
-      selectedBanUser.value = null
+      const response = await api.post<ActionResponse>('/user/delete', { user_id: selectedBanUser.value.user_id }, true)
+      if (response.confirmation === 'successful: user deleted' || response.confirmation === 'successful') {
+        users.value = users.value.filter((u) => u.user_id !== selectedBanUser.value!.user_id)
+        successMessage.value = `${selectedBanUser.value.username} berhasil diban.`
+        showSuccessPopup.value = true
+        selectedBanUser.value = null
+      } else {
+        errorMessage.value = response.confirmation || 'Gagal memproses ban user.'
+      }
     } catch {
       errorMessage.value = 'Gagal memproses ban user.'
     } finally {
