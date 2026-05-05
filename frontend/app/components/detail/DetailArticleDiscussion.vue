@@ -61,7 +61,7 @@ const {
         :comment="comment"
         :active-reply-id="activeReplyId"
         :reply-drafts="replyDrafts"
-        @open-report="openReport('comment', $event)"
+        @open-report="openReport('comment', $event.commentId, $event.owner, $event.content)"
         @open-user-profile="openOtherUserProfile"
         @open-user-report="openReportUser"
         @toggle-reply="toggleReply"
