@@ -57,6 +57,9 @@ onUnmounted(() => document.removeEventListener('mousedown', onOutsideClick))
         <BaseDropdownItem to="/profile" @click="close">
           Profil Saya
         </BaseDropdownItem>
+        <BaseDropdownItem :danger="true" @click="close">
+          Keluar
+        </BaseDropdownItem>
 
       </BaseDropdownPanel>
     </Transition>
