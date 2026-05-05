@@ -190,10 +190,6 @@ const emit = defineEmits<{
 }
 
 .report-user-modal__comment {
-  padding: 14px;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--glass-border);
-  background: rgba(255, 255, 255, 0.1);
   margin-bottom: 14px;
 }
 
@@ -201,11 +197,10 @@ const emit = defineEmits<{
 .report-user-modal__field span {
   display: block;
   margin-bottom: 8px;
-  color: var(--text-muted);
-  font-size: 12px;
-  font-weight: 700;
+  color: #000;
+  font-size: 14px;
+  font-weight: 800;
   letter-spacing: 0.5px;
-  text-transform: uppercase;
 }
 
 .report-user-modal__comment p {
