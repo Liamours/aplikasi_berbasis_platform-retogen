@@ -23,6 +23,8 @@ export const useArticleDetail = () => {
     open: false,
     type: 'article' as 'article' | 'comment',
     targetId: '',
+    targetName: '',
+    targetContent: '',
     description: ''
   }))
 
@@ -366,17 +368,44 @@ export const useArticleDetail = () => {
     tracked.value = !tracked.value
   }
 
-  function openReport(type: 'article' | 'comment', targetId: string) {
-    reportState.value = { open: true, type, targetId, description: '' }
+  function openReport(type: 'article' | 'comment', targetId: string, targetName: string = '', targetContent: string = '') {
+    reportState.value = { open: true, type, targetId, targetName, targetContent, description: '' }
   }
 
   function closeReport() {
-    reportState.value = { ...reportState.value, open: false, description: '', targetId: '' }
+    reportState.value = { ...reportState.value, open: false, description: '', targetId: '', targetName: '', targetContent: '' }
   }
 
-  function submitReport() {
+  async function submitReport() {
     if (!reportState.value.description.trim()) return
-    closeReport()
+    
+    try {
+      if (reportState.value.type === 'article') {
+        const response = await post<ApiBaseResponse>('/report_article/add', {
+          article_id: reportState.value.targetId,
+          description: reportState.value.description
+        }, true)
+        
+        if (response.confirmation.includes('successful')) {
+          closeReport()
+        }
+      } else {
+        // Reporting a comment - currently reports the user who made the comment
+        const comment = article.value.comments?.find(c => c.comment_id === reportState.value.targetId)
+        if (!comment) return
+
+        const response = await post<ApiBaseResponse>('/report_user/report_user', {
+          reported_user_email: comment.user_email,
+          description: `[Comment Report - ID: ${comment.comment_id}] ${reportState.value.description}`
+        }, true)
+
+        if (response.confirmation.includes('successful')) {
+          closeReport()
+        }
+      }
+    } catch (err) {
+      console.error('Failed to submit report', err)
+    }
   }
 
   return {
