@@ -43,18 +43,18 @@ const normalizeStoreName = (store: string) => {
 }
 
 const getStoreLabel = (item: DetailPriceEntry) => {
-  return item.store || 'Toko'
+  return item.store || 'Tokopedia'
 }
 
 const getStoreInitial = (item: DetailPriceEntry) => {
-  const source = item.store || item.product || 'R'
+  const source = item.store || 'T'
   return source.slice(0, 1).toUpperCase()
 }
 
 const resolveStoreLogo = (item: DetailPriceEntry) => {
   if (item.logo) return item.logo
-  if (item.store) return `/${normalizeStoreName(item.store)}.png`
-  return '/logo.jpg'
+  // Always use Tokopedia logo for now as it's the only source
+  return '/tokopedia.png'
 }
 
 const markLogoAsBroken = (id: string) => {
