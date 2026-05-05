@@ -5,7 +5,7 @@ const { logout } = useAuth()
 
 // Profile + add-article only on the main article listing page
 const isMainPage = computed(() => route.path === '/main')
-const isProfilePage = computed(() => route.path === '/profile')
+const isSimpleNavbarPage = computed(() => ['/profile', '/user-management'].includes(route.path))
 
 const authButton = computed(() => {
   if (route.path === '/login') {
@@ -44,8 +44,8 @@ const refreshPage = () => {
           <MainProfileDropdown />
         </template>
 
-        <!-- Profile page: Only show theme toggle -->
-        <template v-else-if="isProfilePage">
+        <!-- Simple navbar pages (Profile, User Management): Only show theme toggle -->
+        <template v-else-if="isSimpleNavbarPage">
           <!-- no extra actions -->
         </template>
 
