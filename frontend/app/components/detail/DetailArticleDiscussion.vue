@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import OtherUserProfileModal from '~/components/profile/OtherUserProfileModal.vue'
+import DetailReportUserModal from '~/components/detail/DetailReportUserModal.vue'
 
 const {
   commentTree,
@@ -22,6 +23,22 @@ const {
   closeOtherUserProfile,
   formatDate
 } = useUserProfile()
+
+const {
+  isOpen: isReportUserOpen,
+  isSubmitting: isReportUserSubmitting,
+  target: reportUserTarget,
+  description: reportUserDescription,
+  errorMessage: reportUserErrorMessage,
+  showSuccessPopup: showReportUserSuccessPopup,
+  successMessage: reportUserSuccessMessage,
+  commentPreview: reportUserCommentPreview,
+  canSubmit: canSubmitReportUser,
+  openReportUser,
+  closeReportUser,
+  submitReportUser,
+  closeSuccessPopup: closeReportUserSuccessPopup
+} = useReportUser()
 </script>
 
 <template>
@@ -46,6 +63,7 @@ const {
         :reply-drafts="replyDrafts"
         @open-report="openReport('comment', $event)"
         @open-user-profile="openOtherUserProfile"
+        @open-user-report="openReportUser"
         @toggle-reply="toggleReply"
         @update-reply-draft="updateReplyDraft"
         @submit-reply="submitComment"
@@ -65,6 +83,24 @@ const {
     :error-message="otherErrorMessage"
     :format-date="formatDate"
     @close="closeOtherUserProfile"
+  />
+
+  <DetailReportUserModal
+    v-model:description="reportUserDescription"
+    :open="isReportUserOpen"
+    :target="reportUserTarget"
+    :comment-preview="reportUserCommentPreview"
+    :is-submitting="isReportUserSubmitting"
+    :can-submit="canSubmitReportUser"
+    :error-message="reportUserErrorMessage"
+    @close="closeReportUser"
+    @submit="submitReportUser"
+  />
+
+  <BaseSuccessPopup
+    v-if="showReportUserSuccessPopup"
+    :message="reportUserSuccessMessage"
+    @close="closeReportUserSuccessPopup"
   />
 </template>
 
