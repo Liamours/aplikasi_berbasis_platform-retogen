@@ -14,6 +14,13 @@ const props = defineProps<{
 const emit = defineEmits<{
   openReport: [commentId: string]
   openUserProfile: [userEmail: string]
+  openUserReport: [
+    payload: {
+      username: string
+      userEmail: string
+      commentContent: string
+    }
+  ]
   toggleReply: [commentId: string]
   updateReplyDraft: [{ commentId: string, value: string }]
   submitReply: [parentId: string]
@@ -52,6 +59,16 @@ const openProfile = () => {
   emit('openUserProfile', props.comment.user_email)
 }
 
+const openUserReport = () => {
+  if (!props.comment.user_email) return
+
+  emit('openUserReport', {
+    username: props.comment.owner,
+    userEmail: props.comment.user_email,
+    commentContent: props.comment.comment_content
+  })
+}
+
 const replyValue = computed(() => props.replyDrafts[props.comment.comment_id] ?? '')
 const isReplying = computed(() => props.activeReplyId === props.comment.comment_id)
 const isEditing = computed(() => activeEditId.value === props.comment.comment_id)
@@ -61,7 +78,9 @@ const commentUserRating = computed(() => getUserRatingValue(props.comment.user_e
 
 const showEditAction = computed(() => canEditComment(props.comment) && !isEditing.value)
 const showDeleteAction = computed(() => canDeleteComment(props.comment))
-const showReportAction = computed(() => !isOwnComment(props.comment) && !isAdmin.value)
+const showUserReportAction = computed(() =>
+  !isOwnComment(props.comment) && !isEditing.value
+)
 </script>
 
 <template>
@@ -109,10 +128,28 @@ const showReportAction = computed(() => !isOwnComment(props.comment) && !isAdmin
           {{ isReplying ? 'Tutup' : 'Balas' }}
         </button>
 
+        <button
+          v-if="showUserReportAction"
+          type="button"
+          class="comment-item__report-user-btn"
+          :aria-label="`Laporkan ${comment.owner}`"
+          @click="openUserReport"
+        >
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path
+              d="M12 9v4M12 17h.01M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+        </button>
+
         <DetailReportMenu
           :show-edit="showEditAction"
           :show-delete="showDeleteAction"
-          :show-report="showReportAction"
+          :show-report="false"
           edit-label="Edit komentar"
           delete-label="Hapus komentar"
           report-label="Laporkan komentar"
@@ -157,7 +194,10 @@ const showReportAction = computed(() => !isOwnComment(props.comment) && !isAdmin
           class="comment-item__textarea"
           rows="3"
           placeholder="Tulis balasan singkat..."
-          @input="$emit('updateReplyDraft', { commentId: comment.comment_id, value: ($event.target as HTMLTextAreaElement).value })"
+          @input="$emit('updateReplyDraft', {
+            commentId: comment.comment_id,
+            value: ($event.target as HTMLTextAreaElement).value
+          })"
         />
 
         <div class="comment-item__reply-actions">
@@ -181,6 +221,7 @@ const showReportAction = computed(() => !isOwnComment(props.comment) && !isAdmin
         :reply-drafts="replyDrafts"
         @open-report="$emit('openReport', $event)"
         @open-user-profile="$emit('openUserProfile', $event)"
+        @open-user-report="$emit('openUserReport', $event)"
         @toggle-reply="$emit('toggleReply', $event)"
         @update-reply-draft="$emit('updateReplyDraft', $event)"
         @submit-reply="$emit('submitReply', $event)"
@@ -303,6 +344,32 @@ const showReportAction = computed(() => !isOwnComment(props.comment) && !isAdmin
 
 .comment-item__reply-btn:hover {
   text-decoration: underline;
+}
+
+.comment-item__report-user-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  border: 1px solid rgba(227, 66, 52, 0.28);
+  background: rgba(227, 66, 52, 0.08);
+  color: var(--primary-red);
+  display: inline-grid;
+  place-items: center;
+  cursor: pointer;
+  transition: var(--transition-fast);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.comment-item__report-user-btn:hover {
+  background: rgba(227, 66, 52, 0.14);
+  border-color: rgba(227, 66, 52, 0.4);
+  transform: translateY(-1px);
+}
+
+.comment-item__report-user-btn svg {
+  width: 18px;
+  height: 18px;
 }
 
 .comment-item__body {
