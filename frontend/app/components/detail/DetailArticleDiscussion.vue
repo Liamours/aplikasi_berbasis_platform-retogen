@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import OtherUserProfileModal from '~/components/profile/OtherUserProfileModal.vue'
+
 const {
   commentTree,
   totalComments,
@@ -9,6 +11,17 @@ const {
   updateReplyDraft,
   submitComment
 } = useArticleDetail()
+
+const {
+  otherProfile,
+  otherProfileInitials,
+  isOtherProfileOpen,
+  isOtherLoading,
+  otherErrorMessage,
+  openOtherUserProfile,
+  closeOtherUserProfile,
+  formatDate
+} = useUserProfile()
 </script>
 
 <template>
@@ -32,6 +45,7 @@ const {
         :active-reply-id="activeReplyId"
         :reply-drafts="replyDrafts"
         @open-report="openReport('comment', $event)"
+        @open-user-profile="openOtherUserProfile"
         @toggle-reply="toggleReply"
         @update-reply-draft="updateReplyDraft"
         @submit-reply="submitComment"
@@ -42,6 +56,16 @@ const {
       Belum ada komentar. Jadilah yang pertama memulai diskusi.
     </div>
   </section>
+
+  <OtherUserProfileModal
+    :open="isOtherProfileOpen"
+    :profile="otherProfile"
+    :initials="otherProfileInitials"
+    :is-loading="isOtherLoading"
+    :error-message="otherErrorMessage"
+    :format-date="formatDate"
+    @close="closeOtherUserProfile"
+  />
 </template>
 
 <style scoped>

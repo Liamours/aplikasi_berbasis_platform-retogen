@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { onMounted } from 'vue'
-import { useUserManagement } from '~/composables/useUserManagement'
+import { useUserManagement, type ManagedUser } from '~/composables/useUserManagement'
 
-// Impor komponen secara manual agar bisa menggunakan nama pendek tanpa edit nuxt.config.ts
 import UMHeader from '~/components/user-management/UMHeader.vue'
 import UMBanConfirmPanel from '~/components/user-management/UMBanConfirmPanel.vue'
 import UMUserRow from '~/components/user-management/UMUserRow.vue'
+import OtherUserProfileModal from '~/components/profile/OtherUserProfileModal.vue'
 
 definePageMeta({
   layout: 'default',
@@ -32,6 +32,25 @@ const {
   closeSuccessPopup,
   formatDate
 } = useUserManagement()
+
+const {
+  otherProfile,
+  otherProfileInitials,
+  isOtherProfileOpen,
+  isOtherLoading,
+  otherErrorMessage,
+  openOtherUserPreview,
+  closeOtherUserProfile,
+  formatDate: formatProfileDate
+} = useUserProfile()
+
+const openManagedUserProfile = (user: ManagedUser) => {
+  openOtherUserPreview({
+    user_email: user.email,
+    username: user.username,
+    created_at: user.created_at
+  })
+}
 
 onMounted(() => {
   fetchUsers()
@@ -80,6 +99,7 @@ onMounted(() => {
             :format-date="formatDate"
             @make-admin="makeAdmin"
             @open-ban-confirm="openBanConfirm"
+            @open-user-profile="openManagedUserProfile"
           />
         </div>
       </BaseGlassCard>
@@ -90,6 +110,16 @@ onMounted(() => {
     v-if="showSuccessPopup"
     :message="successMessage"
     @close="closeSuccessPopup"
+  />
+
+  <OtherUserProfileModal
+    :open="isOtherProfileOpen"
+    :profile="otherProfile"
+    :initials="otherProfileInitials"
+    :is-loading="isOtherLoading"
+    :error-message="otherErrorMessage"
+    :format-date="formatProfileDate"
+    @close="closeOtherUserProfile"
   />
 </template>
 

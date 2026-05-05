@@ -1,9 +1,11 @@
 <script setup lang="ts">
 const { isDark, toggleTheme } = useTheme()
 const route = useRoute()
+const { logout } = useAuth()
 
 // Profile + add-article only on the main article listing page
 const isMainPage = computed(() => route.path === '/main')
+const isProfilePage = computed(() => route.path === '/profile')
 
 const authButton = computed(() => {
   if (route.path === '/login') {
@@ -40,6 +42,11 @@ const refreshPage = () => {
         <!-- Main page: admin add-article + profile -->
         <template v-if="isMainPage">
           <MainProfileDropdown />
+        </template>
+
+        <!-- Profile page: Only show theme toggle -->
+        <template v-else-if="isProfilePage">
+          <!-- no extra actions -->
         </template>
 
         <!-- Auth pages: toggle between login/register -->

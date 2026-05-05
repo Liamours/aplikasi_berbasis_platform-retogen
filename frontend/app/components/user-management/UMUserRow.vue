@@ -10,23 +10,39 @@ defineProps<{
 const emit = defineEmits<{
   makeAdmin: [user: ManagedUser]
   openBanConfirm: [user: ManagedUser]
+  openUserProfile: [user: ManagedUser]
 }>()
 </script>
 
 <template>
   <article class="user-row">
     <div class="user-main">
-      <div class="avatar">
+      <button
+        type="button"
+        class="avatar"
+        :aria-label="`Lihat profil ${user.username}`"
+        @click="emit('openUserProfile', user)"
+      >
         {{ user.username.slice(0, 1).toUpperCase() }}
-      </div>
+      </button>
 
       <div>
         <div class="user-name-line">
-          <h2>{{ user.username }}</h2>
+          <h2>
+            <button
+              type="button"
+              class="user-name-button"
+              @click="emit('openUserProfile', user)"
+            >
+              {{ user.username }}
+            </button>
+          </h2>
+
           <span class="role-pill" :class="{ 'role-pill--admin': user.role === 'admin' }">
             {{ user.role }}
           </span>
         </div>
+
         <p>{{ user.fullname }}</p>
         <span>{{ user.email }}</span>
       </div>
@@ -79,6 +95,7 @@ const emit = defineEmits<{
 .avatar {
   width: 42px;
   height: 42px;
+  border: 1px solid var(--glass-border);
   border-radius: var(--radius-md);
   display: grid;
   place-items: center;
@@ -86,6 +103,13 @@ const emit = defineEmits<{
   color: var(--primary-cyan);
   font-weight: 800;
   flex-shrink: 0;
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.avatar:hover {
+  border-color: rgba(106, 173, 168, 0.32);
+  background: rgba(106, 173, 168, 0.2);
 }
 
 .user-name-line {
@@ -99,6 +123,20 @@ const emit = defineEmits<{
   font-size: 15px;
   line-height: 1.2;
   margin: 0;
+}
+
+.user-name-button {
+  border: none;
+  background: transparent;
+  padding: 0;
+  color: var(--primary-red);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.user-name-button:hover {
+  text-decoration: underline;
 }
 
 .user-main p,
