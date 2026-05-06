@@ -4,7 +4,17 @@ export const useArticleDetail = () => {
   const { post } = useApi()
   const authStore = useAuthStore()
 
-  const article = useState<DetailArticle>('ad-article', () => ({} as DetailArticle))
+  const article = useState<DetailArticle>('ad-article', () => ({
+    article_id: '',
+    article_title: '',
+    article_preview: '',
+    article_content: '',
+    article_tags: [],
+    article_image: null,
+    prices: [],
+    comments: [],
+    ratings: []
+  }))
   const isLoading = useState('ad-loading', () => false)
   const error = useState('ad-error', () => '')
 
@@ -116,10 +126,18 @@ export const useArticleDetail = () => {
 
   function getCurrentUserRating() {
     if (!currentUserEmail.value || !article.value.ratings) return 0
+    const email = currentUserEmail.value.toLowerCase()
     return article.value.ratings.find(
-      (rating) => rating.user_email === currentUserEmail.value
+      (rating) => rating.user_email?.toLowerCase() === email
     )?.rating_value ?? 0
   }
+
+  // Synchronize ratingDraft with the actual article ratings whenever they change
+  // This handles late logins, article updates, and navigation perfectly.
+  watch([currentUserEmail, () => article.value.ratings], () => {
+    ratingDraft.value = getCurrentUserRating()
+  }, { immediate: true, deep: true })
+
 
   function getUserRatingValue(userEmail: string) {
     return article.value.ratings?.find(
@@ -139,6 +157,11 @@ export const useArticleDetail = () => {
           ? (response.article_image.startsWith('data:') ? response.article_image : `data:image/jpeg;base64,${response.article_image}`)
           : null
 
+        // Guard: Only update if the articleId we fetched matches the one currently requested
+        // This prevents race conditions during rapid navigation
+        const currentId = useRoute().params.id
+        if (currentId && articleId !== currentId) return
+
         article.value = {
           article_id: articleId,
           article_title: response.article_title,
@@ -154,7 +177,7 @@ export const useArticleDetail = () => {
           ratings: response.ratings
         }
 
-        ratingDraft.value = getCurrentUserRating()
+        // ratingDraft is now handled by the watcher above
         
         // Fetch prices from monitor
         await fetchPrices(response.article_title)
@@ -193,6 +216,20 @@ export const useArticleDetail = () => {
   }
 
   function resetPageState(articleId: string) {
+    // Clear old state immediately to prevent "ghost" data while loading
+    article.value = {
+      article_id: '',
+      article_title: '',
+      article_preview: '',
+      article_content: '',
+      article_tags: [],
+      article_image: null,
+      prices: [],
+      comments: [],
+      ratings: []
+    }
+    ratingDraft.value = 0
+
     fetchArticle(articleId)
     tracked.value = false
     ratingFeedback.value = ''
