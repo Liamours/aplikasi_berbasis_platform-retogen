@@ -24,6 +24,8 @@ const {
   filteredUsers,
   adminCount,
   userCount,
+  reportedUserCount,
+  totalReportCount,
   fetchUsers,
   makeAdmin,
   openBanConfirm,
@@ -39,17 +41,14 @@ const {
   isOtherProfileOpen,
   isOtherLoading,
   otherErrorMessage,
+  openOtherUserProfile,
   openOtherUserPreview,
   closeOtherUserProfile,
   formatDate: formatProfileDate
 } = useUserProfile()
 
 const openManagedUserProfile = (user: ManagedUser) => {
-  openOtherUserPreview({
-    user_email: user.email,
-    username: user.username,
-    created_at: user.created_at
-  })
+  openOtherUserProfile(user.email)
 }
 
 onMounted(() => {
@@ -65,6 +64,8 @@ onMounted(() => {
           :total-users="users.length"
           :admin-count="adminCount"
           :user-count="userCount"
+          :reported-count="reportedUserCount"
+          :total-reports="totalReportCount"
           :search="search"
           :is-loading="isLoading"
           @update:search="search = $event"
@@ -100,6 +101,7 @@ onMounted(() => {
             @make-admin="makeAdmin"
             @open-ban-confirm="openBanConfirm"
             @open-user-profile="openManagedUserProfile"
+            @open-reports="openManagedUserProfile"
           />
         </div>
       </BaseGlassCard>

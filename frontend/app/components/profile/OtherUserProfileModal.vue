@@ -64,6 +64,21 @@ const memberSince = computed(() => props.formatDate(props.profile?.created_at))
             <p class="other-profile__eyebrow">Member</p>
             <h2>{{ username }}</h2>
             <p>Member since {{ memberSince }}</p>
+
+            <div v-if="profile?.reports && profile.reports.length > 0" class="reports-section">
+              <h3 class="reports-title">Reports ({{ profile.reports.length }})</h3>
+              <div class="reports-list">
+                <div v-for="report in profile.reports" :key="report.report_id" class="report-item">
+                  <div class="report-header">
+                    <span class="report-date">{{ formatDate(report.created_at) }}</span>
+                  </div>
+                  <p class="report-description">{{ report.description }}</p>
+                </div>
+              </div>
+            </div>
+            <div v-else-if="!isLoading && !errorMessage" class="reports-empty">
+              Tidak ada report untuk user ini.
+            </div>
           </div>
         </section>
       </div>
@@ -158,6 +173,71 @@ const memberSince = computed(() => props.formatDate(props.profile?.created_at))
   color: var(--text-secondary);
   font-size: 14px;
   line-height: 1.6;
+}
+
+.reports-section {
+  margin-top: 24px;
+  text-align: left;
+  border-top: 1px solid var(--glass-border);
+  padding-top: 20px;
+}
+
+.reports-title {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin-bottom: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.reports-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 300px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.reports-list::-webkit-scrollbar {
+  width: 4px;
+}
+
+.reports-list::-webkit-scrollbar-thumb {
+  background: var(--glass-border);
+  border-radius: 10px;
+}
+
+.report-item {
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+}
+
+.report-header {
+  margin-bottom: 6px;
+}
+
+.report-date {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.report-description {
+  font-size: 13px !important;
+  color: var(--text-secondary) !important;
+  line-height: 1.5 !important;
+  white-space: pre-wrap;
+}
+
+.reports-empty {
+  margin-top: 20px;
+  font-size: 13px;
+  color: var(--text-muted);
+  font-style: italic;
 }
 
 @media (max-width: 480px) {

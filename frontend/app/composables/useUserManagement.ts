@@ -45,6 +45,8 @@ export function useUserManagement() {
 
   const adminCount = computed(() => users.value.filter((u) => u.role === 'admin').length)
   const userCount = computed(() => users.value.filter((u) => u.role !== 'admin').length)
+  const reportedUserCount = computed(() => users.value.filter((u) => (u.report_count || 0) > 0).length)
+  const totalReportCount = computed(() => users.value.reduce((acc, u) => acc + (u.report_count || 0), 0))
 
   const clearFeedback = () => {
     showSuccessPopup.value = false
@@ -148,6 +150,8 @@ export function useUserManagement() {
     filteredUsers,
     adminCount,
     userCount,
+    reportedUserCount,
+    totalReportCount,
     fetchUsers,
     makeAdmin,
     openBanConfirm,

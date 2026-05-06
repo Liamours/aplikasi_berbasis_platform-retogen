@@ -3,6 +3,8 @@ defineProps<{
   totalUsers: number
   adminCount: number
   userCount: number
+  reportedCount: number
+  totalReports: number
   search: string
   isLoading: boolean
 }>()
@@ -34,6 +36,10 @@ const emit = defineEmits<{
         <span class="meta-dot">•</span>
         <span class="meta-item">
           <strong>{{ userCount }}</strong> User
+        </span>
+        <span class="meta-dot">•</span>
+        <span class="meta-item">
+          <strong :class="{ 'text-danger': reportedCount > 0 }">{{ reportedCount }}</strong> Total Report
         </span>
       </div>
     </div>
@@ -89,6 +95,10 @@ const emit = defineEmits<{
 .meta-dot {
   color: var(--glass-border);
   font-size: 18px;
+}
+
+.text-danger {
+  color: var(--primary-red) !important;
 }
 
 /* Toolbar dikembalikan ke grid horizontal agar tidak bertumpuk */

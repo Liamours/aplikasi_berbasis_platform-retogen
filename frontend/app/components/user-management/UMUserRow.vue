@@ -11,6 +11,7 @@ const emit = defineEmits<{
   makeAdmin: [user: ManagedUser]
   openBanConfirm: [user: ManagedUser]
   openUserProfile: [user: ManagedUser]
+  openReports: [user: ManagedUser]
 }>()
 </script>
 
@@ -49,7 +50,15 @@ const emit = defineEmits<{
     </div>
 
     <div class="user-meta">
-      <span>{{ user.report_count }} report</span>
+      <button
+        type="button"
+        class="report-count-button"
+        :class="{ 'report-count-button--has-reports': user.report_count > 0 }"
+        :disabled="user.report_count === 0"
+        @click="emit('openReports', user)"
+      >
+        {{ user.report_count }} report
+      </button>
       <span>Bergabung {{ formatDate(user.created_at) }}</span>
     </div>
 
@@ -171,6 +180,36 @@ const emit = defineEmits<{
   display: flex;
   flex-direction: column;
   gap: 2px;
+}
+
+.report-count-button {
+  background: transparent;
+  border: none;
+  padding: 0;
+  color: var(--text-secondary);
+  font-size: 13px;
+  text-align: left;
+  cursor: default;
+  font: inherit;
+}
+
+.report-count-button--has-reports {
+  cursor: pointer;
+  color: var(--primary-red);
+  font-weight: 700;
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  transition: var(--transition-fast);
+}
+
+.report-count-button--has-reports:hover {
+  color: #ff5242;
+  text-decoration-style: solid;
+}
+
+.report-count-button:disabled {
+  cursor: default;
+  text-decoration: none;
 }
 
 .row-actions {
