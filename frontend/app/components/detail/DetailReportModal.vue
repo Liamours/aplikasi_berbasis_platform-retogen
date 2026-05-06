@@ -17,10 +17,21 @@ const { reportState, closeReport, submitReport } = useArticleDetail()
           <button type="button" class="report-modal__close" @click="closeReport">×</button>
         </div>
 
+        <div v-if="reportState.type === 'comment' && reportState.targetName" class="report-modal__target">
+          <div class="report-modal__target-user">
+            <span class="report-modal__target-label">User:</span>
+            <span class="report-modal__target-value">{{ reportState.targetName }}</span>
+          </div>
+          <div class="report-modal__target-comment">
+            <span class="report-modal__target-label">Komentar:</span>
+            <p class="report-modal__target-text">"{{ reportState.targetContent }}"</p>
+          </div>
+        </div>
+
         <textarea
           v-model="reportState.description"
           class="report-modal__textarea"
-          rows="5"
+          rows="4"
           placeholder="Jelaskan alasan report secara singkat..."
         />
 
@@ -97,6 +108,45 @@ const { reportState, closeReport, submitReport } = useArticleDetail()
   font-size: 28px;
   line-height: 1;
   cursor: pointer;
+}
+
+.report-modal__target {
+  background: rgba(106, 173, 168, 0.08);
+  border: 1px solid rgba(106, 173, 168, 0.15);
+  border-radius: var(--radius-md);
+  padding: 14px;
+  margin-bottom: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.report-modal__target-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: var(--primary-cyan);
+  display: block;
+  margin-bottom: 2px;
+}
+
+.report-modal__target-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.report-modal__target-text {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+  font-style: italic;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .report-modal__textarea {

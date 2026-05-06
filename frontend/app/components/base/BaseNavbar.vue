@@ -1,9 +1,11 @@
 <script setup lang="ts">
 const { isDark, toggleTheme } = useTheme()
 const route = useRoute()
+const { logout } = useAuth()
 
-// Profile + add-article only on the main article listing page
-const isMainPage = computed(() => route.path === '/main')
+// Profile + add-article only on main listing and detail pages
+const isMainPage = computed(() => route.path === '/main' || route.path.startsWith('/articles/'))
+const isSimpleNavbarPage = computed(() => ['/profile', '/user-management'].includes(route.path))
 
 const authButton = computed(() => {
   if (route.path === '/login') {
@@ -12,20 +14,15 @@ const authButton = computed(() => {
   return { text: 'Login', link: '/login' }
 })
 
-const refreshPage = () => {
-  if (import.meta.client) {
-    window.location.reload()
-  }
-}
 </script>
 
 <template>
   <header class="navbar">
     <div class="navbar__inner">
-      <div class="navbar__brand" @click="refreshPage" style="cursor: pointer;">
+      <NuxtLink to="/main" class="navbar__brand">
         <img src="/logo.jpg" alt="RetoGen logo" class="navbar__logo">
         <span class="navbar__brand-text">RetoGen</span>
-      </div>
+      </NuxtLink>
 
       <div class="navbar__actions">
         <!-- Main page: admin add-article + profile -->
@@ -40,6 +37,11 @@ const refreshPage = () => {
         <!-- Main page: admin add-article + profile -->
         <template v-if="isMainPage">
           <MainProfileDropdown />
+        </template>
+
+        <!-- Simple navbar pages (Profile, User Management): Only show theme toggle -->
+        <template v-else-if="isSimpleNavbarPage">
+          <!-- no extra actions -->
         </template>
 
         <!-- Auth pages: toggle between login/register -->
