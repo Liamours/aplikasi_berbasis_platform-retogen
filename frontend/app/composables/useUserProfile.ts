@@ -12,11 +12,19 @@ export interface OwnUserProfile {
 }
 
 export interface PublicUserProfile {
+  user_id?: string
   user_email?: string
   username: string
   fullname?: string
   role?: string
   created_at: string
+  report_count?: number
+  reports?: Array<{
+    report_id: string
+    user_id: string
+    description: string
+    created_at: string
+  }>
 }
 
 interface UserDetailsResponse {
@@ -122,8 +130,9 @@ export const useUserProfile = () => {
     isOtherLoading.value = true
 
     try {
-      const response = await api.post<PublicUserProfileResponse>(
-        '/report_user/get_user_profile',
+      // Use /user/get_details which returns reports for admins
+      const response = await api.post<UserDetailsResponse>(
+        '/user/get_details',
         { user_email: userEmail },
         true
       )
@@ -133,7 +142,16 @@ export const useUserProfile = () => {
         return
       }
 
-      otherProfile.value = response.user
+      // Map OwnUserProfile to PublicUserProfile
+      otherProfile.value = {
+        user_id: response.user.user_id,
+        user_email: response.user.email,
+        username: response.user.username,
+        fullname: response.user.fullname,
+        role: response.user.role,
+        created_at: response.user.created_at || '',
+        reports: response.user.reports as any
+      }
     } catch {
       otherErrorMessage.value = 'Gagal memuat profil user.'
     } finally {
