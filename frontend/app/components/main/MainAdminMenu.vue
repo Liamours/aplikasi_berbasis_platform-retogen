@@ -36,7 +36,7 @@ onUnmounted(() => document.removeEventListener('mousedown', onOutsideClick))
         <BaseDropdownItem to="/articles/create" @click="close">
           Tambah Artikel
         </BaseDropdownItem>
-        <BaseDropdownItem to="/admin/users" @click="close">
+        <BaseDropdownItem to="/user-management" @click="close">
           User Management
         </BaseDropdownItem>
       </BaseDropdownPanel>

@@ -12,7 +12,8 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  openReport: [commentId: string]
+  openReport: [payload: { commentId: string, owner: string, content: string }]
+  openUserProfile: [userEmail: string]
   toggleReply: [commentId: string]
   updateReplyDraft: [{ commentId: string, value: string }]
   submitReply: [parentId: string]
@@ -45,6 +46,13 @@ const formatCommentTime = (value: string) => {
   }).format(date)
 }
 
+const openProfile = () => {
+  if (!props.comment.user_email) return
+
+  emit('openUserProfile', props.comment.user_email)
+}
+
+
 const replyValue = computed(() => props.replyDrafts[props.comment.comment_id] ?? '')
 const isReplying = computed(() => props.activeReplyId === props.comment.comment_id)
 const isEditing = computed(() => activeEditId.value === props.comment.comment_id)
@@ -54,20 +62,30 @@ const commentUserRating = computed(() => getUserRatingValue(props.comment.user_e
 
 const showEditAction = computed(() => canEditComment(props.comment) && !isEditing.value)
 const showDeleteAction = computed(() => canDeleteComment(props.comment))
-const showReportAction = computed(() => !isOwnComment(props.comment) && !isAdmin.value)
 </script>
 
 <template>
   <article class="comment-item">
     <div class="comment-item__header">
       <div class="comment-item__author">
-        <div class="comment-item__avatar">
+        <button
+          type="button"
+          class="comment-item__avatar"
+          :aria-label="`Lihat profil ${comment.owner}`"
+          @click="openProfile"
+        >
           {{ initials }}
-        </div>
+        </button>
 
         <div class="comment-item__meta">
           <div class="comment-item__name-row">
-            <strong class="comment-item__name">{{ comment.owner }}</strong>
+            <button
+              type="button"
+              class="comment-item__name"
+              @click="openProfile"
+            >
+              {{ comment.owner }}
+            </button>
 
             <span v-if="commentUserRating" class="comment-item__rating">
               {{ commentUserRating }}/5
@@ -94,13 +112,13 @@ const showReportAction = computed(() => !isOwnComment(props.comment) && !isAdmin
         <DetailReportMenu
           :show-edit="showEditAction"
           :show-delete="showDeleteAction"
-          :show-report="showReportAction"
+          :show-report="!isOwnComment(comment)"
           edit-label="Edit komentar"
           delete-label="Hapus komentar"
           report-label="Laporkan komentar"
           @edit="startEditComment(comment.comment_id)"
           @remove="openDeleteComment(comment.comment_id)"
-          @report="$emit('openReport', comment.comment_id)"
+          @report="$emit('openReport', { commentId: comment.comment_id, owner: comment.owner, content: comment.comment_content })"
         />
       </div>
     </div>
@@ -139,7 +157,10 @@ const showReportAction = computed(() => !isOwnComment(props.comment) && !isAdmin
           class="comment-item__textarea"
           rows="3"
           placeholder="Tulis balasan singkat..."
-          @input="$emit('updateReplyDraft', { commentId: comment.comment_id, value: ($event.target as HTMLTextAreaElement).value })"
+          @input="$emit('updateReplyDraft', {
+            commentId: comment.comment_id,
+            value: ($event.target as HTMLTextAreaElement).value
+          })"
         />
 
         <div class="comment-item__reply-actions">
@@ -162,6 +183,7 @@ const showReportAction = computed(() => !isOwnComment(props.comment) && !isAdmin
         :active-reply-id="activeReplyId"
         :reply-drafts="replyDrafts"
         @open-report="$emit('openReport', $event)"
+        @open-user-profile="$emit('openUserProfile', $event)"
         @toggle-reply="$emit('toggleReply', $event)"
         @update-reply-draft="$emit('updateReplyDraft', $event)"
         @submit-reply="$emit('submitReply', $event)"
@@ -196,14 +218,22 @@ const showReportAction = computed(() => !isOwnComment(props.comment) && !isAdmin
   width: 40px;
   height: 40px;
   border-radius: var(--radius-sm);
+  border: 1px solid var(--glass-border);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   background: var(--bg-surface);
-  border: 1px solid var(--glass-border);
   color: var(--text-primary);
   font-weight: 700;
   flex-shrink: 0;
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.comment-item__avatar:hover {
+  color: var(--primary-cyan);
+  border-color: rgba(106, 173, 168, 0.32);
+  background: rgba(106, 173, 168, 0.08);
 }
 
 .comment-item__meta {
@@ -220,8 +250,18 @@ const showReportAction = computed(() => !isOwnComment(props.comment) && !isAdmin
 }
 
 .comment-item__name {
+  border: none;
+  background: transparent;
+  padding: 0;
+  color: var(--primary-red);
+  font: inherit;
   font-size: 14px;
-  color: var(--text-primary);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.comment-item__name:hover {
+  text-decoration: underline;
 }
 
 .comment-item__rating {
@@ -262,6 +302,10 @@ const showReportAction = computed(() => !isOwnComment(props.comment) && !isAdmin
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
+}
+
+.comment-item__reply-btn:hover {
+  text-decoration: underline;
 }
 
 .comment-item__reply-btn:hover {

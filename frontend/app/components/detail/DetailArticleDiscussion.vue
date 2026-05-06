@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import OtherUserProfileModal from '~/components/profile/OtherUserProfileModal.vue'
+import DetailReportUserModal from '~/components/detail/DetailReportUserModal.vue'
+
 const {
   commentTree,
   totalComments,
@@ -9,6 +12,33 @@ const {
   updateReplyDraft,
   submitComment
 } = useArticleDetail()
+
+const {
+  otherProfile,
+  otherProfileInitials,
+  isOtherProfileOpen,
+  isOtherLoading,
+  otherErrorMessage,
+  openOtherUserProfile,
+  closeOtherUserProfile,
+  formatDate
+} = useUserProfile()
+
+const {
+  isOpen: isReportUserOpen,
+  isSubmitting: isReportUserSubmitting,
+  target: reportUserTarget,
+  description: reportUserDescription,
+  errorMessage: reportUserErrorMessage,
+  showSuccessPopup: showReportUserSuccessPopup,
+  successMessage: reportUserSuccessMessage,
+  commentPreview: reportUserCommentPreview,
+  canSubmit: canSubmitReportUser,
+  openReportUser,
+  closeReportUser,
+  submitReportUser,
+  closeSuccessPopup: closeReportUserSuccessPopup
+} = useReportUser()
 </script>
 
 <template>
@@ -31,7 +61,9 @@ const {
         :comment="comment"
         :active-reply-id="activeReplyId"
         :reply-drafts="replyDrafts"
-        @open-report="openReport('comment', $event)"
+        @open-report="openReport('comment', $event.commentId, $event.owner, $event.content)"
+        @open-user-profile="openOtherUserProfile"
+        @open-user-report="openReportUser"
         @toggle-reply="toggleReply"
         @update-reply-draft="updateReplyDraft"
         @submit-reply="submitComment"
@@ -42,6 +74,34 @@ const {
       Belum ada komentar. Jadilah yang pertama memulai diskusi.
     </div>
   </section>
+
+  <OtherUserProfileModal
+    :open="isOtherProfileOpen"
+    :profile="otherProfile"
+    :initials="otherProfileInitials"
+    :is-loading="isOtherLoading"
+    :error-message="otherErrorMessage"
+    :format-date="formatDate"
+    @close="closeOtherUserProfile"
+  />
+
+  <DetailReportUserModal
+    v-model:description="reportUserDescription"
+    :open="isReportUserOpen"
+    :target="reportUserTarget"
+    :comment-preview="reportUserCommentPreview"
+    :is-submitting="isReportUserSubmitting"
+    :can-submit="canSubmitReportUser"
+    :error-message="reportUserErrorMessage"
+    @close="closeReportUser"
+    @submit="submitReportUser"
+  />
+
+  <BaseSuccessPopup
+    v-if="showReportUserSuccessPopup"
+    :message="reportUserSuccessMessage"
+    @close="closeReportUserSuccessPopup"
+  />
 </template>
 
 <style scoped>
