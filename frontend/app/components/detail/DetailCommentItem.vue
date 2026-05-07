@@ -194,10 +194,12 @@ const showDeleteAction = computed(() => canDeleteComment(props.comment))
 
 <style scoped>
 .comment-item {
+  min-width: 0;
   padding: 16px;
   border-radius: var(--radius-md);
-  background: rgba(255, 255, 255, 0.22);
+  background: var(--comment-surface, var(--bg-surface));
   border: 1px solid var(--glass-border);
+  overflow: hidden;
 }
 
 .comment-item__header {
@@ -313,9 +315,10 @@ const showDeleteAction = computed(() => canDeleteComment(props.comment))
 }
 
 .comment-item__body {
-  margin-top: 12px;
-  color: var(--text-secondary);
-  line-height: 1.65;
+  max-width: 100%;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .comment-item__reply-box,
@@ -354,12 +357,15 @@ const showDeleteAction = computed(() => canDeleteComment(props.comment))
 }
 
 .comment-item__children {
-  margin-top: 16px;
-  margin-left: 24px;
-  padding-left: 16px;
-  border-left: 2px solid rgba(106, 173, 168, 0.2);
+  --comment-surface: rgba(106, 173, 168, 0.03); /* Subtle tint instead of white */
+
+  min-width: 0;
+  margin-top: 12px;
+  margin-left: 6px;
+  padding-left: 10px;
+  border-left: 1px solid rgba(106, 173, 168, 0.18);
   display: grid;
-  gap: 12px;
+  gap: 10px;
 }
 
 @media (max-width: 480px) {
@@ -372,10 +378,10 @@ const showDeleteAction = computed(() => canDeleteComment(props.comment))
     justify-content: space-between;
   }
 
-  .comment-item__children {
-    margin-left: 12px;
-    padding-left: 12px;
-  }
+ .comment-item__children {
+  margin-left: 4px;
+  padding-left: 8px;
+}
 
   .comment-item__reply-actions {
     flex-direction: column;

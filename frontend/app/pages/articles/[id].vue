@@ -1,21 +1,61 @@
 <script setup lang="ts">
 import DetailDeleteArticleModal from '~/components/detail/DetailDeleteArticleModal.vue'
 import DetailDeleteCommentModal from '~/components/detail/DetailDeleteCommentModal.vue'
+import DetailReportLogModal from '~/components/detail/DetailReportLogModal.vue'
 
-definePageMeta({ layout: 'default' })
+definePageMeta({
+  layout: 'default',
+  middleware: 'auth'
+})
 
 const route = useRoute()
-const { resetPageState } = useArticleDetail()
 
-watch(() => route.params.id, (id) => {
-  resetPageState(String(id || 'demo-article'))
-}, { immediate: true })
+const {
+  resetPageState,
+  isLoading,
+  error
+} = useArticleDetail()
+
+const { isDark } = useTheme()
+
+useHead({
+  htmlAttrs: {
+    class: computed(() => isDark.value ? 'dark-mode' : '')
+  }
+})
+
+watch(
+  () => route.params.id,
+  async (id) => {
+    const articleId = Array.isArray(id) ? id[0] : String(id || '')
+
+    if (!articleId) {
+      await navigateTo('/main')
+      return
+    }
+
+    await resetPageState(articleId)
+  },
+  { immediate: true }
+)
 </script>
 
 <template>
   <BasePageShell>
     <div class="detail-page">
-      <BaseGlassCard class="detail-card">
+      <BaseGlassCard v-if="isLoading" class="detail-card">
+        <p class="detail-feedback">
+          Memuat artikel...
+        </p>
+      </BaseGlassCard>
+
+      <BaseGlassCard v-else-if="error" class="detail-card">
+        <p class="detail-feedback detail-feedback--error">
+          {{ error }}
+        </p>
+      </BaseGlassCard>
+
+      <BaseGlassCard v-else class="detail-card">
         <DetailArticleHero />
 
         <div class="detail-card__grid">
@@ -33,6 +73,7 @@ watch(() => route.params.id, (id) => {
       <DetailReportModal />
 
       <ClientOnly>
+        <DetailReportLogModal />
         <DetailDeleteCommentModal />
         <DetailDeleteArticleModal />
       </ClientOnly>
@@ -45,11 +86,27 @@ watch(() => route.params.id, (id) => {
   display: flex;
   justify-content: center;
   padding: 8px 0 40px;
+  background: var(--bg-page);
+  min-height: calc(100vh - var(--navbar-height));
 }
 
 .detail-card {
   width: min(100%, 1080px);
   margin: 0 auto;
+  isolation: isolate;
+  backdrop-filter: blur(16px) saturate(140%) !important;
+  contain: layout;
+}
+
+.detail-feedback {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.detail-feedback--error {
+  color: var(--primary-red);
 }
 
 .detail-card__grid {
