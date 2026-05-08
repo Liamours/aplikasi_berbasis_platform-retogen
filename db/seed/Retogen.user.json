@@ -6,7 +6,7 @@
     "email": "fathanaryamaulana@gmail.com",
     "password": "$2b$12$qIK5wOFTwV7rk3A6fmJLguJOR0VTHlARvid8/Ho6tL7xxD.UyZY/W",
     "role": "admin",
-    "report_count": 0,
+    "report_count": 1,
     "created_at": {"$date": "2025-12-12T20:02:14.484Z"},
     "updated_at": {"$date": "2025-12-12T20:02:14.484Z"}
   },
@@ -17,7 +17,7 @@
     "email": "rafiq_labib@example.com",
     "password": "$2b$12$uRFcUDCu890Ct/b5hRDlM.bmqoGOFBWLD/DMvMrDCS1OK9ZxqqrZe",
     "role": "admin",
-    "report_count": 0,
+    "report_count": 1,
     "created_at": {"$date": "2025-12-12T20:02:15.193Z"},
     "updated_at": {"$date": "2025-12-12T20:02:15.193Z"}
   },
@@ -50,7 +50,7 @@
     "email": "williamafton@example.com",
     "password": "$2b$12$0ruUIdFf81TWcJHjpBe1peqqm.MZGbFlD1vaeMJxE2/bmqbXkU/06",
     "role": "user",
-    "report_count": 0,
+    "report_count": 1,
     "created_at": {"$date": "2025-12-15T09:15:00.846Z"},
     "updated_at": {"$date": "2025-12-15T09:15:00.846Z"}
   },
