@@ -1,6 +1,18 @@
-import type { ArticleFormData, DetailArticle } from '~/types/api'
+import type {
+  ApiBaseResponse,
+  ArticleFormData
+} from '~/types/api'
 
 type ArticleFormMode = 'create' | 'edit'
+
+type ArticleEditGetResponse = ApiBaseResponse & {
+  article_id: string
+  article_title: string
+  article_preview: string
+  article_content: string
+  article_tags: string[]
+  article_image: string | null
+}
 
 const TITLE_MAX_LENGTH = 256
 const PREVIEW_MAX_LENGTH = 128
@@ -8,9 +20,10 @@ const TAG_MAX_COUNT = 5
 const TAG_MAX_LENGTH = 24
 
 export const useArticleForm = () => {
-  const articleDrafts = useState<Record<string, DetailArticle>>('ad-article-drafts', () => ({}))
+  const { post } = useApi()
 
   const mode = useState<ArticleFormMode>('article-form-mode', () => 'create')
+
   const form = useState<ArticleFormData>('article-form-data', () => ({
     article_id: '',
     article_title: '',
@@ -26,19 +39,24 @@ export const useArticleForm = () => {
   const formError = useState('article-form-error', () => '')
   const formSuccess = useState('article-form-success', () => '')
   const isSubmitting = useState('article-form-submitting', () => false)
+  const isLoading = useState('article-form-loading', () => false)
 
   const isEditMode = computed(() => mode.value === 'edit')
 
   const normalizedTags = computed(() => normalizeTags(tagsInput.value))
 
-  const titleLength = computed(() => form.value.article_title.length)
-  const previewLength = computed(() => form.value.article_preview.length)
+  const titleLength = computed(() => String(form.value.article_title || '').length)
+  const previewLength = computed(() => String(form.value.article_preview || '').length)
 
   const tagCount = computed(() => normalizedTags.value.length)
 
   const hasInvalidTagLength = computed(() =>
     normalizedTags.value.some((tag) => tag.length > TAG_MAX_LENGTH)
   )
+
+  function isObjectId(value: string) {
+    return /^[a-fA-F0-9]{24}$/.test(value)
+  }
 
   function resetForm() {
     form.value = {
@@ -56,6 +74,7 @@ export const useArticleForm = () => {
     formError.value = ''
     formSuccess.value = ''
     isSubmitting.value = false
+    isLoading.value = false
   }
 
   function normalizeTags(value: string) {
@@ -70,10 +89,30 @@ export const useArticleForm = () => {
     return tags.some((tag) => !/^[a-z0-9 _-]+$/.test(tag))
   }
 
+  function stripDataUrl(value: string) {
+    const separatorIndex = value.indexOf(',')
+
+    if (separatorIndex >= 0) {
+      return value.slice(separatorIndex + 1)
+    }
+
+    return value
+  }
+
+  function toImageSrc(value?: string | null) {
+    if (!value) return null
+
+    if (value.startsWith('data:')) {
+      return value
+    }
+
+    return `data:image/jpeg;base64,${value}`
+  }
+
   function validateForm() {
-    const title = form.value.article_title.trim()
-    const preview = form.value.article_preview.trim()
-    const content = form.value.article_content.trim()
+    const title = String(form.value.article_title || '').trim()
+    const preview = String(form.value.article_preview || '').trim()
+    const content = String(form.value.article_content || '').trim()
     const tags = normalizeTags(tagsInput.value)
 
     if (!title || title.length > TITLE_MAX_LENGTH) {
@@ -111,7 +150,7 @@ export const useArticleForm = () => {
     return ''
   }
 
-  function fileToBase64(file: File) {
+  function fileToDataUrl(file: File) {
     return new Promise<string>((resolve, reject) => {
       const reader = new FileReader()
 
@@ -141,15 +180,20 @@ export const useArticleForm = () => {
       return
     }
 
-    const base64Image = await fileToBase64(file)
+    try {
+      const dataUrl = await fileToDataUrl(file)
 
-    form.value.article_image = base64Image
-    previewImage.value = base64Image
-    imageFileName.value = file.name
-    formError.value = ''
+      form.value.article_image = stripDataUrl(dataUrl)
+      previewImage.value = dataUrl
+      imageFileName.value = file.name
+      formError.value = ''
+    } catch {
+      formError.value = 'Gagal membaca gambar.'
+      input.value = ''
+    }
   }
 
-  function loadForm(nextMode: ArticleFormMode, articleId?: string) {
+  async function loadForm(nextMode: ArticleFormMode, articleId?: string) {
     resetForm()
     mode.value = nextMode
 
@@ -157,25 +201,51 @@ export const useArticleForm = () => {
       return
     }
 
-    if (!articleId) {
-      formError.value = 'Artikel tidak ditemukan.'
+    const currentArticleId = articleId || ''
+
+    if (!isObjectId(currentArticleId)) {
+      await navigateTo('/main')
       return
     }
 
-    const article = articleDrafts.value[articleId] ?? useMockArticleDetail(articleId)
+    isLoading.value = true
 
-    form.value = {
-      article_id: article.article_id,
-      article_title: article.article_title,
-      article_preview: article.article_preview,
-      article_content: article.article_content,
-      article_tags: article.article_tags,
-      article_image: article.article_image
+    try {
+      const response = await post<ArticleEditGetResponse>(
+        '/article/edit/get',
+        { article_id: currentArticleId },
+        true
+      )
+
+      if (response.confirmation !== 'successful') {
+        await navigateTo('/main')
+        return
+      }
+
+      form.value = {
+        article_id: response.article_id,
+        article_title: response.article_title,
+        article_preview: response.article_preview,
+        article_content: response.article_content,
+        article_tags: response.article_tags ?? [],
+        article_image: response.article_image
+      }
+
+      tagsInput.value = (response.article_tags ?? []).join(', ')
+      previewImage.value = toImageSrc(response.article_image)
+      imageFileName.value = response.article_image ? 'Gambar saat ini' : ''
+    } catch (err: any) {
+      const status = err?.response?.status || err?.statusCode
+
+      if (status === 401) {
+        await navigateTo('/')
+        return
+      }
+
+      await navigateTo('/main')
+    } finally {
+      isLoading.value = false
     }
-
-    tagsInput.value = article.article_tags.join(', ')
-    previewImage.value = article.article_image || '/logo.jpg'
-    imageFileName.value = article.article_image ? 'Gambar saat ini' : ''
   }
 
   async function submitForm() {
@@ -183,49 +253,81 @@ export const useArticleForm = () => {
     formSuccess.value = ''
 
     const validationMessage = validateForm()
+
     if (validationMessage) {
       formError.value = validationMessage
       return
     }
 
+    const currentArticleId = form.value.article_id || ''
+
+    if (isEditMode.value && !isObjectId(currentArticleId)) {
+      await navigateTo('/main')
+      return
+    }
+
     isSubmitting.value = true
 
-    const tags = normalizeTags(tagsInput.value)
-    const articleId = isEditMode.value
-      ? form.value.article_id || 'demo-article'
-      : `article-${Date.now()}`
-
-    const existingArticle = articleDrafts.value[articleId] ?? useMockArticleDetail(articleId)
-
-    const nextArticle: DetailArticle = {
-      article_id: articleId,
-      article_title: form.value.article_title.trim(),
-      article_preview: form.value.article_preview.trim(),
-      article_content: form.value.article_content.trim(),
-      article_tags: tags,
-      article_image: form.value.article_image || '/logo.jpg',
-      prices: existingArticle.prices ?? [],
-      comments: existingArticle.comments ?? [],
-      ratings: existingArticle.ratings ?? []
+    const payload = {
+      article_title: String(form.value.article_title || '').trim(),
+      article_preview: String(form.value.article_preview || '').trim(),
+      article_content: String(form.value.article_content || '').trim(),
+      article_tags: normalizeTags(tagsInput.value),
+      article_image: stripDataUrl(String(form.value.article_image || ''))
     }
 
-    articleDrafts.value = {
-      ...articleDrafts.value,
-      [articleId]: nextArticle
+    try {
+      if (isEditMode.value) {
+        const response = await post<ApiBaseResponse>(
+          '/article/edit/update',
+          {
+            article_id: currentArticleId,
+            ...payload
+          },
+          true
+        )
+
+        if (response.confirmation !== 'successful: article edited') {
+          formError.value = response.confirmation || 'Gagal memperbarui artikel.'
+          return
+        }
+
+        formSuccess.value = 'Artikel diperbarui.'
+        await navigateTo(`/articles/${currentArticleId}`)
+        return
+      }
+
+      const response = await post<ApiBaseResponse>(
+        '/article/add',
+        payload,
+        true
+      )
+
+      if (response.confirmation !== 'success: article added') {
+        formError.value = response.confirmation || 'Gagal membuat artikel.'
+        return
+      }
+
+      formSuccess.value = 'Artikel berhasil dibuat.'
+    } catch (err: any) {
+      const status = err?.response?.status || err?.statusCode
+
+      if (status === 401) {
+        await navigateTo('/')
+        return
+      }
+
+      formError.value = 'Gagal terhubung ke server.'
+    } finally {
+      isSubmitting.value = false
     }
-
-    formSuccess.value = isEditMode.value
-      ? 'Artikel diperbarui.'
-      : 'Artikel dibuat.'
-
-    isSubmitting.value = false
-
-    await navigateTo(`/articles/${articleId}`)
   }
 
   async function cancelForm() {
-    if (isEditMode.value && form.value.article_id) {
-      await navigateTo(`/articles/${form.value.article_id}`)
+    const currentArticleId = form.value.article_id || ''
+
+    if (isEditMode.value && currentArticleId) {
+      await navigateTo(`/articles/${currentArticleId}`)
       return
     }
 
@@ -241,6 +343,7 @@ export const useArticleForm = () => {
     formError,
     formSuccess,
     isSubmitting,
+    isLoading,
     isEditMode,
     normalizedTags,
     titleLength,

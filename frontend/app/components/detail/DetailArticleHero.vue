@@ -5,8 +5,10 @@ const {
   averageRating,
   totalComments,
   lowestPrice,
+  reportLogCount,
   formatPrice,
   openReport,
+  openReportLog,
   openDeleteArticle
 } = useArticleDetail()
 
@@ -31,17 +33,28 @@ const goToEditArticle = () => {
         <span>Article</span>
       </div>
 
-      <DetailReportMenu
-        :show-edit="isAdmin"
-        :show-delete="isAdmin"
-        :show-report="!isAdmin"
-        edit-label="Edit artikel"
-        delete-label="Hapus artikel"
-        report-label="Laporkan artikel"
-        @edit="goToEditArticle"
-        @remove="openDeleteArticle(article.article_id)"
-        @report="openReport('article', article.article_id)"
-      />
+      <div class="hero__actions">
+        <button
+          v-if="isAdmin"
+          type="button"
+          class="hero__report-log-button"
+          @click="openReportLog"
+        >
+          Log report ({{ reportLogCount }})
+        </button>
+
+        <DetailReportMenu
+          :show-edit="isAdmin"
+          :show-delete="isAdmin"
+          :show-report="!isAdmin"
+          edit-label="Edit artikel"
+          delete-label="Hapus artikel"
+          report-label="Laporkan artikel"
+          @edit="goToEditArticle"
+          @remove="openDeleteArticle(article.article_id)"
+          @report="openReport('article', article.article_id)"
+        />
+      </div>
     </div>
 
     <div class="hero__headline">
@@ -139,6 +152,35 @@ const goToEditArticle = () => {
   color: var(--primary-cyan);
 }
 
+.hero__actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-shrink: 0;
+  min-width: 0;
+}
+
+.hero__report-log-button {
+  border: 1px solid rgba(227, 66, 52, 0.22);
+  background: rgba(227, 66, 52, 0.08);
+  color: var(--primary-red);
+  border-radius: 12px;
+  padding: 9px 12px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: var(--transition-fast);
+}
+
+.hero__report-log-button:hover {
+  background: rgba(227, 66, 52, 0.14);
+  border-color: rgba(227, 66, 52, 0.32);
+  transform: translateY(-1px);
+}
+
 .hero__headline {
   display: grid;
   grid-template-columns: 260px minmax(0, 1fr);
@@ -213,7 +255,8 @@ const goToEditArticle = () => {
   padding: 4px 8px;
   border-radius: var(--radius-sm);
   font-size: 12px;
-  font-weight: 600;
+  line-height: 1.4;
+  font-weight: 700;
   background: rgba(181, 107, 82, 0.1);
   color: var(--primary-red);
   overflow-wrap: anywhere;
@@ -251,6 +294,10 @@ const goToEditArticle = () => {
 }
 
 @media (max-width: 850px) {
+  .hero__topbar {
+    align-items: flex-start;
+  }
+
   .hero__headline {
     grid-template-columns: 1fr;
   }
@@ -266,7 +313,17 @@ const goToEditArticle = () => {
   }
 
   .hero__topbar {
-    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .hero__actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .hero__report-log-button {
+    white-space: normal;
+    text-align: left;
   }
 
   .hero__headline {
