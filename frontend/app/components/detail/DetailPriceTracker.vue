@@ -3,12 +3,9 @@ import type { DetailPriceEntry } from '~/types/api'
 
 const props = defineProps<{
   prices: DetailPriceEntry[]
-  tracked: boolean
 }>()
 
-defineEmits<{
-  toggleTrack: []
-}>()
+
 
 const logoErrors = ref<Record<string, boolean>>({})
 
@@ -81,14 +78,6 @@ const formatRating = (value: number | null) => {
         </p>
       </div>
 
-      <button
-        type="button"
-        class="price-tracker__follow"
-        :class="{ 'is-active': tracked }"
-        @click="$emit('toggleTrack')"
-      >
-        {{ tracked ? 'Dipantau' : 'Pantau' }}
-      </button>
     </div>
 
     <div v-if="bestPrice" class="price-tracker__summary">
@@ -96,11 +85,7 @@ const formatRating = (value: number | null) => {
       <strong>{{ formatPrice(bestPrice.price) }}</strong>
     </div>
 
-    <p class="price-tracker__track-note">
-      {{ tracked
-        ? 'Produk ini masuk daftar pantauan.'
-        : 'Aktifkan pantauan untuk menandai produk ini.' }}
-    </p>
+
 
     <div v-if="topRatedPrices.length" class="price-tracker__list">
       <article
