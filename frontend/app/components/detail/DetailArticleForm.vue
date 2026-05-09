@@ -12,6 +12,7 @@ const {
   formError,
   formSuccess,
   isSubmitting,
+  isLoading,
   isEditMode,
   normalizedTags,
   titleLength,
@@ -29,9 +30,9 @@ const {
 } = useArticleForm()
 
 watch(
-  () => [props.mode, props.articleId],
-  () => {
-    loadForm(props.mode, props.articleId)
+  () => [props.mode, props.articleId] as const,
+  async ([nextMode, nextArticleId]) => {
+    await loadForm(nextMode, nextArticleId)
   },
   { immediate: true }
 )
@@ -47,6 +48,7 @@ const pageSubtitle = computed(() => {
 })
 
 const submitLabel = computed(() => {
+  if (isLoading.value) return 'Memuat...'
   if (isSubmitting.value) return 'Menyimpan...'
   return isEditMode.value ? 'Simpan perubahan' : 'Terbitkan artikel'
 })
@@ -71,6 +73,10 @@ const isTagsInvalid = computed(() => isTagCountInvalid.value || hasInvalidTagLen
       </button>
     </div>
 
+    <div v-if="isLoading" class="article-form__alert article-form__alert--neutral">
+      Memuat data artikel...
+    </div>
+
     <div v-if="formError" class="article-form__alert article-form__alert--error">
       {{ formError }}
     </div>
@@ -89,6 +95,7 @@ const isTagsInvalid = computed(() => isTagCountInvalid.value || hasInvalidTagLen
             :class="{ 'is-invalid': isTitleInvalid }"
             type="text"
             placeholder="Contoh: Sony WH-1000XM5"
+            :disabled="isLoading || isSubmitting"
           >
           <small :class="{ 'is-danger': isTitleInvalid }">
             {{ titleLength }}/{{ TITLE_MAX_LENGTH }} karakter
@@ -103,6 +110,7 @@ const isTagsInvalid = computed(() => isTagCountInvalid.value || hasInvalidTagLen
             :class="{ 'is-invalid': isPreviewInvalid }"
             rows="3"
             placeholder="Ringkasan singkat yang muncul di kartu artikel."
+            :disabled="isLoading || isSubmitting"
           />
           <small :class="{ 'is-danger': isPreviewInvalid }">
             {{ previewLength }}/{{ PREVIEW_MAX_LENGTH }} karakter
@@ -116,6 +124,7 @@ const isTagsInvalid = computed(() => isTagCountInvalid.value || hasInvalidTagLen
             class="article-form__textarea"
             rows="13"
             placeholder="Tulis review lengkap, pengalaman penggunaan, kelebihan, kekurangan, dan rekomendasi."
+            :disabled="isLoading || isSubmitting"
           />
         </label>
 
@@ -127,6 +136,7 @@ const isTagsInvalid = computed(() => isTagCountInvalid.value || hasInvalidTagLen
             :class="{ 'is-invalid': isTagsInvalid }"
             type="text"
             placeholder="audio, headphone, wireless"
+            :disabled="isLoading || isSubmitting"
           >
           <small :class="{ 'is-danger': isTagsInvalid }">
             {{ tagCount }}/{{ TAG_MAX_COUNT }} tag, maksimal {{ TAG_MAX_LENGTH }} karakter per tag.
@@ -158,10 +168,11 @@ const isTagsInvalid = computed(() => isTagCountInvalid.value || hasInvalidTagLen
             <span v-else>Preview gambar</span>
           </div>
 
-          <label class="article-form__upload">
+          <label class="article-form__upload" :class="{ 'is-disabled': isLoading || isSubmitting }">
             <input
               type="file"
               accept="image/png,image/jpeg"
+              :disabled="isLoading || isSubmitting"
               @change="handleImageChange"
             >
             <span>Pilih gambar</span>
@@ -186,6 +197,7 @@ const isTagsInvalid = computed(() => isTagCountInvalid.value || hasInvalidTagLen
       <button
         type="button"
         class="article-form__button article-form__button--ghost"
+        :disabled="isSubmitting"
         @click="cancelForm"
       >
         Batal
@@ -194,7 +206,7 @@ const isTagsInvalid = computed(() => isTagCountInvalid.value || hasInvalidTagLen
       <button
         type="button"
         class="article-form__button article-form__button--primary"
-        :disabled="isSubmitting"
+        :disabled="isSubmitting || isLoading"
         @click="submitForm"
       >
         {{ submitLabel }}
@@ -276,6 +288,12 @@ const isTagsInvalid = computed(() => isTagCountInvalid.value || hasInvalidTagLen
   word-break: break-word;
 }
 
+.article-form__alert--neutral {
+  color: var(--text-secondary);
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid var(--glass-border);
+}
+
 .article-form__alert--error {
   color: var(--primary-red);
   background: rgba(181, 107, 82, 0.1);
@@ -353,6 +371,12 @@ const isTagsInvalid = computed(() => isTagCountInvalid.value || hasInvalidTagLen
   word-break: break-word;
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
+}
+
+.article-form__input:disabled,
+.article-form__textarea:disabled {
+  opacity: 0.72;
+  cursor: not-allowed;
 }
 
 .article-form__textarea {
@@ -440,11 +464,20 @@ const isTagsInvalid = computed(() => isTagCountInvalid.value || hasInvalidTagLen
   background: rgba(106, 173, 168, 0.14);
 }
 
+.article-form__upload.is-disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
 .article-form__upload input {
   position: absolute;
   inset: 0;
   opacity: 0;
   cursor: pointer;
+}
+
+.article-form__upload input:disabled {
+  cursor: not-allowed;
 }
 
 .article-form__file-name {
@@ -496,7 +529,7 @@ const isTagsInvalid = computed(() => isTagCountInvalid.value || hasInvalidTagLen
   color: var(--text-primary);
 }
 
-.article-form__button--ghost:hover {
+.article-form__button--ghost:hover:not(:disabled) {
   background: rgba(255, 255, 255, 0.14);
 }
 

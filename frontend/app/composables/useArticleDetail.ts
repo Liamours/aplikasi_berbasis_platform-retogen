@@ -1,10 +1,45 @@
-import type { DetailArticle, DetailComment, DetailCommentTree, ArticleViewResponse, ApiBaseResponse, DetailPriceEntry } from '~/types/api'
+import type {
+  ApiBaseResponse,
+  ArticleViewResponse,
+  DetailArticle,
+  DetailComment,
+  DetailCommentTree
+} from '~/types/api'
+
+type ArticleReportLog = {
+  report_id: string
+  reporter_id?: string | null
+  reporter_username?: string | null
+  reporter_email?: string | null
+  description: string
+  created_at?: string | null
+}
+
+type ArticleWithReports = DetailArticle & {
+  report_count?: number
+  reports?: ArticleReportLog[]
+}
+
+type ArticleViewResponseWithReports = ArticleViewResponse & {
+  article_preview?: string
+  report_count?: number
+  reports?: ArticleReportLog[]
+}
+
+
+
+const priceFormatter = new Intl.NumberFormat('id-ID', {
+  style: 'currency',
+  currency: 'IDR',
+  maximumFractionDigits: 0
+})
 
 export const useArticleDetail = () => {
   const { post } = useApi()
   const authStore = useAuthStore()
+  const route = useRoute()
 
-  const article = useState<DetailArticle>('ad-article', () => ({
+  const article = useState<ArticleWithReports>('ad-article', () => ({
     article_id: '',
     article_title: '',
     article_preview: '',
@@ -13,12 +48,15 @@ export const useArticleDetail = () => {
     article_image: null,
     prices: [],
     comments: [],
-    ratings: []
+    ratings: [],
+    report_count: 0,
+    reports: []
   }))
+
   const isLoading = useState('ad-loading', () => false)
   const error = useState('ad-error', () => '')
 
-  const tracked = useState('ad-tracked', () => false)
+
   const ratingDraft = useState('ad-rating-draft', () => 0)
   const ratingFeedback = useState('ad-rating-feedback', () => '')
   const hoverRating = useState('ad-hover-rating', () => 0)
@@ -37,6 +75,10 @@ export const useArticleDetail = () => {
     description: ''
   }))
 
+  const reportLogState = useState('ad-report-log-state', () => ({
+    open: false
+  }))
+
   const deleteCommentState = useState('ad-delete-comment-state', () => ({
     open: false,
     targetId: '',
@@ -52,11 +94,15 @@ export const useArticleDetail = () => {
   const isAdmin = computed(() => authStore.user?.role === 'admin')
   const currentUserEmail = computed(() => authStore.user?.email || '')
 
-  const averageRating = computed(() => {
-    const ratings = article.value.ratings ?? []
-    if (!ratings.length) return '0.0'
+  const isReportLogOpen = computed(() => reportLogState.value.open)
+  const reportLogs = computed(() => article.value.reports ?? [])
+  const reportLogCount = computed(() => article.value.report_count ?? reportLogs.value.length)
 
-    const total = ratings.reduce((sum, rating) => sum + rating.rating_value, 0)
+  const averageRating = computed(() => {
+    const ratings = article.value.ratings
+    if (!ratings?.length) return '0.0'
+
+    const total = ratings.reduce((sum, r) => sum + r.rating_value, 0)
     return (total / ratings.length).toFixed(1)
   })
 
@@ -94,6 +140,45 @@ export const useArticleDetail = () => {
     return labels[ratingDraft.value] ?? 'Pilih rating'
   })
 
+  function isObjectId(value: string) {
+    return /^[a-fA-F0-9]{24}$/.test(value)
+  }
+
+  function getCurrentRouteArticleId() {
+    const currentId = route.params.id
+    return Array.isArray(currentId) ? currentId[0] : String(currentId || '')
+  }
+
+  function toImageSrc(value?: string | null) {
+    if (!value) return null
+    return value.startsWith('data:') ? value : `data:image/jpeg;base64,${value}`
+  }
+
+  function getPreview(response: ArticleViewResponseWithReports) {
+    if (response.article_preview) return response.article_preview
+
+    return (response.article_content || '')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .slice(0, 128)
+  }
+
+  function clearArticleState() {
+    article.value = {
+      article_id: '',
+      article_title: '',
+      article_preview: '',
+      article_content: '',
+      article_tags: [],
+      article_image: null,
+      prices: [],
+      comments: [],
+      ratings: [],
+      report_count: 0,
+      reports: []
+    }
+  }
+
   function buildCommentTree(comments: DetailComment[]): DetailCommentTree[] {
     const map = new Map<string, DetailCommentTree>()
     const roots: DetailCommentTree[] = []
@@ -105,11 +190,13 @@ export const useArticleDetail = () => {
     map.forEach((comment) => {
       if (comment.parent_comment_id) {
         const parent = map.get(comment.parent_comment_id)
+
         if (parent) {
           parent.children.push(comment)
           return
         }
       }
+
       roots.push(comment)
     })
 
@@ -117,27 +204,26 @@ export const useArticleDetail = () => {
   }
 
   function formatPrice(value: number) {
-    return new Intl.NumberFormat('id-ID', {
-      style: 'currency',
-      currency: 'IDR',
-      maximumFractionDigits: 0
-    }).format(value)
+    return priceFormatter.format(value)
   }
 
   function getCurrentUserRating() {
     if (!currentUserEmail.value || !article.value.ratings) return 0
+
     const email = currentUserEmail.value.toLowerCase()
+
     return article.value.ratings.find(
       (rating) => rating.user_email?.toLowerCase() === email
     )?.rating_value ?? 0
   }
 
-  // Synchronize ratingDraft with the actual article ratings whenever they change
-  // This handles late logins, article updates, and navigation perfectly.
-  watch([currentUserEmail, () => article.value.ratings], () => {
-    ratingDraft.value = getCurrentUserRating()
-  }, { immediate: true, deep: true })
-
+  watch(
+    [currentUserEmail, () => article.value.ratings],
+    () => {
+      ratingDraft.value = getCurrentUserRating()
+    },
+    { immediate: true, deep: true }
+  )
 
   function getUserRatingValue(userEmail: string) {
     return article.value.ratings?.find(
@@ -146,46 +232,65 @@ export const useArticleDetail = () => {
   }
 
   async function fetchArticle(articleId: string) {
+    if (!isObjectId(articleId)) {
+      isLoading.value = false
+      error.value = ''
+      await navigateTo('/main')
+      return false
+    }
+
     isLoading.value = true
     error.value = ''
 
     try {
-      const response = await post<ArticleViewResponse>('/article/view', { article_id: articleId }, true)
+      const response = await post<ArticleViewResponseWithReports>(
+        '/article/view',
+        { article_id: articleId },
+        true
+      )
 
-      if (response.confirmation === 'successful') {
-        const image = response.article_image
-          ? (response.article_image.startsWith('data:') ? response.article_image : `data:image/jpeg;base64,${response.article_image}`)
-          : null
-
-        // Guard: Only update if the articleId we fetched matches the one currently requested
-        // This prevents race conditions during rapid navigation
-        const currentId = useRoute().params.id
-        if (currentId && articleId !== currentId) return
-
-        article.value = {
-          article_id: articleId,
-          article_title: response.article_title,
-          article_preview: response.article_title.substring(0, 100),
-          article_content: response.article_content,
-          article_tags: response.article_tags,
-          article_image: image,
-          prices: [],
-          comments: response.comments.map(c => ({
-            ...c,
-            created_at: new Date().toISOString()
-          })),
-          ratings: response.ratings
-        }
-
-        // ratingDraft is now handled by the watcher above
-        
-        // Fetch prices from monitor
-        await fetchPrices(response.article_title)
-      } else {
-        error.value = response.confirmation
+      if (response.confirmation !== 'successful') {
+        await navigateTo('/main')
+        return false
       }
+
+      const currentId = getCurrentRouteArticleId()
+
+      if (currentId && articleId !== currentId) {
+        return false
+      }
+
+      article.value = {
+        article_id: articleId,
+        article_title: response.article_title,
+        article_preview: getPreview(response),
+        article_content: response.article_content,
+        article_tags: response.article_tags ?? [],
+        article_image: toImageSrc(response.article_image),
+        prices: [],
+        comments: (response.comments ?? []).map((comment) => ({
+          ...comment,
+          created_at: new Date().toISOString()
+        })),
+        ratings: response.ratings ?? [],
+        report_count: response.report_count ?? response.reports?.length ?? 0,
+        reports: response.reports ?? []
+      }
+
+      // Parallelize price fetching - don't block article display
+      fetchPrices(response.article_title)
+
+      return true
     } catch (err: any) {
-      error.value = err.message || 'Gagal memuat artikel.'
+      const status = err?.response?.status || err?.statusCode
+
+      if (status === 401) {
+        await navigateTo('/')
+        return false
+      }
+
+      error.value = 'Gagal memuat artikel. Pastikan backend berjalan.'
+      return false
     } finally {
       isLoading.value = false
     }
@@ -195,18 +300,22 @@ export const useArticleDetail = () => {
     if (!productName) return
 
     try {
-      const response = await post<any>('/monitor/search', {
-        product_name: productName,
-        limit: 10
-      }, true)
+      const response = await post<any>(
+        '/monitor/search',
+        {
+          product_name: productName,
+          limit: 10
+        },
+        true
+      )
 
-      if (response && response.results) {
-        article.value.prices = response.results.map((r: any, index: number) => ({
+      if (response?.results) {
+        article.value.prices = response.results.map((item: any, index: number) => ({
           id: `price-${index}`,
-          store: r.store || 'Tokopedia',
-          product: r.product,
-          price: r.price,
-          rating: r.rating,
+          store: item.store || 'Tokopedia',
+          product: item.product,
+          price: item.price,
+          rating: item.rating,
           logo: null
         }))
       }
@@ -215,23 +324,10 @@ export const useArticleDetail = () => {
     }
   }
 
-  function resetPageState(articleId: string) {
-    // Clear old state immediately to prevent "ghost" data while loading
-    article.value = {
-      article_id: '',
-      article_title: '',
-      article_preview: '',
-      article_content: '',
-      article_tags: [],
-      article_image: null,
-      prices: [],
-      comments: [],
-      ratings: []
-    }
-    ratingDraft.value = 0
+  async function resetPageState(articleId: string) {
+    clearArticleState()
 
-    fetchArticle(articleId)
-    tracked.value = false
+    ratingDraft.value = 0
     ratingFeedback.value = ''
     hoverRating.value = 0
     commentDraft.value = ''
@@ -239,61 +335,81 @@ export const useArticleDetail = () => {
     replyDrafts.value = {}
     activeEditId.value = null
     editDraft.value = ''
+    reportLogState.value = { open: false }
     deleteCommentState.value = { open: false, targetId: '', targetOwner: '' }
     deleteArticleState.value = { open: false, targetId: '', title: '' }
+
+    return await fetchArticle(articleId)
   }
 
   async function setRating(value: number) {
     const normalizedValue = Math.min(5, Math.max(1, Math.round(value)))
     const existingRating = article.value.ratings.find(
-      (r) => r.user_email === currentUserEmail.value
+      (rating) => rating.user_email === currentUserEmail.value
     )
 
     try {
       let response: ArticleViewResponse
+
       if (existingRating) {
-        response = await post<ArticleViewResponse>('/rating/edit/update', {
-          rating_id: existingRating.rating_id,
-          article_id: article.value.article_id,
-          rating_value: normalizedValue
-        }, true)
+        response = await post<ArticleViewResponse>(
+          '/rating/edit/update',
+          {
+            rating_id: existingRating.rating_id,
+            article_id: article.value.article_id,
+            rating_value: normalizedValue
+          },
+          true
+        )
       } else {
-        response = await post<ArticleViewResponse>('/rating/add', {
-          article_id: article.value.article_id,
-          rating_value: normalizedValue
-        }, true)
+        response = await post<ArticleViewResponse>(
+          '/rating/add',
+          {
+            article_id: article.value.article_id,
+            rating_value: normalizedValue
+          },
+          true
+        )
       }
 
       if (response.confirmation === 'successful') {
         article.value.ratings = response.ratings
         ratingDraft.value = normalizedValue
         ratingFeedback.value = existingRating ? 'Rating diperbarui' : 'Rating disimpan'
-      } else if (response.confirmation === 'already rated') {
-        // If backend says already rated but we didn't find it, refresh article to get the ID
+        return
+      }
+
+      if (response.confirmation === 'already rated') {
         await fetchArticle(article.value.article_id)
         ratingFeedback.value = 'Data rating sinkron kembali. Silakan coba lagi.'
-      } else {
-        ratingFeedback.value = response.confirmation
+        return
       }
-    } catch (err: any) {
+
+      ratingFeedback.value = response.confirmation
+    } catch {
       ratingFeedback.value = 'Gagal menyimpan rating'
     }
   }
 
   async function submitComment(parentId: string | null = null) {
     const text = (parentId ? (replyDrafts.value[parentId] ?? '') : commentDraft.value).trim()
+
     if (!text) return
 
     try {
-      const response = await post<ArticleViewResponse>('/comment/add', {
-        article_id: article.value.article_id,
-        parent_comment_id: parentId,
-        comment_content: text
-      }, true)
+      const response = await post<ArticleViewResponse>(
+        '/comment/add',
+        {
+          article_id: article.value.article_id,
+          parent_comment_id: parentId,
+          comment_content: text
+        },
+        true
+      )
 
       if (response.confirmation === 'successful') {
-        article.value.comments = response.comments.map(c => ({
-          ...c,
+        article.value.comments = response.comments.map((comment) => ({
+          ...comment,
           created_at: new Date().toISOString()
         }))
 
@@ -304,7 +420,7 @@ export const useArticleDetail = () => {
           commentDraft.value = ''
         }
       }
-    } catch (err: any) {
+    } catch (err) {
       console.error('Failed to submit comment', err)
     }
   }
@@ -337,6 +453,7 @@ export const useArticleDetail = () => {
 
   function startEditComment(commentId: string) {
     const comment = findCommentById(commentId)
+
     if (!comment || !canEditComment(comment)) return
 
     activeReplyId.value = null
@@ -357,36 +474,44 @@ export const useArticleDetail = () => {
     if (!activeEditId.value) return
 
     const text = editDraft.value.trim()
+
     if (!text) return
 
     const comment = findCommentById(activeEditId.value)
+
     if (!comment || !canEditComment(comment)) {
       cancelEditComment()
       return
     }
 
     try {
-      const response = await post<ArticleViewResponse>('/comment/edit/update', {
-        article_id: article.value.article_id,
-        comment_id: activeEditId.value,
-        parent_comment_id: comment.parent_comment_id,
-        comment_content: text
-      }, true)
+      const response = await post<ArticleViewResponse>(
+        '/comment/edit/update',
+        {
+          article_id: article.value.article_id,
+          comment_id: activeEditId.value,
+          parent_comment_id: comment.parent_comment_id,
+          comment_content: text
+        },
+        true
+      )
 
       if (response.confirmation === 'successful') {
-        article.value.comments = response.comments.map(c => ({
-          ...c,
+        article.value.comments = response.comments.map((item) => ({
+          ...item,
           created_at: new Date().toISOString()
         }))
+
         cancelEditComment()
       }
-    } catch (err: any) {
+    } catch (err) {
       console.error('Failed to save comment edit', err)
     }
   }
 
   function openDeleteComment(commentId: string) {
     const comment = findCommentById(commentId)
+
     if (!comment || !canDeleteComment(comment)) return
 
     deleteCommentState.value = {
@@ -406,21 +531,25 @@ export const useArticleDetail = () => {
 
   async function confirmDeleteComment() {
     const targetId = deleteCommentState.value.targetId
+
     if (!targetId) return
 
     try {
-      const response = await post<ArticleViewResponse>('/comment/delete', {
-        comment_id: targetId
-      }, true)
+      const response = await post<ArticleViewResponse>(
+        '/comment/delete',
+        { comment_id: targetId },
+        true
+      )
 
       if (response.confirmation === 'successful') {
-        article.value.comments = response.comments.map(c => ({
-          ...c,
+        article.value.comments = response.comments.map((comment) => ({
+          ...comment,
           created_at: new Date().toISOString()
         }))
+
         closeDeleteComment()
       }
-    } catch (err: any) {
+    } catch (err) {
       console.error('Failed to delete comment', err)
     }
   }
@@ -445,59 +574,106 @@ export const useArticleDetail = () => {
 
   async function confirmDeleteArticle() {
     const targetId = deleteArticleState.value.targetId
+
     if (!targetId || !isAdmin.value) return
 
     try {
-      const response = await post<ApiBaseResponse>('/article/delete', {
-        article_id: targetId
-      }, true)
+      const response = await post<ApiBaseResponse>(
+        '/article/delete',
+        { article_id: targetId },
+        true
+      )
 
       if (response.confirmation.includes('successful')) {
         closeDeleteArticle()
         await navigateTo('/main')
       }
-    } catch (err: any) {
+    } catch (err) {
       console.error('Failed to delete article', err)
     }
   }
 
-  function toggleTrackPrice() {
-    tracked.value = !tracked.value
+  function openReportLog() {
+    if (!isAdmin.value) return
+
+    reportLogState.value = {
+      open: true
+    }
   }
 
-  function openReport(type: 'article' | 'comment', targetId: string, targetName: string = '', targetContent: string = '') {
-    reportState.value = { open: true, type, targetId, targetName, targetContent, description: '' }
+  function closeReportLog() {
+    reportLogState.value = {
+      open: false
+    }
+  }
+
+
+
+  function openReport(
+    type: 'article' | 'comment',
+    targetId: string,
+    targetName: string = '',
+    targetContent: string = ''
+  ) {
+    reportState.value = {
+      open: true,
+      type,
+      targetId,
+      targetName,
+      targetContent,
+      description: ''
+    }
   }
 
   function closeReport() {
-    reportState.value = { ...reportState.value, open: false, description: '', targetId: '', targetName: '', targetContent: '' }
+    reportState.value = {
+      ...reportState.value,
+      open: false,
+      description: '',
+      targetId: '',
+      targetName: '',
+      targetContent: ''
+    }
   }
 
   async function submitReport() {
     if (!reportState.value.description.trim()) return
-    
+
     try {
       if (reportState.value.type === 'article') {
-        const response = await post<ApiBaseResponse>('/report_article/add', {
-          article_id: reportState.value.targetId,
+        const response = await post<ApiBaseResponse>(
+          '/report_article/add',
+          {
+            article_id: reportState.value.targetId,
+            description: reportState.value.description
+          },
+          true
+        )
+
+        if (response.confirmation.includes('successful')) {
+          closeReport()
+        }
+
+        return
+      }
+
+      const comment = article.value.comments?.find(
+        (item) => item.comment_id === reportState.value.targetId
+      )
+
+      if (!comment) return
+
+      const response = await post<ApiBaseResponse>(
+        '/report_user/report_user',
+        {
+          reported_user_email: comment.user_email || '',
           description: reportState.value.description
-        }, true)
-        
-        if (response.confirmation.includes('successful')) {
-          closeReport()
-        }
-      } else {
-        const comment = article.value.comments?.find(c => c.comment_id === reportState.value.targetId)
-        if (!comment) return
+        },
+        true
+      )
 
-        const response = await post<ApiBaseResponse>('/report_user/report_user', {
-          reported_user_email: comment.user_email,
-          description: `${reportState.value.description}`
-        }, true)
-
-        if (response.confirmation.includes('successful')) {
-          closeReport()
-        }
+      if (response.confirmation.includes('successful')) {
+        closeReport()
       }
     } catch (err) {
       console.error('Failed to submit report', err)
@@ -509,7 +685,7 @@ export const useArticleDetail = () => {
     article,
     isLoading,
     error,
-    tracked,
+
     ratingDraft,
     ratingFeedback,
     hoverRating,
@@ -519,8 +695,12 @@ export const useArticleDetail = () => {
     activeEditId,
     editDraft,
     reportState,
+    reportLogState,
     deleteCommentState,
     deleteArticleState,
+    isReportLogOpen,
+    reportLogs,
+    reportLogCount,
     averageRating,
     totalComments,
     articleParagraphs,
@@ -550,7 +730,9 @@ export const useArticleDetail = () => {
     openDeleteArticle,
     closeDeleteArticle,
     confirmDeleteArticle,
-    toggleTrackPrice,
+    openReportLog,
+    closeReportLog,
+
     openReport,
     closeReport,
     submitReport

@@ -1,13 +1,11 @@
 <script setup lang="ts">
-const { article, tracked, toggleTrackPrice } = useArticleDetail()
+const { article } = useArticleDetail()
 </script>
 
 <template>
   <aside class="article-detail-side">
     <DetailPriceTracker
       :prices="article.prices ?? []"
-      :tracked="tracked"
-      @toggle-track="toggleTrackPrice"
     />
   </aside>
 </template>

@@ -20,16 +20,26 @@ const articleTitle = computed(() => {
         class="delete-article-modal"
         @click.self="closeDeleteArticle"
       >
-        <section class="delete-article-modal__panel" role="dialog" aria-modal="true">
-          <p class="delete-article-modal__eyebrow">Konfirmasi</p>
+        <section
+          class="delete-article-modal__panel"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="delete-article-title"
+        >
+          <p class="delete-article-modal__eyebrow">
+            Konfirmasi
+          </p>
 
-          <h2 class="delete-article-modal__title">
+          <h2 id="delete-article-title" class="delete-article-modal__title">
             Hapus artikel?
           </h2>
 
           <p class="delete-article-modal__description">
-            Artikel <strong>{{ articleTitle }}</strong> akan dihapus. Setelah konfirmasi,
-            Anda akan kembali ke halaman utama.
+            Artikel
+            <strong class="delete-article-modal__article-title">
+              {{ articleTitle }}
+            </strong>
+            akan dihapus. Setelah konfirmasi, Anda akan kembali ke halaman utama.
           </p>
 
           <div class="delete-article-modal__actions">
@@ -60,19 +70,22 @@ const articleTitle = computed(() => {
   position: fixed;
   inset: 0;
   z-index: 99999;
-  background: rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 24px;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
 }
 
 .delete-article-modal__panel {
   width: min(100%, 440px);
+  max-height: calc(100vh - 48px);
+  min-width: 0;
+  overflow: hidden auto;
   border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.72);
+  border: 1px solid var(--glass-border);
   background: var(--bg-surface);
   box-shadow: 0 18px 50px rgba(0, 0, 0, 0.18);
   padding: 28px;
@@ -81,37 +94,51 @@ const articleTitle = computed(() => {
 }
 
 .delete-article-modal__eyebrow {
-  margin-bottom: 6px;
+  margin: 0 0 6px;
   color: var(--primary-red);
   font-size: 12px;
   font-weight: 700;
-  letter-spacing: 0.6px;
+  letter-spacing: 0.8px;
   text-transform: uppercase;
 }
 
 .delete-article-modal__title {
+  margin: 0;
   color: var(--text-primary);
   font-size: 24px;
-  line-height: 1.15;
-  font-weight: 700;
+  line-height: 1.2;
+  font-weight: 800;
+  letter-spacing: -0.4px;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .delete-article-modal__description {
-  margin-top: 12px;
+  max-width: 100%;
+  min-width: 0;
+  margin: 12px 0 0;
   color: var(--text-secondary);
   font-size: 14px;
   line-height: 1.7;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
-.delete-article-modal__description strong {
+.delete-article-modal__article-title {
+  display: inline;
+  max-width: 100%;
   color: var(--text-primary);
+  font-weight: 700;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .delete-article-modal__actions {
-  margin-top: 24px;
   display: flex;
   justify-content: flex-end;
   gap: 10px;
+  margin-top: 22px;
+  min-width: 0;
 }
 
 .delete-article-modal__button {
@@ -127,12 +154,12 @@ const articleTitle = computed(() => {
 
 .delete-article-modal__button--ghost {
   border: 1px solid var(--glass-border);
-  background: var(--input-bg);
+  background: rgba(255, 255, 255, 0.08);
   color: var(--text-primary);
 }
 
 .delete-article-modal__button--ghost:hover {
-  background: rgba(255, 255, 255, 0.78);
+  background: rgba(255, 255, 255, 0.14);
 }
 
 .delete-article-modal__button--danger {
@@ -142,15 +169,12 @@ const articleTitle = computed(() => {
 
 .delete-article-modal__button--danger:hover {
   transform: translateY(-1px);
-  background: #c73629;
+  background: var(--primary-red);
 }
 
-/* Variabel otomatis adaptif */
-
-@media (max-width: 480px) {
+@media (max-width: 520px) {
   .delete-article-modal {
-    align-items: flex-end;
-    padding: 16px;
+    padding: 18px;
   }
 
   .delete-article-modal__panel {

@@ -11,6 +11,14 @@ const props = defineProps<{
   replyDrafts: Record<string, string>
 }>()
 
+const commentDateFormatter = new Intl.DateTimeFormat('id-ID', {
+  day: '2-digit',
+  month: 'short',
+  year: 'numeric',
+  hour: '2-digit',
+  minute: '2-digit'
+})
+
 const emit = defineEmits<{
   openReport: [payload: { commentId: string, owner: string, content: string }]
   openUserProfile: [userEmail: string]
@@ -35,15 +43,7 @@ const {
 } = useArticleDetail()
 
 const formatCommentTime = (value: string) => {
-  const date = new Date(value)
-
-  return new Intl.DateTimeFormat('id-ID', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  }).format(date)
+  return commentDateFormatter.format(new Date(value))
 }
 
 const openProfile = () => {
@@ -53,8 +53,8 @@ const openProfile = () => {
 }
 
 
-const replyValue = computed(() => props.replyDrafts[props.comment.comment_id] ?? '')
 const isReplying = computed(() => props.activeReplyId === props.comment.comment_id)
+const replyValue = computed(() => props.replyDrafts[props.comment.comment_id] ?? '')
 const isEditing = computed(() => activeEditId.value === props.comment.comment_id)
 const initials = computed(() => props.comment.owner.slice(0, 1).toUpperCase())
 
@@ -65,7 +65,10 @@ const showDeleteAction = computed(() => canDeleteComment(props.comment))
 </script>
 
 <template>
-  <article class="comment-item">
+  <article
+    v-memo="[comment.comment_content, isReplying, isEditing, commentUserRating, replyValue]"
+    class="comment-item"
+  >
     <div class="comment-item__header">
       <div class="comment-item__author">
         <button
@@ -175,7 +178,11 @@ const showDeleteAction = computed(() => canDeleteComment(props.comment))
       </div>
     </Transition>
 
-    <div v-if="comment.children.length" class="comment-item__children">
+    <div
+      v-if="comment.children.length"
+      v-memo="[comment.children, activeReplyId, replyDrafts]"
+      class="comment-item__children"
+    >
       <DetailCommentItem
         v-for="child in comment.children"
         :key="child.comment_id"
@@ -194,10 +201,12 @@ const showDeleteAction = computed(() => canDeleteComment(props.comment))
 
 <style scoped>
 .comment-item {
+  min-width: 0;
   padding: 16px;
   border-radius: var(--radius-md);
-  background: rgba(255, 255, 255, 0.22);
+  background: var(--comment-surface, var(--bg-surface));
   border: 1px solid var(--glass-border);
+  overflow: hidden;
 }
 
 .comment-item__header {
@@ -313,9 +322,10 @@ const showDeleteAction = computed(() => canDeleteComment(props.comment))
 }
 
 .comment-item__body {
-  margin-top: 12px;
-  color: var(--text-secondary);
-  line-height: 1.65;
+  max-width: 100%;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .comment-item__reply-box,
@@ -354,12 +364,15 @@ const showDeleteAction = computed(() => canDeleteComment(props.comment))
 }
 
 .comment-item__children {
-  margin-top: 16px;
-  margin-left: 24px;
-  padding-left: 16px;
-  border-left: 2px solid rgba(106, 173, 168, 0.2);
+  --comment-surface: rgba(106, 173, 168, 0.03); /* Subtle tint instead of white */
+
+  min-width: 0;
+  margin-top: 12px;
+  margin-left: 6px;
+  padding-left: 10px;
+  border-left: 1px solid rgba(106, 173, 168, 0.18);
   display: grid;
-  gap: 12px;
+  gap: 10px;
 }
 
 @media (max-width: 480px) {
@@ -372,10 +385,10 @@ const showDeleteAction = computed(() => canDeleteComment(props.comment))
     justify-content: space-between;
   }
 
-  .comment-item__children {
-    margin-left: 12px;
-    padding-left: 12px;
-  }
+ .comment-item__children {
+  margin-left: 4px;
+  padding-left: 8px;
+}
 
   .comment-item__reply-actions {
     flex-direction: column;
