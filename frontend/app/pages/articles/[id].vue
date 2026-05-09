@@ -5,7 +5,6 @@ definePageMeta({
 })
 
 const route = useRoute()
-const { resetPageState } = useArticleDetail()
 
 const {
   resetPageState,
