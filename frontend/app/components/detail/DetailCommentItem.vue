@@ -11,6 +11,14 @@ const props = defineProps<{
   replyDrafts: Record<string, string>
 }>()
 
+const commentDateFormatter = new Intl.DateTimeFormat('id-ID', {
+  day: '2-digit',
+  month: 'short',
+  year: 'numeric',
+  hour: '2-digit',
+  minute: '2-digit'
+})
+
 const emit = defineEmits<{
   openReport: [payload: { commentId: string, owner: string, content: string }]
   openUserProfile: [userEmail: string]
@@ -35,15 +43,7 @@ const {
 } = useArticleDetail()
 
 const formatCommentTime = (value: string) => {
-  const date = new Date(value)
-
-  return new Intl.DateTimeFormat('id-ID', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  }).format(date)
+  return commentDateFormatter.format(new Date(value))
 }
 
 const openProfile = () => {
@@ -53,8 +53,8 @@ const openProfile = () => {
 }
 
 
-const replyValue = computed(() => props.replyDrafts[props.comment.comment_id] ?? '')
 const isReplying = computed(() => props.activeReplyId === props.comment.comment_id)
+const replyValue = computed(() => props.replyDrafts[props.comment.comment_id] ?? '')
 const isEditing = computed(() => activeEditId.value === props.comment.comment_id)
 const initials = computed(() => props.comment.owner.slice(0, 1).toUpperCase())
 
@@ -65,7 +65,10 @@ const showDeleteAction = computed(() => canDeleteComment(props.comment))
 </script>
 
 <template>
-  <article class="comment-item">
+  <article
+    v-memo="[comment.comment_content, isReplying, isEditing, commentUserRating, replyValue]"
+    class="comment-item"
+  >
     <div class="comment-item__header">
       <div class="comment-item__author">
         <button
@@ -175,7 +178,11 @@ const showDeleteAction = computed(() => canDeleteComment(props.comment))
       </div>
     </Transition>
 
-    <div v-if="comment.children.length" class="comment-item__children">
+    <div
+      v-if="comment.children.length"
+      v-memo="[comment.children, activeReplyId, replyDrafts]"
+      class="comment-item__children"
+    >
       <DetailCommentItem
         v-for="child in comment.children"
         :key="child.comment_id"

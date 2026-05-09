@@ -26,6 +26,14 @@ type ArticleViewResponseWithReports = ArticleViewResponse & {
   reports?: ArticleReportLog[]
 }
 
+
+
+const priceFormatter = new Intl.NumberFormat('id-ID', {
+  style: 'currency',
+  currency: 'IDR',
+  maximumFractionDigits: 0
+})
+
 export const useArticleDetail = () => {
   const { post } = useApi()
   const authStore = useAuthStore()
@@ -48,7 +56,7 @@ export const useArticleDetail = () => {
   const isLoading = useState('ad-loading', () => false)
   const error = useState('ad-error', () => '')
 
-  const tracked = useState('ad-tracked', () => false)
+
   const ratingDraft = useState('ad-rating-draft', () => 0)
   const ratingFeedback = useState('ad-rating-feedback', () => '')
   const hoverRating = useState('ad-hover-rating', () => 0)
@@ -91,11 +99,10 @@ export const useArticleDetail = () => {
   const reportLogCount = computed(() => article.value.report_count ?? reportLogs.value.length)
 
   const averageRating = computed(() => {
-    const ratings = article.value.ratings ?? []
+    const ratings = article.value.ratings
+    if (!ratings?.length) return '0.0'
 
-    if (!ratings.length) return '0.0'
-
-    const total = ratings.reduce((sum, rating) => sum + rating.rating_value, 0)
+    const total = ratings.reduce((sum, r) => sum + r.rating_value, 0)
     return (total / ratings.length).toFixed(1)
   })
 
@@ -197,11 +204,7 @@ export const useArticleDetail = () => {
   }
 
   function formatPrice(value: number) {
-    return new Intl.NumberFormat('id-ID', {
-      style: 'currency',
-      currency: 'IDR',
-      maximumFractionDigits: 0
-    }).format(value)
+    return priceFormatter.format(value)
   }
 
   function getCurrentUserRating() {
@@ -274,7 +277,8 @@ export const useArticleDetail = () => {
         reports: response.reports ?? []
       }
 
-      await fetchPrices(response.article_title)
+      // Parallelize price fetching - don't block article display
+      fetchPrices(response.article_title)
 
       return true
     } catch (err: any) {
@@ -324,7 +328,6 @@ export const useArticleDetail = () => {
     clearArticleState()
 
     ratingDraft.value = 0
-    tracked.value = false
     ratingFeedback.value = ''
     hoverRating.value = 0
     commentDraft.value = ''
@@ -604,9 +607,7 @@ export const useArticleDetail = () => {
     }
   }
 
-  function toggleTrackPrice() {
-    tracked.value = !tracked.value
-  }
+
 
   function openReport(
     type: 'article' | 'comment',
@@ -684,7 +685,7 @@ export const useArticleDetail = () => {
     article,
     isLoading,
     error,
-    tracked,
+
     ratingDraft,
     ratingFeedback,
     hoverRating,
@@ -731,7 +732,7 @@ export const useArticleDetail = () => {
     confirmDeleteArticle,
     openReportLog,
     closeReportLog,
-    toggleTrackPrice,
+
     openReport,
     closeReport,
     submitReport

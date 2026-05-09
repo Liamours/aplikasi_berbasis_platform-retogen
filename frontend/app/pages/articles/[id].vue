@@ -1,8 +1,4 @@
 <script setup lang="ts">
-import DetailDeleteArticleModal from '~/components/detail/DetailDeleteArticleModal.vue'
-import DetailDeleteCommentModal from '~/components/detail/DetailDeleteCommentModal.vue'
-import DetailReportLogModal from '~/components/detail/DetailReportLogModal.vue'
-
 definePageMeta({
   layout: 'default',
   middleware: 'auth'
@@ -13,49 +9,101 @@ const route = useRoute()
 const {
   resetPageState,
   isLoading,
-  error
+  error,
+  reportState,
+  isReportLogOpen,
+  deleteCommentState,
+  deleteArticleState
 } = useArticleDetail()
 
 const { isDark } = useTheme()
 
 useHead({
   htmlAttrs: {
-    class: computed(() => isDark.value ? 'dark-mode' : '')
+    class: computed(() => (isDark.value ? 'dark-mode' : ''))
   }
 })
 
-watch(
-  () => route.params.id,
-  async (id) => {
-    const articleId = Array.isArray(id) ? id[0] : String(id || '')
+const canRenderBelowFold = ref(false)
+const canRenderModals = ref(false)
 
-    if (!articleId) {
+const routeArticleId = computed<string>(() => {
+  const id = route.params.id
+
+  if (Array.isArray(id)) {
+    return id[0] ?? ''
+  }
+
+  return typeof id === 'string' ? id : ''
+})
+
+const isObjectId = (value: string) => /^[a-fA-F0-9]{24}$/.test(value)
+
+const scheduleIdle = (callback: () => void, fallbackDelay = 300) => {
+  if (!import.meta.client) return
+
+  const win = window as Window & {
+    requestIdleCallback?: (
+      callback: () => void,
+      options?: { timeout: number }
+    ) => number
+  }
+
+  if (typeof win.requestIdleCallback === 'function') {
+    win.requestIdleCallback(callback, { timeout: 1200 })
+    return
+  }
+
+  window.setTimeout(callback, fallbackDelay)
+}
+
+watch(
+  routeArticleId,
+  async (articleId) => {
+    if (!isObjectId(articleId)) {
       await navigateTo('/main')
       return
     }
 
+    canRenderBelowFold.value = false
+    canRenderModals.value = false
+
     await resetPageState(articleId)
+
+    scheduleIdle(() => {
+      canRenderBelowFold.value = true
+    }, 350)
+
+    scheduleIdle(() => {
+      canRenderModals.value = true
+    }, 700)
   },
   { immediate: true }
 )
+
+onMounted(() => {
+  scheduleIdle(() => {
+    canRenderModals.value = true
+  }, 700)
+})
 </script>
 
 <template>
   <BasePageShell>
     <div class="detail-page">
-      <BaseGlassCard v-if="isLoading" class="detail-card">
+      <section v-if="isLoading" class="detail-card detail-card--state">
         <p class="detail-feedback">
-          Memuat artikel...
+          Memuat artikel.
         </p>
-      </BaseGlassCard>
+      </section>
 
-      <BaseGlassCard v-else-if="error" class="detail-card">
+      <section v-else-if="error" class="detail-card detail-card--state">
         <p class="detail-feedback detail-feedback--error">
           {{ error }}
         </p>
-      </BaseGlassCard>
+      </section>
 
-      <BaseGlassCard v-else class="detail-card">
+      <section v-else class="detail-card">
         <DetailArticleHero />
 
         <div class="detail-card__grid">
@@ -64,18 +112,46 @@ watch(
             <DetailArticleRating />
           </section>
 
-          <DetailTrackingStatus />
+          <aside class="detail-card__side">
+            <ClientOnly>
+              <LazyDetailTrackingStatus v-if="canRenderBelowFold" />
+
+              <div v-else class="side-placeholder">
+                <p class="side-placeholder__eyebrow">Monitor harga</p>
+                <strong class="side-placeholder__title">Memuat harga setelah konten utama.</strong>
+              </div>
+            </ClientOnly>
+          </aside>
         </div>
 
-        <DetailArticleDiscussion />
-      </BaseGlassCard>
+        <ClientOnly>
+          <LazyDetailArticleDiscussion v-if="canRenderBelowFold" />
 
-      <DetailReportModal />
+          <section v-else class="discussion-placeholder">
+            <h2 class="discussion-placeholder__title">Diskusi pengguna</h2>
+            <p class="discussion-placeholder__text">
+              Diskusi akan dimuat setelah konten utama siap.
+            </p>
+          </section>
+        </ClientOnly>
+      </section>
 
       <ClientOnly>
-        <DetailReportLogModal />
-        <DetailDeleteCommentModal />
-        <DetailDeleteArticleModal />
+        <LazyDetailReportModal
+          v-if="canRenderModals || reportState.open"
+        />
+
+        <LazyDetailReportLogModal
+          v-if="canRenderModals || isReportLogOpen"
+        />
+
+        <LazyDetailDeleteCommentModal
+          v-if="canRenderModals || deleteCommentState.open"
+        />
+
+        <LazyDetailDeleteArticleModal
+          v-if="canRenderModals || deleteArticleState.open"
+        />
       </ClientOnly>
     </div>
   </BasePageShell>
@@ -85,17 +161,33 @@ watch(
 .detail-page {
   display: flex;
   justify-content: center;
+  min-height: calc(100vh - var(--navbar-height));
   padding: 8px 0 40px;
   background: var(--bg-page);
-  min-height: calc(100vh - var(--navbar-height));
 }
 
 .detail-card {
   width: min(100%, 1080px);
   margin: 0 auto;
-  isolation: isolate;
-  backdrop-filter: blur(16px) saturate(140%) !important;
-  contain: layout;
+  padding: 36px;
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  background: var(--bg-surface);
+  box-shadow: 0 8px 22px rgba(60, 55, 50, 0.06);
+
+  /*
+    Lebih ringan daripada BaseGlassCard:
+    - tidak ada backdrop-filter
+    - tidak ada saturate
+    - containment bantu browser membatasi layout/paint
+  */
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  contain: layout paint style;
+}
+
+.detail-card--state {
+  padding: 28px;
 }
 
 .detail-feedback {
@@ -111,7 +203,7 @@ watch(
 
 .detail-card__grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.4fr) minmax(300px, 0.8fr);
+  grid-template-columns: minmax(0, 1.4fr) minmax(280px, 0.8fr);
   gap: 24px;
   align-items: start;
 }
@@ -124,6 +216,61 @@ watch(
   display: grid;
   gap: 18px;
   min-width: 0;
+}
+
+.detail-card__side {
+  min-width: 0;
+  content-visibility: auto;
+  contain-intrinsic-size: 320px;
+}
+
+.side-placeholder,
+.discussion-placeholder {
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.side-placeholder {
+  padding: 22px;
+}
+
+.side-placeholder__eyebrow {
+  margin: 0 0 6px;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+}
+
+.side-placeholder__title {
+  display: block;
+  color: var(--text-primary);
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.discussion-placeholder {
+  margin-top: 28px;
+  padding: 20px;
+  content-visibility: auto;
+  contain-intrinsic-size: 420px;
+}
+
+.discussion-placeholder__title {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 20px;
+  line-height: 1.2;
+  font-weight: 700;
+}
+
+.discussion-placeholder__text {
+  margin: 8px 0 0;
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 1.6;
 }
 
 @media (max-width: 1024px) {
