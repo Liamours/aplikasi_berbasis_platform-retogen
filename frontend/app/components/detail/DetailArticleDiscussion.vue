@@ -132,8 +132,6 @@ const {
   margin-top: 16px;
   display: grid;
   gap: 14px;
-  content-visibility: auto;
-  contain-intrinsic-size: 0 400px;
 }
 
 .article-comments__empty {
