@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import DetailSuccessArticleModal from '~/components/detail/DetailSuccessArticleModal.vue'
 const props = defineProps<{
   mode: 'create' | 'edit'
   articleId?: string
@@ -9,7 +10,7 @@ const {
   tagsInput,
   previewImage,
   imageFileName,
-  formError,
+  fieldErrors,
   formSuccess,
   isSubmitting,
   isLoading,
@@ -57,6 +58,7 @@ const isTitleInvalid = computed(() => titleLength.value > TITLE_MAX_LENGTH)
 const isPreviewInvalid = computed(() => previewLength.value > PREVIEW_MAX_LENGTH)
 const isTagCountInvalid = computed(() => tagCount.value > TAG_MAX_COUNT)
 const isTagsInvalid = computed(() => isTagCountInvalid.value || hasInvalidTagLength.value)
+const showInlineSuccess = computed(() => formSuccess.value && isEditMode.value)
 </script>
 
 <template>
@@ -77,17 +79,17 @@ const isTagsInvalid = computed(() => isTagCountInvalid.value || hasInvalidTagLen
       Memuat data artikel...
     </div>
 
-    <div v-if="formError" class="article-form__alert article-form__alert--error">
-      {{ formError }}
+    <div v-if="fieldErrors.general" class="article-form__alert article-form__alert--error">
+      {{ fieldErrors.general }}
     </div>
 
-    <div v-if="formSuccess" class="article-form__alert article-form__alert--success">
+    <div v-if="showInlineSuccess" class="article-form__alert article-form__alert--success">
       {{ formSuccess }}
     </div>
 
     <div class="article-form__grid">
       <div class="article-form__main">
-        <label class="article-form__field">
+        <label id="field-title" class="article-form__field">
           <span>Judul artikel</span>
           <input
             v-model="form.article_title"
@@ -97,12 +99,13 @@ const isTagsInvalid = computed(() => isTagCountInvalid.value || hasInvalidTagLen
             placeholder="Contoh: Sony WH-1000XM5"
             :disabled="isLoading || isSubmitting"
           >
-          <small :class="{ 'is-danger': isTitleInvalid }">
-            {{ titleLength }}/{{ TITLE_MAX_LENGTH }} karakter
+          <small :class="{ 'is-danger': isTitleInvalid || fieldErrors.article_title }">
+            <template v-if="fieldErrors.article_title">{{ fieldErrors.article_title }}</template>
+            <template v-else>{{ titleLength }}/{{ TITLE_MAX_LENGTH }} karakter</template>
           </small>
         </label>
 
-        <label class="article-form__field">
+        <label id="field-preview" class="article-form__field">
           <span>Preview singkat</span>
           <textarea
             v-model="form.article_preview"
@@ -112,12 +115,13 @@ const isTagsInvalid = computed(() => isTagCountInvalid.value || hasInvalidTagLen
             placeholder="Ringkasan singkat yang muncul di kartu artikel."
             :disabled="isLoading || isSubmitting"
           />
-          <small :class="{ 'is-danger': isPreviewInvalid }">
-            {{ previewLength }}/{{ PREVIEW_MAX_LENGTH }} karakter
+          <small :class="{ 'is-danger': isPreviewInvalid || fieldErrors.article_preview }">
+            <template v-if="fieldErrors.article_preview">{{ fieldErrors.article_preview }}</template>
+            <template v-else>{{ previewLength }}/{{ PREVIEW_MAX_LENGTH }} karakter</template>
           </small>
         </label>
 
-        <label class="article-form__field">
+        <label id="field-content" class="article-form__field">
           <span>Review lengkap</span>
           <textarea
             v-model="form.article_content"
@@ -126,9 +130,12 @@ const isTagsInvalid = computed(() => isTagCountInvalid.value || hasInvalidTagLen
             placeholder="Tulis review lengkap, pengalaman penggunaan, kelebihan, kekurangan, dan rekomendasi."
             :disabled="isLoading || isSubmitting"
           />
+          <small v-if="fieldErrors.article_content" class="is-danger">
+            {{ fieldErrors.article_content }}
+          </small>
         </label>
 
-        <label class="article-form__field">
+        <label id="field-tags" class="article-form__field">
           <span>Tag</span>
           <input
             v-model="tagsInput"
@@ -138,8 +145,9 @@ const isTagsInvalid = computed(() => isTagCountInvalid.value || hasInvalidTagLen
             placeholder="audio, headphone, wireless"
             :disabled="isLoading || isSubmitting"
           >
-          <small :class="{ 'is-danger': isTagsInvalid }">
-            {{ tagCount }}/{{ TAG_MAX_COUNT }} tag, maksimal {{ TAG_MAX_LENGTH }} karakter per tag.
+          <small :class="{ 'is-danger': isTagsInvalid || fieldErrors.article_tags }">
+            <template v-if="fieldErrors.article_tags">{{ fieldErrors.article_tags }}</template>
+            <template v-else>{{ tagCount }}/{{ TAG_MAX_COUNT }} tag, maksimal {{ TAG_MAX_LENGTH }} karakter per tag.</template>
           </small>
 
           <div v-if="normalizedTags.length" class="article-form__tag-preview">
@@ -156,7 +164,7 @@ const isTagsInvalid = computed(() => isTagCountInvalid.value || hasInvalidTagLen
       </div>
 
       <aside class="article-form__side">
-        <div class="article-form__image-card">
+        <div id="field-image" class="article-form__image-card">
           <span class="article-form__image-label">Gambar produk</span>
 
           <div class="article-form__image-preview">
@@ -178,8 +186,8 @@ const isTagsInvalid = computed(() => isTagCountInvalid.value || hasInvalidTagLen
             <span>Pilih gambar</span>
           </label>
 
-          <p class="article-form__file-name">
-            {{ imageFileName || 'PNG atau JPEG' }}
+          <p class="article-form__file-name" :class="{ 'is-danger': fieldErrors.article_image }">
+            {{ fieldErrors.article_image || imageFileName || 'PNG atau JPEG' }}
           </p>
         </div>
 
@@ -212,6 +220,8 @@ const isTagsInvalid = computed(() => isTagCountInvalid.value || hasInvalidTagLen
         {{ submitLabel }}
       </button>
     </div>
+
+    <DetailSuccessArticleModal v-if="!isEditMode" />
   </section>
 </template>
 
@@ -486,6 +496,11 @@ const isTagsInvalid = computed(() => isTagCountInvalid.value || hasInvalidTagLen
   line-height: 1.5;
   overflow-wrap: anywhere;
   word-break: break-word;
+}
+
+.article-form__file-name.is-danger {
+  color: var(--primary-red);
+  font-weight: 600;
 }
 
 .article-form__note h2 {

@@ -36,10 +36,11 @@ export const useArticleForm = () => {
   const tagsInput = useState('article-form-tags-input', () => '')
   const previewImage = useState<string | null>('article-form-preview-image', () => null)
   const imageFileName = useState('article-form-image-file-name', () => '')
-  const formError = useState('article-form-error', () => '')
+  const fieldErrors = useState<Record<string, string>>('article-form-field-errors', () => ({}))
   const formSuccess = useState('article-form-success', () => '')
   const isSubmitting = useState('article-form-submitting', () => false)
   const isLoading = useState('article-form-loading', () => false)
+  const showSuccessModal = useState('article-form-show-success-modal', () => false)
 
   const isEditMode = computed(() => mode.value === 'edit')
 
@@ -71,7 +72,7 @@ export const useArticleForm = () => {
     tagsInput.value = ''
     previewImage.value = null
     imageFileName.value = ''
-    formError.value = ''
+    fieldErrors.value = {}
     formSuccess.value = ''
     isSubmitting.value = false
     isLoading.value = false
@@ -110,44 +111,53 @@ export const useArticleForm = () => {
   }
 
   function validateForm() {
+    fieldErrors.value = {}
     const title = String(form.value.article_title || '').trim()
     const preview = String(form.value.article_preview || '').trim()
     const content = String(form.value.article_content || '').trim()
     const tags = normalizeTags(tagsInput.value)
 
+    let firstErrorField = ''
+
     if (!title || title.length > TITLE_MAX_LENGTH) {
-      return `Judul wajib diisi dan maksimal ${TITLE_MAX_LENGTH} karakter.`
+      fieldErrors.value.article_title = `Judul wajib diisi dan maksimal ${TITLE_MAX_LENGTH} karakter.`
+      if (!firstErrorField) firstErrorField = 'field-title'
     }
 
     if (!preview || preview.length > PREVIEW_MAX_LENGTH) {
-      return `Preview wajib diisi dan maksimal ${PREVIEW_MAX_LENGTH} karakter.`
+      fieldErrors.value.article_preview = `Preview wajib diisi dan maksimal ${PREVIEW_MAX_LENGTH} karakter.`
+      if (!firstErrorField) firstErrorField = 'field-preview'
     }
 
     if (!content || content.length > 65536) {
-      return 'Review wajib diisi.'
+      fieldErrors.value.article_content = 'Review wajib diisi.'
+      if (!firstErrorField) firstErrorField = 'field-content'
     }
 
     if (!tags.length) {
-      return 'Minimal satu tag diperlukan.'
-    }
-
-    if (tags.length > TAG_MAX_COUNT) {
-      return `Maksimal ${TAG_MAX_COUNT} tag.`
-    }
-
-    if (tags.some((tag) => tag.length > TAG_MAX_LENGTH)) {
-      return `Setiap tag maksimal ${TAG_MAX_LENGTH} karakter.`
-    }
-
-    if (hasInvalidTagCharacters(tags)) {
-      return 'Tag hanya boleh berisi huruf, angka, spasi, dash, atau underscore.'
+      fieldErrors.value.article_tags = 'Minimal satu tag diperlukan.'
+      if (!firstErrorField) firstErrorField = 'field-tags'
+    } else if (tags.length > TAG_MAX_COUNT) {
+      fieldErrors.value.article_tags = `Maksimal ${TAG_MAX_COUNT} tag.`
+      if (!firstErrorField) firstErrorField = 'field-tags'
+    } else if (tags.some((tag) => tag.length > TAG_MAX_LENGTH)) {
+      fieldErrors.value.article_tags = `Setiap tag maksimal ${TAG_MAX_LENGTH} karakter.`
+      if (!firstErrorField) firstErrorField = 'field-tags'
+    } else if (hasInvalidTagCharacters(tags)) {
+      fieldErrors.value.article_tags = 'Tag hanya boleh berisi huruf, angka, spasi, dash, atau underscore.'
+      if (!firstErrorField) firstErrorField = 'field-tags'
     }
 
     if (!form.value.article_image) {
-      return 'Gambar produk wajib diisi.'
+      fieldErrors.value.article_image = 'Gambar produk wajib diisi.'
+      if (!firstErrorField) firstErrorField = 'field-image'
     }
 
-    return ''
+    if (firstErrorField) {
+      return { fieldId: firstErrorField }
+    }
+
+    return null
   }
 
   function fileToDataUrl(file: File) {
@@ -249,13 +259,25 @@ export const useArticleForm = () => {
   }
 
   async function submitForm() {
-    formError.value = ''
+    fieldErrors.value = {}
     formSuccess.value = ''
 
-    const validationMessage = validateForm()
+    const validation = validateForm()
 
-    if (validationMessage) {
-      formError.value = validationMessage
+    if (validation) {
+      const element = document.getElementById(validation.fieldId)
+      if (element) {
+        const offset = 100
+        const bodyRect = document.body.getBoundingClientRect().top
+        const elementRect = element.getBoundingClientRect().top
+        const elementPosition = elementRect - bodyRect
+        const offsetPosition = elementPosition - offset
+
+        window.scrollTo({
+          top: offsetPosition,
+          behavior: 'smooth'
+        })
+      }
       return
     }
 
@@ -288,7 +310,7 @@ export const useArticleForm = () => {
         )
 
         if (response.confirmation !== 'successful: article edited') {
-          formError.value = response.confirmation || 'Gagal memperbarui artikel.'
+          fieldErrors.value.general = response.confirmation || 'Gagal memperbarui artikel.'
           return
         }
 
@@ -304,11 +326,18 @@ export const useArticleForm = () => {
       )
 
       if (response.confirmation !== 'success: article added') {
-        formError.value = response.confirmation || 'Gagal membuat artikel.'
+        fieldErrors.value.general = response.confirmation || 'Gagal membuat artikel.'
         return
       }
 
       formSuccess.value = 'Artikel berhasil dibuat.'
+      showSuccessModal.value = true
+
+      setTimeout(() => {
+        resetForm()
+        showSuccessModal.value = false
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+      }, 2000)
     } catch (err: any) {
       const status = err?.response?.status || err?.statusCode
 
@@ -317,7 +346,7 @@ export const useArticleForm = () => {
         return
       }
 
-      formError.value = 'Gagal terhubung ke server.'
+      fieldErrors.value.general = 'Gagal terhubung ke server.'
     } finally {
       isSubmitting.value = false
     }
@@ -340,7 +369,7 @@ export const useArticleForm = () => {
     tagsInput,
     previewImage,
     imageFileName,
-    formError,
+    fieldErrors,
     formSuccess,
     isSubmitting,
     isLoading,
@@ -350,6 +379,7 @@ export const useArticleForm = () => {
     previewLength,
     tagCount,
     hasInvalidTagLength,
+    showSuccessModal,
     TITLE_MAX_LENGTH,
     PREVIEW_MAX_LENGTH,
     TAG_MAX_COUNT,
