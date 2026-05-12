@@ -1,61 +1,54 @@
 <script setup lang="ts">
-import type { ArticleCard } from '~/types/api'
+import type { ArticleListItem } from '~/types/api'
 
-defineProps<{ article: ArticleCard }>()
+defineProps<{ article: ArticleListItem }>()
 
-const TAG_COLORS: Record<string, 'red' | 'cyan'> = {
-  smartphone: 'red',  laptop: 'cyan',  audio: 'red',   display: 'cyan',
-  gaming: 'red',      processor: 'cyan', kamera: 'red', tws: 'cyan',
-  tv: 'red',          oled: 'cyan',    aksesoris: 'red', produktivitas: 'cyan',
-  ultrabook: 'red',   budget: 'cyan',
-}
-
+/** Hash tag string → consistent red/cyan, no hardcoded dictionary. */
 function tagColor(tag: string): string {
-  const color = TAG_COLORS[tag]
-  return color ? `article-tag--${color}` : 'article-tag--neutral'
+  const hash = tag.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0)
+  return hash % 2 === 0 ? 'article-tag--cyan' : 'article-tag--red'
 }
 
-function formatDate(dateStr: string) {
-  return new Date(dateStr).toLocaleDateString('id-ID', {
-    day: 'numeric', month: 'short', year: 'numeric',
-  })
+/** Detect PNG vs JPEG from base64 header, return valid data URL. */
+function toDataUrl(b64: string): string {
+  const mime = b64.startsWith('iVBOR') ? 'image/png' : 'image/jpeg'
+  return `data:${mime};base64,${b64}`
 }
 </script>
 
 <template>
   <NuxtLink :to="`/articles/${article.article_id}`" class="article-card-link">
-  <article class="article-card">
-    <!-- Image placeholder frame -->
-    <div class="article-card__image" aria-hidden="true">
-      <span class="article-card__image-label">{{ article.article_tags[0] }}</span>
-    </div>
+    <article class="article-card">
 
-    <!-- Body -->
-    <div class="article-card__body">
-      <div class="article-card__tags">
-        <span
-          v-for="tag in article.article_tags"
-          :key="tag"
-          class="article-tag"
-          :class="tagColor(tag)"
-        >{{ tag }}</span>
+      <!-- Image: real base64 when available, placeholder when null -->
+      <div class="article-card__thumb">
+        <img
+          v-if="article.article_image"
+          :src="toDataUrl(article.article_image)"
+          :alt="article.article_title"
+          class="article-card__img"
+        >
+        <span v-else class="article-card__placeholder-label">
+          {{ article.article_tags?.[0] ?? 'artikel' }}
+        </span>
       </div>
 
-      <h2 class="article-card__title">{{ article.article_title }}</h2>
-      <p class="article-card__preview">{{ article.article_preview }}</p>
+      <!-- Body -->
+      <div class="article-card__body">
+        <div v-if="article.article_tags?.length" class="article-card__tags">
+          <span
+            v-for="tag in article.article_tags"
+            :key="tag"
+            class="article-tag"
+            :class="tagColor(tag)"
+          >{{ tag }}</span>
+        </div>
 
-      <footer class="article-card__footer">
-        <div class="article-card__rating">
-          <span class="article-card__star" aria-hidden="true">★</span>
-          <span class="article-card__rating-value">{{ article.rating_avg.toFixed(1) }}</span>
-        </div>
-        <div class="article-card__meta">
-          <span>{{ article.comment_count }} komentar</span>
-          <time :datetime="article.created_at">{{ formatDate(article.created_at) }}</time>
-        </div>
-      </footer>
-    </div>
-  </article>
+        <h2 class="article-card__title">{{ article.article_title }}</h2>
+        <p class="article-card__preview">{{ article.article_preview }}</p>
+      </div>
+
+    </article>
   </NuxtLink>
 </template>
 
@@ -86,19 +79,28 @@ function formatDate(dateStr: string) {
   box-shadow: 0 12px 32px 0 rgba(60, 55, 50, 0.12);
 }
 
-/* Image placeholder frame — dashed border signals "image goes here" */
-.article-card__image {
+/* ── Thumbnail ───────────────────────────── */
+.article-card__thumb {
   position: relative;
-  height: 140px;
+  height: 160px;
+  flex-shrink: 0;
+  overflow: hidden;
   background: var(--bg-surface);
-  border-bottom: 1px dashed var(--glass-border);
+  border-bottom: 1px solid var(--glass-border);
   display: flex;
   align-items: center;
   justify-content: center;
-  flex-shrink: 0;
 }
 
-.article-card__image-label {
+.article-card__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Placeholder shown when no image */
+.article-card__placeholder-label {
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 1.5px;
@@ -106,20 +108,19 @@ function formatDate(dateStr: string) {
   color: var(--text-muted);
 }
 
-/* Body */
+/* ── Body ────────────────────────────────── */
 .article-card__body {
-  padding: 20px 22px 22px;
+  padding: 18px 20px 20px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
   flex: 1;
 }
 
-/* Inline tags */
 .article-card__tags {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 5px;
 }
 
 .article-tag {
@@ -129,14 +130,12 @@ function formatDate(dateStr: string) {
   font-weight: 600;
 }
 
-.article-tag--red     { background: rgba(181,107,82,0.1);  color: var(--primary-red); }
-.article-tag--cyan    { background: rgba(106,173,168,0.1); color: var(--primary-cyan); }
-.article-tag--neutral { background: rgba(100,100,100,0.08); color: var(--text-secondary); }
+.article-tag--red  { background: rgba(181,107,82,0.1);  color: var(--primary-red); }
+.article-tag--cyan { background: rgba(106,173,168,0.1); color: var(--primary-cyan); }
 
-/* Title */
 .article-card__title {
   margin: 0;
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 700;
   line-height: 1.35;
   color: var(--text-primary);
@@ -146,7 +145,6 @@ function formatDate(dateStr: string) {
   overflow: hidden;
 }
 
-/* Preview */
 .article-card__preview {
   margin: 0;
   font-size: 13px;
@@ -156,33 +154,5 @@ function formatDate(dateStr: string) {
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  flex: 1;
-}
-
-/* Footer */
-.article-card__footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding-top: 10px;
-  border-top: 1px solid var(--glass-border);
-  margin-top: auto;
-}
-
-.article-card__rating {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.article-card__star         { color: var(--primary-red); font-size: 14px; }
-.article-card__rating-value { font-size: 13px; font-weight: 700; color: var(--text-primary); }
-
-.article-card__meta {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 12px;
-  color: var(--text-muted);
 }
 </style>

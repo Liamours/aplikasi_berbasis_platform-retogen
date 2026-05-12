@@ -1,5 +1,9 @@
 <script setup lang="ts">
-definePageMeta({ middleware: [] })
+definePageMeta({ middleware: ['auth'] })
+
+const { fetchArticles } = useArticleFilter()
+
+onMounted(fetchArticles)
 </script>
 
 <template>

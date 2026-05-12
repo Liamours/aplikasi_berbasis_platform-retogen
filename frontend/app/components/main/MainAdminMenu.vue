@@ -1,6 +1,6 @@
 <script setup lang="ts">
-// TODO: replace `true` with `useAuthStore().isAdmin` once auth is live.
-const isAdmin = true
+const authStore = useAuthStore()
+const isAdmin   = computed(() => authStore.isAdmin)
 
 const isOpen  = ref(false)
 const rootRef = ref<HTMLElement | null>(null)

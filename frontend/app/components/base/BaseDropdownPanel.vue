@@ -20,25 +20,24 @@
   z-index: 2000;
   padding: 8px;
 
-  /* Glass surface — BaseGlassCard tokens, dropdown-appropriate radius */
-  background: var(--glass-bg);
-  backdrop-filter: blur(24px) saturate(180%);
-  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  /* Solid surface — no transparency, always readable regardless of background */
+  background: var(--bg-surface);
   border: 1px solid var(--glass-border);
   border-radius: 16px;
-  box-shadow: var(--glass-shadow);
+  box-shadow: 0 8px 28px rgba(60, 55, 50, 0.16), 0 2px 8px rgba(60, 55, 50, 0.08);
   overflow: hidden;
 }
 
-/* Identical edge-highlight pseudo pattern used in BaseGlassCard */
+.dark-mode .dropdown-panel {
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* Edge highlight kept as subtle top-border accent */
 .dropdown-panel__edge {
   position: absolute;
-  inset: 0;
-  padding: 1px;
-  border-radius: 16px;
-  background: linear-gradient(135deg, var(--glass-edge), transparent 50%);
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  mask-composite: exclude;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--primary-red), var(--primary-cyan));
   pointer-events: none;
 }
 </style>

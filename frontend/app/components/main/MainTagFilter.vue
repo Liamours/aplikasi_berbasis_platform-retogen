@@ -1,5 +1,10 @@
 <script setup lang="ts">
-const { allTags, activeTag, setTag } = useArticleFilter()
+const { allTags, activeTag, setTag, fetchArticles } = useArticleFilter()
+
+function clearTag() {
+  activeTag.value = ''
+  fetchArticles()
+}
 </script>
 
 <template>
@@ -7,7 +12,7 @@ const { allTags, activeTag, setTag } = useArticleFilter()
     <button
       class="tag-filter__pill"
       :class="{ 'tag-filter__pill--active': activeTag === '' }"
-      @click="activeTag = ''"
+      @click="clearTag"
     >
       Semua
     </button>

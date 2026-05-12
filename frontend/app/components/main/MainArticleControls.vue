@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import type { SortOption } from '~/types/api'
+import type { UISortOption } from '~/composables/useArticleFilter'
 
 const { searchQuery, activeSort } = useArticleFilter()
 
-const sortOptions: { value: SortOption; label: string }[] = [
+// Only user-selectable sorts — by_tag / search_title / most_reported are auto-derived.
+const sortOptions: { value: UISortOption; label: string }[] = [
   { value: 'newest',         label: 'Terbaru' },
   { value: 'oldest',         label: 'Terlama' },
   { value: 'highest_rated',  label: 'Rating Tertinggi' },

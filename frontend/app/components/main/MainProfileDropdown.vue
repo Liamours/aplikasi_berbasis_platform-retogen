@@ -1,10 +1,10 @@
 <script setup lang="ts">
-// Standalone mode: mock user — swap with `useAuthStore().user` once auth is live.
-const MOCK_USER = {
-  username: 'Admin',
-  fullname: 'Admin RetoGen',
-  email: 'admin@retogen.id',
-}
+const authStore = useAuthStore()
+const { logout } = useAuth()
+
+// Real user from store — falls back to safe defaults if somehow null
+const user    = computed(() => authStore.user)
+const initial = computed(() => user.value?.username?.[0]?.toUpperCase() ?? '?')
 
 const isOpen  = ref(false)
 const rootRef = ref<HTMLElement | null>(null)
@@ -16,6 +16,11 @@ function onOutsideClick(e: MouseEvent) {
   if (rootRef.value && !rootRef.value.contains(e.target as Node)) close()
 }
 
+async function handleLogout() {
+  close()
+  await logout()
+}
+
 onMounted(()  => document.addEventListener('mousedown', onOutsideClick))
 onUnmounted(() => document.removeEventListener('mousedown', onOutsideClick))
 </script>
@@ -23,7 +28,7 @@ onUnmounted(() => document.removeEventListener('mousedown', onOutsideClick))
 <template>
   <div ref="rootRef" class="profile-menu">
 
-    <!-- Avatar trigger — custom gradient bg, can't use BaseButton--icon (transparent bg) -->
+    <!-- Avatar trigger -->
     <button
       class="profile-avatar"
       :class="{ 'profile-avatar--open': isOpen }"
@@ -32,34 +37,26 @@ onUnmounted(() => document.removeEventListener('mousedown', onOutsideClick))
       aria-label="Menu profil pengguna"
       @click="toggle"
     >
-      <span class="profile-avatar__initial">
-        {{ MOCK_USER.username[0].toUpperCase() }}
-      </span>
+      <span class="profile-avatar__initial">{{ initial }}</span>
     </button>
 
-    <!-- Panel: glass surface from BaseDropdownPanel, items from BaseDropdownItem -->
+    <!-- Dropdown — solid panel via BaseDropdownPanel -->
     <Transition name="glass-fade">
       <BaseDropdownPanel v-if="isOpen" role="menu">
 
         <!-- User info header -->
         <div class="profile-panel__head">
-          <div class="profile-panel__avatar-sm" aria-hidden="true">
-            {{ MOCK_USER.username[0].toUpperCase() }}
-          </div>
+          <div class="profile-panel__avatar-sm" aria-hidden="true">{{ initial }}</div>
           <div class="profile-panel__user-text">
-            <span class="profile-panel__name">{{ MOCK_USER.fullname }}</span>
-            <span class="profile-panel__email">{{ MOCK_USER.email }}</span>
+            <span class="profile-panel__name">{{ user?.fullname ?? user?.username ?? '—' }}</span>
+            <span class="profile-panel__email">{{ user?.email ?? '' }}</span>
           </div>
         </div>
 
         <hr class="profile-panel__divider">
 
-        <BaseDropdownItem to="/profile" @click="close">
-          Profil Saya
-        </BaseDropdownItem>
-        <BaseDropdownItem :danger="true" @click="close">
-          Keluar
-        </BaseDropdownItem>
+        <BaseDropdownItem to="/profile" @click="close">Profil Saya</BaseDropdownItem>
+        <BaseDropdownItem :danger="true" @click="handleLogout">Keluar</BaseDropdownItem>
 
       </BaseDropdownPanel>
     </Transition>
@@ -68,10 +65,9 @@ onUnmounted(() => document.removeEventListener('mousedown', onOutsideClick))
 </template>
 
 <style scoped>
-/* Wrapper */
 .profile-menu { position: relative; }
 
-/* Avatar button — custom gradient, size matches BaseButton--icon */
+/* Avatar — gradient bg, matches BaseButton--icon sizing */
 .profile-avatar {
   display: inline-flex;
   align-items: center;
@@ -100,7 +96,7 @@ onUnmounted(() => document.removeEventListener('mousedown', onOutsideClick))
   user-select: none;
 }
 
-/* Panel content — layout only, glass surface owned by BaseDropdownPanel */
+/* Panel content — layout only, surface owned by BaseDropdownPanel */
 .profile-panel__head {
   display: flex;
   align-items: center;

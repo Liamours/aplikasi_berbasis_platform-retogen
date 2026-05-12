@@ -48,16 +48,13 @@ export interface ArticleListItem {
   article_id: string
   article_title: string
   article_preview: string
-  article_tags: string[]
+  article_tags: string[]         // normalised array — always use this
+  article_tag?: string           // raw singular field some backend versions return
   article_image: string | null
 }
 
-/** Extends ArticleListItem with display-only fields used by mock data and the main page card. */
-export interface ArticleCard extends ArticleListItem {
-  rating_avg: number
-  comment_count: number
-  created_at: string
-}
+/** @deprecated Mock-only fields. Backend /article/main_page does not return these. Use ArticleListItem. */
+export type ArticleCard = ArticleListItem
 
 export interface MainPageRequest {
   sort?: string
