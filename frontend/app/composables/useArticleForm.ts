@@ -36,7 +36,7 @@ export const useArticleForm = () => {
   const tagsInput = useState('article-form-tags-input', () => '')
   const previewImage = useState<string | null>('article-form-preview-image', () => null)
   const imageFileName = useState('article-form-image-file-name', () => '')
-  const formError = useState('article-form-error', () => '')
+  const fieldErrors = useState<Record<string, string>>('article-form-field-errors', () => ({}))
   const formSuccess = useState('article-form-success', () => '')
   const isSubmitting = useState('article-form-submitting', () => false)
   const isLoading = useState('article-form-loading', () => false)
@@ -72,7 +72,7 @@ export const useArticleForm = () => {
     tagsInput.value = ''
     previewImage.value = null
     imageFileName.value = ''
-    formError.value = ''
+    fieldErrors.value = {}
     formSuccess.value = ''
     isSubmitting.value = false
     isLoading.value = false
@@ -111,65 +111,50 @@ export const useArticleForm = () => {
   }
 
   function validateForm() {
+    fieldErrors.value = {}
     const title = String(form.value.article_title || '').trim()
     const preview = String(form.value.article_preview || '').trim()
     const content = String(form.value.article_content || '').trim()
     const tags = normalizeTags(tagsInput.value)
 
+    let firstErrorField = ''
+
     if (!title || title.length > TITLE_MAX_LENGTH) {
-      return {
-        message: `Judul wajib diisi dan maksimal ${TITLE_MAX_LENGTH} karakter.`,
-        fieldId: 'field-title'
-      }
+      fieldErrors.value.article_title = `Judul wajib diisi dan maksimal ${TITLE_MAX_LENGTH} karakter.`
+      if (!firstErrorField) firstErrorField = 'field-title'
     }
 
     if (!preview || preview.length > PREVIEW_MAX_LENGTH) {
-      return {
-        message: `Preview wajib diisi dan maksimal ${PREVIEW_MAX_LENGTH} karakter.`,
-        fieldId: 'field-preview'
-      }
+      fieldErrors.value.article_preview = `Preview wajib diisi dan maksimal ${PREVIEW_MAX_LENGTH} karakter.`
+      if (!firstErrorField) firstErrorField = 'field-preview'
     }
 
     if (!content || content.length > 65536) {
-      return {
-        message: 'Review wajib diisi.',
-        fieldId: 'field-content'
-      }
+      fieldErrors.value.article_content = 'Review wajib diisi.'
+      if (!firstErrorField) firstErrorField = 'field-content'
     }
 
     if (!tags.length) {
-      return {
-        message: 'Minimal satu tag diperlukan.',
-        fieldId: 'field-tags'
-      }
-    }
-
-    if (tags.length > TAG_MAX_COUNT) {
-      return {
-        message: `Maksimal ${TAG_MAX_COUNT} tag.`,
-        fieldId: 'field-tags'
-      }
-    }
-
-    if (tags.some((tag) => tag.length > TAG_MAX_LENGTH)) {
-      return {
-        message: `Setiap tag maksimal ${TAG_MAX_LENGTH} karakter.`,
-        fieldId: 'field-tags'
-      }
-    }
-
-    if (hasInvalidTagCharacters(tags)) {
-      return {
-        message: 'Tag hanya boleh berisi huruf, angka, spasi, dash, atau underscore.',
-        fieldId: 'field-tags'
-      }
+      fieldErrors.value.article_tags = 'Minimal satu tag diperlukan.'
+      if (!firstErrorField) firstErrorField = 'field-tags'
+    } else if (tags.length > TAG_MAX_COUNT) {
+      fieldErrors.value.article_tags = `Maksimal ${TAG_MAX_COUNT} tag.`
+      if (!firstErrorField) firstErrorField = 'field-tags'
+    } else if (tags.some((tag) => tag.length > TAG_MAX_LENGTH)) {
+      fieldErrors.value.article_tags = `Setiap tag maksimal ${TAG_MAX_LENGTH} karakter.`
+      if (!firstErrorField) firstErrorField = 'field-tags'
+    } else if (hasInvalidTagCharacters(tags)) {
+      fieldErrors.value.article_tags = 'Tag hanya boleh berisi huruf, angka, spasi, dash, atau underscore.'
+      if (!firstErrorField) firstErrorField = 'field-tags'
     }
 
     if (!form.value.article_image) {
-      return {
-        message: 'Gambar produk wajib diisi.',
-        fieldId: 'field-image'
-      }
+      fieldErrors.value.article_image = 'Gambar produk wajib diisi.'
+      if (!firstErrorField) firstErrorField = 'field-image'
+    }
+
+    if (firstErrorField) {
+      return { fieldId: firstErrorField }
     }
 
     return null
@@ -274,13 +259,12 @@ export const useArticleForm = () => {
   }
 
   async function submitForm() {
-    formError.value = ''
+    fieldErrors.value = {}
     formSuccess.value = ''
 
     const validation = validateForm()
 
     if (validation) {
-      formError.value = validation.message
       const element = document.getElementById(validation.fieldId)
       if (element) {
         const offset = 100
@@ -326,7 +310,7 @@ export const useArticleForm = () => {
         )
 
         if (response.confirmation !== 'successful: article edited') {
-          formError.value = response.confirmation || 'Gagal memperbarui artikel.'
+          fieldErrors.value.general = response.confirmation || 'Gagal memperbarui artikel.'
           return
         }
 
@@ -342,7 +326,7 @@ export const useArticleForm = () => {
       )
 
       if (response.confirmation !== 'success: article added') {
-        formError.value = response.confirmation || 'Gagal membuat artikel.'
+        fieldErrors.value.general = response.confirmation || 'Gagal membuat artikel.'
         return
       }
 
@@ -362,7 +346,7 @@ export const useArticleForm = () => {
         return
       }
 
-      formError.value = 'Gagal terhubung ke server.'
+      fieldErrors.value.general = 'Gagal terhubung ke server.'
     } finally {
       isSubmitting.value = false
     }
@@ -385,7 +369,7 @@ export const useArticleForm = () => {
     tagsInput,
     previewImage,
     imageFileName,
-    formError,
+    fieldErrors,
     formSuccess,
     isSubmitting,
     isLoading,
