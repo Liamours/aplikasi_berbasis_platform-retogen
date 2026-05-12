@@ -40,6 +40,7 @@ export const useArticleForm = () => {
   const formSuccess = useState('article-form-success', () => '')
   const isSubmitting = useState('article-form-submitting', () => false)
   const isLoading = useState('article-form-loading', () => false)
+  const showSuccessModal = useState('article-form-show-success-modal', () => false)
 
   const isEditMode = computed(() => mode.value === 'edit')
 
@@ -116,38 +117,62 @@ export const useArticleForm = () => {
     const tags = normalizeTags(tagsInput.value)
 
     if (!title || title.length > TITLE_MAX_LENGTH) {
-      return `Judul wajib diisi dan maksimal ${TITLE_MAX_LENGTH} karakter.`
+      return {
+        message: `Judul wajib diisi dan maksimal ${TITLE_MAX_LENGTH} karakter.`,
+        fieldId: 'field-title'
+      }
     }
 
     if (!preview || preview.length > PREVIEW_MAX_LENGTH) {
-      return `Preview wajib diisi dan maksimal ${PREVIEW_MAX_LENGTH} karakter.`
+      return {
+        message: `Preview wajib diisi dan maksimal ${PREVIEW_MAX_LENGTH} karakter.`,
+        fieldId: 'field-preview'
+      }
     }
 
     if (!content || content.length > 65536) {
-      return 'Review wajib diisi.'
+      return {
+        message: 'Review wajib diisi.',
+        fieldId: 'field-content'
+      }
     }
 
     if (!tags.length) {
-      return 'Minimal satu tag diperlukan.'
+      return {
+        message: 'Minimal satu tag diperlukan.',
+        fieldId: 'field-tags'
+      }
     }
 
     if (tags.length > TAG_MAX_COUNT) {
-      return `Maksimal ${TAG_MAX_COUNT} tag.`
+      return {
+        message: `Maksimal ${TAG_MAX_COUNT} tag.`,
+        fieldId: 'field-tags'
+      }
     }
 
     if (tags.some((tag) => tag.length > TAG_MAX_LENGTH)) {
-      return `Setiap tag maksimal ${TAG_MAX_LENGTH} karakter.`
+      return {
+        message: `Setiap tag maksimal ${TAG_MAX_LENGTH} karakter.`,
+        fieldId: 'field-tags'
+      }
     }
 
     if (hasInvalidTagCharacters(tags)) {
-      return 'Tag hanya boleh berisi huruf, angka, spasi, dash, atau underscore.'
+      return {
+        message: 'Tag hanya boleh berisi huruf, angka, spasi, dash, atau underscore.',
+        fieldId: 'field-tags'
+      }
     }
 
     if (!form.value.article_image) {
-      return 'Gambar produk wajib diisi.'
+      return {
+        message: 'Gambar produk wajib diisi.',
+        fieldId: 'field-image'
+      }
     }
 
-    return ''
+    return null
   }
 
   function fileToDataUrl(file: File) {
@@ -252,10 +277,23 @@ export const useArticleForm = () => {
     formError.value = ''
     formSuccess.value = ''
 
-    const validationMessage = validateForm()
+    const validation = validateForm()
 
-    if (validationMessage) {
-      formError.value = validationMessage
+    if (validation) {
+      formError.value = validation.message
+      const element = document.getElementById(validation.fieldId)
+      if (element) {
+        const offset = 100
+        const bodyRect = document.body.getBoundingClientRect().top
+        const elementRect = element.getBoundingClientRect().top
+        const elementPosition = elementRect - bodyRect
+        const offsetPosition = elementPosition - offset
+
+        window.scrollTo({
+          top: offsetPosition,
+          behavior: 'smooth'
+        })
+      }
       return
     }
 
@@ -309,6 +347,13 @@ export const useArticleForm = () => {
       }
 
       formSuccess.value = 'Artikel berhasil dibuat.'
+      showSuccessModal.value = true
+
+      setTimeout(() => {
+        resetForm()
+        showSuccessModal.value = false
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+      }, 2000)
     } catch (err: any) {
       const status = err?.response?.status || err?.statusCode
 
@@ -350,6 +395,7 @@ export const useArticleForm = () => {
     previewLength,
     tagCount,
     hasInvalidTagLength,
+    showSuccessModal,
     TITLE_MAX_LENGTH,
     PREVIEW_MAX_LENGTH,
     TAG_MAX_COUNT,
