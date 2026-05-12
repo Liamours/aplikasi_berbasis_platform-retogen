@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { onMounted } from 'vue'
+
 defineProps<{
   message: string
 }>()
@@ -6,6 +8,12 @@ defineProps<{
 const emit = defineEmits<{
   close: []
 }>()
+
+onMounted(() => {
+  setTimeout(() => {
+    emit('close')
+  }, 3000)
+})
 </script>
 
 <template>
