@@ -17,47 +17,52 @@ const emit = defineEmits<{
 
 <template>
   <header class="management-header">
-    <div class="header-left">
-      <div>
-        <p class="eyebrow">Admin Control</p>
-        <h1 class="card-title">User Management</h1>
-        <p class="management-description">Kelola role dan akses user RetoGen.</p>
-      </div>
-
-      <!-- Statistik dalam bentuk Metadata (tetap minimalis) -->
-      <div class="header-meta">
-        <span class="meta-item">
-          <strong>{{ totalUsers }}</strong> Total User
-        </span>
-        <span class="meta-dot">•</span>
-        <span class="meta-item">
-          <strong>{{ adminCount }}</strong> Admin
-        </span>
-        <span class="meta-dot">•</span>
-        <span class="meta-item">
-          <strong>{{ userCount }}</strong> User
-        </span>
-        <span class="meta-dot">•</span>
-        <span class="meta-item">
-          <strong :class="{ 'text-danger': reportedCount > 0 }">{{ reportedCount }}</strong> Total Report
-        </span>
-      </div>
-    </div>
-
-    <!-- Toolbar dikembalikan ke kanan dengan tata letak semula -->
-    <div class="header-right">
-      <div class="toolbar">
-        <div class="search-wrapper">
-          <BaseInput
-            :model-value="search"
-            placeholder="Cari nama, email..."
-            label="Cari user"
-            @update:model-value="emit('update:search', $event)"
-          />
+    <div class="header-main">
+      <div class="header-left">
+        <div class="header-info">
+          <div class="breadcrumbs">
+            <NuxtLink to="/main" class="breadcrumb-link">home</NuxtLink>
+            <span class="breadcrumb-separator">/</span>
+            <span class="breadcrumb-current">admin-menu</span>
+          </div>
+          <h1 class="card-title">User Management</h1>
+          <p class="management-description">Kelola role dan akses user RetoGen.</p>
         </div>
-        <BaseButton variant="ghost" :disabled="isLoading" @click="emit('refresh')">
-          Refresh
-        </BaseButton>
+
+        <!-- Statistik dalam bentuk Metadata -->
+        <div class="header-meta">
+          <span class="meta-item">
+            <strong>{{ totalUsers }}</strong> Total User
+          </span>
+          <span class="meta-dot">•</span>
+          <span class="meta-item">
+            <strong>{{ adminCount }}</strong> Admin
+          </span>
+          <span class="meta-dot">•</span>
+          <span class="meta-item">
+            <strong>{{ userCount }}</strong> User
+          </span>
+          <span class="meta-dot">•</span>
+          <span class="meta-item">
+            <strong :class="{ 'text-danger': reportedCount > 0 }">{{ reportedCount }}</strong> Total Report
+          </span>
+        </div>
+      </div>
+
+      <div class="header-right">
+        <div class="toolbar">
+          <div class="search-wrapper">
+            <BaseInput
+              :model-value="search"
+              placeholder="Cari nama, email..."
+              label="Cari user"
+              @update:model-value="emit('update:search', $event)"
+            />
+          </div>
+          <BaseButton variant="ghost" :disabled="isLoading" @click="emit('refresh')">
+            Refresh
+          </BaseButton>
+        </div>
       </div>
     </div>
   </header>
@@ -66,16 +71,56 @@ const emit = defineEmits<{
 <style scoped>
 .management-header {
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start; /* Aligment kembali seperti semula */
+  flex-direction: column;
   gap: 24px;
   margin-bottom: 32px;
+}
+
+.header-main {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 24px;
 }
 
 .header-left {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
+}
+
+.breadcrumbs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.breadcrumb-link {
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.breadcrumb-link:hover {
+  color: var(--primary-cyan);
+}
+
+.breadcrumb-separator {
+  color: var(--glass-border);
+}
+
+.breadcrumb-current {
+  color: var(--primary-cyan);
+  text-transform: lowercase;
+}
+
+.header-info {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 /* Style Metadata yang lebih bersih */
@@ -113,8 +158,9 @@ const emit = defineEmits<{
 }
 
 @media (max-width: 860px) {
-  .management-header {
+  .header-main {
     flex-direction: column;
+    align-items: flex-start;
   }
   
   .header-right, .search-wrapper {
