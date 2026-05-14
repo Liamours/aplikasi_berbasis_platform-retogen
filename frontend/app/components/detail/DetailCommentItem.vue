@@ -206,7 +206,6 @@ const showDeleteAction = computed(() => canDeleteComment(props.comment))
   border-radius: var(--radius-md);
   background: var(--comment-surface, var(--bg-surface));
   border: 1px solid var(--glass-border);
-  overflow: hidden;
 }
 
 .comment-item__header {

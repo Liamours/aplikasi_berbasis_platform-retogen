@@ -7,6 +7,7 @@ const props = defineProps<{
   initials: string
   isLoading: boolean
   errorMessage: string
+  isAdmin: boolean
   formatDate: (value?: string) => string
 }>()
 
@@ -65,7 +66,7 @@ const memberSince = computed(() => props.formatDate(props.profile?.created_at))
             <h2>{{ username }}</h2>
             <p>Member since {{ memberSince }}</p>
 
-            <div v-if="profile?.reports && profile.reports.length > 0" class="reports-section">
+            <div v-if="isAdmin && profile?.reports && profile.reports.length > 0" class="reports-section">
               <h3 class="reports-title">Reports ({{ profile.reports.length }})</h3>
               <div class="reports-list">
                 <div v-for="report in profile.reports" :key="report.report_id" class="report-item">
@@ -76,7 +77,7 @@ const memberSince = computed(() => props.formatDate(props.profile?.created_at))
                 </div>
               </div>
             </div>
-            <div v-else-if="!isLoading && !errorMessage" class="reports-empty">
+            <div v-else-if="isAdmin && !isLoading && !errorMessage" class="reports-empty">
               Tidak ada report untuk user ini.
             </div>
           </div>

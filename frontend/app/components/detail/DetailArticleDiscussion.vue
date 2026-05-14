@@ -7,6 +7,7 @@ const {
   totalComments,
   activeReplyId,
   replyDrafts,
+  isAdmin,
   openReport,
   toggleReply,
   updateReplyDraft,
@@ -81,6 +82,7 @@ const {
     :initials="otherProfileInitials"
     :is-loading="isOtherLoading"
     :error-message="otherErrorMessage"
+    :is-admin="isAdmin"
     :format-date="formatDate"
     @close="closeOtherUserProfile"
   />

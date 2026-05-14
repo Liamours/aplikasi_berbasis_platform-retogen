@@ -120,6 +120,7 @@ onMounted(() => {
     :initials="otherProfileInitials"
     :is-loading="isOtherLoading"
     :error-message="otherErrorMessage"
+    :is-admin="true"
     :format-date="formatProfileDate"
     @close="closeOtherUserProfile"
   />
