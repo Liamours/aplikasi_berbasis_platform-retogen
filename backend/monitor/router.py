@@ -1,3 +1,4 @@
+import asyncio
 from fastapi import APIRouter, HTTPException, Depends, Request
 
 from monitor.schemas import MonitorSearchRequest, MonitorSearchResponse
@@ -10,7 +11,7 @@ router = APIRouter()
 
 @router.post("/search", response_model=MonitorSearchResponse)
 @limiter.limit("20/minute")
-def monitor_search(request: Request, body: MonitorSearchRequest, payload: dict = Depends(get_current_user)):
+async def monitor_search(request: Request, body: MonitorSearchRequest, payload: dict = Depends(get_current_user)):
     """
     Search Tokopedia for a product and return top listings with price + rating.
     Requires valid JWT.
@@ -18,10 +19,16 @@ def monitor_search(request: Request, body: MonitorSearchRequest, payload: dict =
     if not body.product_name.strip():
         raise HTTPException(status_code=400, detail="product_name required")
 
-    result = scrape_tokopedia(body.product_name.strip(), limit=body.limit)
+    # Run blocking scraper in thread pool — avoids blocking the async event loop
+    result = await asyncio.to_thread(
+        scrape_tokopedia,
+        body.product_name.strip(),
+        body.limit,
+        body.min_score,
+    )
     return result
 
 
 @router.get("/health")
-def monitor_health():
+async def monitor_health():
     return {"status": "ok"}
