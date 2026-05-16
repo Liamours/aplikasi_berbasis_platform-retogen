@@ -56,7 +56,7 @@ onUnmounted(() => document.removeEventListener('mousedown', onOutsideClick))
         <hr class="profile-panel__divider">
 
         <BaseDropdownItem to="/profile" @click="close">Profil Saya</BaseDropdownItem>
-        <BaseDropdownItem :danger="true" @click="handleLogout">Keluar</BaseDropdownItem>
+        <BaseDropdownItem :danger="true" @click="handleLogout">Logout</BaseDropdownItem>
 
       </BaseDropdownPanel>
     </Transition>
