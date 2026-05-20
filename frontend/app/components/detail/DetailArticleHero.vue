@@ -28,7 +28,7 @@ const goToEditArticle = () => {
   <div class="hero">
     <div class="hero__topbar">
       <div class="hero__breadcrumbs">
-        <NuxtLink to="/" class="hero__crumb">Home</NuxtLink>
+        <NuxtLink to="/main" class="hero__crumb">Home</NuxtLink>
         <span>/</span>
         <span>Article</span>
       </div>

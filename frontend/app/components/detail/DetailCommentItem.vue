@@ -9,6 +9,7 @@ const props = defineProps<{
   comment: DetailCommentTree
   activeReplyId: string | null
   replyDrafts: Record<string, string>
+  isChild?: boolean
 }>()
 
 const commentDateFormatter = new Intl.DateTimeFormat('id-ID', {
@@ -65,10 +66,7 @@ const showDeleteAction = computed(() => canDeleteComment(props.comment))
 </script>
 
 <template>
-  <article
-    v-memo="[comment.comment_content, isReplying, isEditing, commentUserRating, replyValue]"
-    class="comment-item"
-  >
+  <article class="comment-item">
     <div class="comment-item__header">
       <div class="comment-item__author">
         <button
@@ -104,7 +102,7 @@ const showDeleteAction = computed(() => canDeleteComment(props.comment))
 
       <div class="comment-item__actions">
         <button
-          v-if="!isEditing"
+          v-if="!isEditing && !isChild"
           type="button"
           class="comment-item__reply-btn"
           @click="$emit('toggleReply', comment.comment_id)"
@@ -180,7 +178,6 @@ const showDeleteAction = computed(() => canDeleteComment(props.comment))
 
     <div
       v-if="comment.children.length"
-      v-memo="[comment.children, activeReplyId, replyDrafts]"
       class="comment-item__children"
     >
       <DetailCommentItem
@@ -189,6 +186,7 @@ const showDeleteAction = computed(() => canDeleteComment(props.comment))
         :comment="child"
         :active-reply-id="activeReplyId"
         :reply-drafts="replyDrafts"
+        :is-child="true"
         @open-report="$emit('openReport', $event)"
         @open-user-profile="$emit('openUserProfile', $event)"
         @toggle-reply="$emit('toggleReply', $event)"
