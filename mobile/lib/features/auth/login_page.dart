@@ -95,7 +95,7 @@ class _LoginPageState extends State<LoginPage> {
         }
         if (!mounted) return;
         SuccessPopup.show(context, 'Login berhasil.', () {
-          context.go('/articles/675e8a1f2c4d3e8f9a1b2c3d');
+          context.go('/articles');
         });
         return;
       }
