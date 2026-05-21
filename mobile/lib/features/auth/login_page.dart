@@ -8,7 +8,14 @@ import '../../core/widgets/glass_input.dart';
 import '../../core/widgets/success_popup.dart';
 
 class LoginPage extends StatefulWidget {
-  const LoginPage({super.key});
+  final String? initialEmail;
+  final String? initialPassword;
+
+  const LoginPage({
+    super.key,
+    this.initialEmail,
+    this.initialPassword,
+  });
 
   @override
   State<LoginPage> createState() => _LoginPageState();
@@ -22,6 +29,24 @@ class _LoginPageState extends State<LoginPage> {
   String? _emailError;
   String? _passwordError;
   String? _generalError;
+
+  @override
+  void initState() {
+    super.initState();
+    _emailCtrl.text = widget.initialEmail ?? '';
+    _passCtrl.text = widget.initialPassword ?? '';
+  }
+
+  @override
+  void didUpdateWidget(covariant LoginPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.initialEmail != oldWidget.initialEmail && widget.initialEmail != null) {
+      _emailCtrl.text = widget.initialEmail!;
+    }
+    if (widget.initialPassword != oldWidget.initialPassword && widget.initialPassword != null) {
+      _passCtrl.text = widget.initialPassword!;
+    }
+  }
 
   bool validateForm() {
     setState(() {
@@ -70,7 +95,7 @@ class _LoginPageState extends State<LoginPage> {
         }
         if (!mounted) return;
         SuccessPopup.show(context, 'Login berhasil.', () {
-          context.go('/articles');
+          context.go('/articles/675e8a1f2c4d3e8f9a1b2c3d');
         });
         return;
       }

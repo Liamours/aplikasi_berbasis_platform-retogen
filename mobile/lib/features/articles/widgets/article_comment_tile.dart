@@ -22,6 +22,7 @@ class ArticleCommentTile extends StatelessWidget {
   final Future<void> Function(ArticleComment comment) onReport;
   final TextEditingController Function(String commentId) resolveReplyController;
   final bool Function(ArticleComment comment) isOwnComment;
+  final void Function(String email) onOpenUserProfile;
 
   const ArticleCommentTile({
     super.key,
@@ -42,6 +43,7 @@ class ArticleCommentTile extends StatelessWidget {
     required this.onReport,
     required this.resolveReplyController,
     required this.isOwnComment,
+    required this.onOpenUserProfile,
     this.isChild = false,
   });
 
@@ -67,12 +69,28 @@ class ArticleCommentTile extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _CommentAvatar(owner: comment.owner),
-              const SizedBox(width: 10),
               Expanded(
-                child: _CommentAuthor(
-                  owner: comment.owner,
-                  userRating: userRating,
+                child: InkWell(
+                  onTap: comment.userEmail == null
+                      ? null
+                      : () => onOpenUserProfile(comment.userEmail!),
+                  borderRadius: BorderRadius.circular(10),
+                  child: Padding(
+                    padding: const EdgeInsets.all(2.0),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _CommentAvatar(owner: comment.owner),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: _CommentAuthor(
+                            owner: comment.owner,
+                            userRating: userRating,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ),
               _CommentActionsMenu(
@@ -144,6 +162,7 @@ class ArticleCommentTile extends StatelessWidget {
                         onReport: onReport,
                         resolveReplyController: resolveReplyController,
                         isOwnComment: isOwnComment,
+                        onOpenUserProfile: onOpenUserProfile,
                       ),
                     ),
                   )

@@ -122,8 +122,10 @@ class _RegisterPageState extends State<RegisterPage> {
       
       if (confirmation == 'register successful') {
         if (!mounted) return;
+        final email = _emailCtrl.text.trim();
+        final password = _passCtrl.text;
         SuccessPopup.show(context, 'Registrasi berhasil. Silakan masuk.', () {
-          context.go('/login');
+          context.go('/login', extra: {'email': email, 'password': password});
         });
         return;
       }

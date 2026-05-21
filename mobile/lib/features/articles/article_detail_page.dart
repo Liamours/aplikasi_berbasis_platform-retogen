@@ -14,6 +14,7 @@ import 'package:retogen/features/articles/widgets/article_price_tracker.dart';
 import 'package:retogen/features/articles/widgets/article_rating_section.dart';
 import 'package:retogen/features/articles/widgets/article_report_sheet.dart';
 import 'package:retogen/features/articles/widgets/article_review_section.dart';
+import 'package:retogen/features/articles/widgets/other_user_profile_sheet.dart';
 
 class ArticleDetailPage extends StatefulWidget {
   final String articleId;
@@ -430,6 +431,21 @@ class _ArticleDetailPageState extends State<ArticleDetailPage> {
     }
   }
 
+  Future<void> _openUserProfile(String email) async {
+    final article = _article;
+    if (article == null) return;
+
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => OtherUserProfileSheet(
+        userEmail: email,
+        isAdmin: article.isAdmin,
+      ),
+    );
+  }
+
   TextEditingController _replyControllerFor(String commentId) {
     return _replyControllers.putIfAbsent(commentId, TextEditingController.new);
   }
@@ -453,7 +469,7 @@ class _ArticleDetailPageState extends State<ArticleDetailPage> {
     if (context.canPop()) {
       context.pop();
     } else {
-      context.go('/login');
+      context.go('/articles');
     }
   }
 
@@ -581,6 +597,7 @@ class _ArticleDetailPageState extends State<ArticleDetailPage> {
                   onReport: _openReportComment,
                   resolveReplyController: _replyControllerFor,
                   isOwnComment: _isOwnComment,
+                  onOpenUserProfile: _openUserProfile,
                 ),
               ]),
             ),

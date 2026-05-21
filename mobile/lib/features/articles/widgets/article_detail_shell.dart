@@ -202,7 +202,6 @@ class ArticleBottomSheetSurface extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(20, 14, 20, 20),
       decoration: const BoxDecoration(
         color: AppTheme.bgSurface,
         borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
@@ -214,7 +213,13 @@ class ArticleBottomSheetSurface extends StatelessWidget {
           ),
         ],
       ),
-      child: child,
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 14, 20, 20),
+          child: child,
+        ),
+      ),
     );
   }
 }

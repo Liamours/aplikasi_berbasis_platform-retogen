@@ -20,6 +20,7 @@ class ArticleDiscussionSection extends StatelessWidget {
   final Future<void> Function(ArticleComment comment) onReport;
   final TextEditingController Function(String commentId) resolveReplyController;
   final bool Function(ArticleComment comment) isOwnComment;
+  final void Function(String email) onOpenUserProfile;
 
   const ArticleDiscussionSection({
     super.key,
@@ -38,6 +39,7 @@ class ArticleDiscussionSection extends StatelessWidget {
     required this.onReport,
     required this.resolveReplyController,
     required this.isOwnComment,
+    required this.onOpenUserProfile,
   });
 
   @override
@@ -95,6 +97,7 @@ class ArticleDiscussionSection extends StatelessWidget {
                   onReport: onReport,
                   resolveReplyController: resolveReplyController,
                   isOwnComment: isOwnComment,
+                  onOpenUserProfile: onOpenUserProfile,
                 ),
               ),
             ),
