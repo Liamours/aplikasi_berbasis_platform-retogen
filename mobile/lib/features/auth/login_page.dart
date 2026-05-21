@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/api_client.dart';
+import '../../core/fcm_service.dart';
 import '../../core/theme.dart';
 import '../../core/widgets/glass_background.dart';
 import '../../core/widgets/glass_card.dart';
@@ -92,6 +93,8 @@ class _LoginPageState extends State<LoginPage> {
         final token = res.data['access_token'];
         if (token != null) {
           await ApiClient.saveToken(token);
+          // Register device for FCM push notifications (non-blocking)
+          FcmService.registerToken();
         }
         if (!mounted) return;
         SuccessPopup.show(context, 'Login berhasil.', () {

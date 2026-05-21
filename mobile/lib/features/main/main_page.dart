@@ -43,9 +43,9 @@ class _MainPageState extends State<MainPage> {
   // Notifications
   List<MainNotification> _notifications = [];
   bool _notifLoading = false;
-  // IDs yang sudah diketahui — untuk deteksi notif baru
-  Set<String> _knownNotifIds = {};
-  bool _notifInitialized = false;
+  // Static — persists across page rebuilds so we never re-show old notifications
+  static final Set<String> _knownNotifIds = {};
+  static bool _notifInitialized = false;
 
   // User
   String _username = '';
@@ -59,13 +59,13 @@ class _MainPageState extends State<MainPage> {
 
     // Auto-refresh artikel setiap 60 detik
     _articleTimer = Timer.periodic(
-      const Duration(seconds: 60),
+      const Duration(seconds: 10),
       (_) => _fetchArticles(),
     );
 
     // Poll notifikasi setiap 30 detik
     _notifTimer = Timer.periodic(
-      const Duration(seconds: 30),
+      const Duration(seconds: 10),
       (_) => _fetchNotifications(),
     );
   }
@@ -155,7 +155,9 @@ class _MainPageState extends State<MainPage> {
 
       if (!_notifInitialized) {
         // Load pertama: simpan semua ID yang ada, jangan tampilkan notifikasi
-        _knownNotifIds = notifs.map((n) => n.id).toSet();
+        _knownNotifIds
+          ..clear()
+          ..addAll(notifs.map((n) => n.id));
         _notifInitialized = true;
       } else {
         // Load berikutnya: deteksi ID baru dan tampilkan di notification bar
@@ -267,8 +269,7 @@ class _MainPageState extends State<MainPage> {
   }
 
   Future<void> _openNotifications() async {
-    // Refresh in background then open sheet.
-    _fetchNotifications();
+    // Open sheet immediately with cached data — timer already keeps it fresh
     if (!mounted) return;
     await showModalBottomSheet(
       context: context,
@@ -276,7 +277,7 @@ class _MainPageState extends State<MainPage> {
       backgroundColor: Colors.transparent,
       builder: (context) => MainNotificationSheet(
         notifications: _notifications,
-        isLoading: _notifLoading,
+        isLoading: false,
       ),
     );
   }
