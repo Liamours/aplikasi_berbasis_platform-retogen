@@ -359,27 +359,22 @@ class _RoleBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isAdmin = role == 'admin';
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: isAdmin
-            ? const Color(0x1AB56B52)
-            : const Color(0x156AADA8),
+        color: const Color(0x156AADA8),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: isAdmin
-              ? AppTheme.primaryRed.withOpacity(0.25)
-              : AppTheme.primaryCyan.withOpacity(0.25),
+          color: AppTheme.primaryCyan.withValues(alpha: 0.25),
         ),
       ),
       child: Text(
         role.toUpperCase(),
-        style: TextStyle(
+        style: const TextStyle(
           fontSize: 10,
           fontWeight: FontWeight.w700,
           letterSpacing: 0.8,
-          color: isAdmin ? AppTheme.primaryRed : AppTheme.primaryCyan,
+          color: AppTheme.primaryCyan,
         ),
       ),
     );

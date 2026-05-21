@@ -12,7 +12,6 @@ class ArticleDetail {
   final List<ArticleComment> comments;
   final List<ArticleRating> ratings;
   final List<PriceEntry> prices;
-  final bool isAdmin;
 
   const ArticleDetail({
     required this.id,
@@ -26,7 +25,6 @@ class ArticleDetail {
     required this.comments,
     required this.ratings,
     required this.prices,
-    required this.isAdmin,
   });
 
   factory ArticleDetail.fromJson(
@@ -53,7 +51,6 @@ class ArticleDetail {
       ).map(ArticleComment.fromJson).toList(),
       ratings: asMapList(json['ratings']).map(ArticleRating.fromJson).toList(),
       prices: prices,
-      isAdmin: json['userclass']?.toString() == 'admin',
     );
   }
 
@@ -70,7 +67,6 @@ class ArticleDetail {
       comments: comments,
       ratings: ratings,
       prices: prices ?? this.prices,
-      isAdmin: isAdmin,
     );
   }
 

@@ -6,12 +6,10 @@ import 'package:retogen/features/articles/widgets/article_detail_shell.dart';
 
 class OtherUserProfileSheet extends StatefulWidget {
   final String userEmail;
-  final bool isAdmin;
 
   const OtherUserProfileSheet({
     super.key,
     required this.userEmail,
-    required this.isAdmin,
   });
 
   @override
@@ -25,7 +23,6 @@ class _OtherUserProfileSheetState extends State<OtherUserProfileSheet> {
   String _username = '';
   String _role = '';
   String _createdAt = '';
-  List<dynamic> _reports = [];
 
   @override
   void initState() {
@@ -40,18 +37,17 @@ class _OtherUserProfileSheetState extends State<OtherUserProfileSheet> {
     });
 
     try {
-      final endpoint = widget.isAdmin
-          ? '/user/get_details'
-          : '/report_user/get_user_profile';
-
       final response = await ApiClient.instance.post(
-        endpoint,
+        '/report_user/get_user_profile',
         data: {'user_email': widget.userEmail},
       );
 
       final data = asMap(response.data);
       if (data['confirmation'] != 'successful') {
-        setState(() => _error = 'Gagal memuat profil user.');
+        setState(() {
+          _error = 'Gagal memuat profil user.';
+          _loading = false;
+        });
         return;
       }
 
@@ -60,15 +56,13 @@ class _OtherUserProfileSheetState extends State<OtherUserProfileSheet> {
         _username = user['username']?.toString() ?? '-';
         _role = user['role']?.toString() ?? 'user';
         _createdAt = _formatDate(user['created_at']);
-        _reports = asMapList(user['reports']);
         _loading = false;
       });
     } catch (_) {
-      setState(() => _error = 'Gagal terhubung ke server.');
-    } finally {
-      if (mounted) {
-        setState(() => _loading = false);
-      }
+      setState(() {
+        _error = 'Gagal terhubung ke server.';
+        _loading = false;
+      });
     }
   }
 
@@ -78,7 +72,7 @@ class _OtherUserProfileSheetState extends State<OtherUserProfileSheet> {
       final dt = DateTime.parse(raw.toString()).toLocal();
       const months = [
         '', 'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
-        'Jul', 'Ags', 'Sep', 'Okt', 'Nov', 'Des'
+        'Jul', 'Ags', 'Sep', 'Okt', 'Nov', 'Des',
       ];
       return '${dt.day} ${months[dt.month]} ${dt.year}';
     } catch (_) {
@@ -86,9 +80,8 @@ class _OtherUserProfileSheetState extends State<OtherUserProfileSheet> {
     }
   }
 
-  String get _initials {
-    return _username.isEmpty ? 'R' : _username[0].toUpperCase();
-  }
+  String get _initials =>
+      _username.isEmpty ? '?' : _username[0].toUpperCase();
 
   @override
   Widget build(BuildContext context) {
@@ -106,24 +99,24 @@ class _OtherUserProfileSheetState extends State<OtherUserProfileSheet> {
             ),
           ),
           if (_loading) ...[
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
             const CircularProgressIndicator(color: AppTheme.primaryCyan),
-            const SizedBox(height: 20),
+            const SizedBox(height: 14),
             const Text(
               'Memuat profil...',
               style: TextStyle(color: AppTheme.textSecondary, fontSize: 14),
             ),
-            const SizedBox(height: 30),
+            const SizedBox(height: 24),
           ] else if (_error != null) ...[
-            const SizedBox(height: 20),
-            const Icon(Icons.error_outline, color: AppTheme.primaryRed, size: 48),
             const SizedBox(height: 12),
+            const Icon(Icons.error_outline, color: AppTheme.primaryRed, size: 44),
+            const SizedBox(height: 10),
             Text(
               _error!,
               style: const TextStyle(color: AppTheme.textSecondary, fontSize: 14),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
             SizedBox(
               width: double.infinity,
               child: OutlinedButton(
@@ -153,7 +146,6 @@ class _OtherUserProfileSheetState extends State<OtherUserProfileSheet> {
               ),
             ),
             const SizedBox(height: 14),
-            // Eyebrow
             Text(
               _role.toUpperCase(),
               style: const TextStyle(
@@ -164,7 +156,6 @@ class _OtherUserProfileSheetState extends State<OtherUserProfileSheet> {
               ),
             ),
             const SizedBox(height: 6),
-            // Username
             Text(
               _username,
               style: const TextStyle(
@@ -175,7 +166,6 @@ class _OtherUserProfileSheetState extends State<OtherUserProfileSheet> {
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 4),
-            // Created At
             Text(
               'Member since $_createdAt',
               style: const TextStyle(
@@ -184,87 +174,7 @@ class _OtherUserProfileSheetState extends State<OtherUserProfileSheet> {
               ),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 20),
-
-            // Reports Section for Admin
-            if (widget.isAdmin) ...[
-              const Divider(color: AppTheme.glassBorder),
-              const SizedBox(height: 10),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  'REPORTS (${_reports.length})',
-                  style: const TextStyle(
-                    color: AppTheme.textPrimary,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 0.5,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              if (_reports.isEmpty)
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 10),
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      'Tidak ada report untuk user ini.',
-                      style: TextStyle(
-                        color: AppTheme.textMuted,
-                        fontStyle: FontStyle.italic,
-                        fontSize: 13,
-                      ),
-                    ),
-                  ),
-                )
-              else
-                ConstrainedBox(
-                  constraints: const BoxConstraints(maxHeight: 200),
-                  child: ListView.builder(
-                    shrinkWrap: true,
-                    itemCount: _reports.length,
-                    itemBuilder: (ctx, i) {
-                      final r = asMap(_reports[i]);
-                      final date = _formatDate(r['created_at']);
-                      final desc = r['description']?.toString() ?? '';
-                      return Container(
-                        margin: const EdgeInsets.only(bottom: 10),
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.05),
-                          border: Border.all(color: AppTheme.glassBorder),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              date,
-                              style: const TextStyle(
-                                color: AppTheme.textMuted,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              desc,
-                              style: const TextStyle(
-                                color: AppTheme.textSecondary,
-                                fontSize: 13,
-                                height: 1.45,
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              const SizedBox(height: 10),
-            ],
-            const SizedBox(height: 10),
+            const SizedBox(height: 24),
             SizedBox(
               width: double.infinity,
               child: OutlinedButton(

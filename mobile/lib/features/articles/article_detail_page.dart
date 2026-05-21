@@ -432,16 +432,12 @@ class _ArticleDetailPageState extends State<ArticleDetailPage> {
   }
 
   Future<void> _openUserProfile(String email) async {
-    final article = _article;
-    if (article == null) return;
-
     await showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => OtherUserProfileSheet(
         userEmail: email,
-        isAdmin: article.isAdmin,
       ),
     );
   }
