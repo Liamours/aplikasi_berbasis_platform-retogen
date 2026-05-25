@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import List
+from typing import List, Optional
 
 class Article(BaseModel):
     article_title: str
@@ -7,3 +7,4 @@ class Article(BaseModel):
     article_content: str
     article_tags: List[str]
     article_image: bytes
+    product_name: Optional[str] = None

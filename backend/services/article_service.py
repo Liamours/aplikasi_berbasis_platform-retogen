@@ -32,6 +32,8 @@ class ArticleService:
             update_fields["article_content"] = data.article_content
         if data.article_tags is not None:
             update_fields["article_tags"] = [t.strip().lower() for t in data.article_tags]
+        if hasattr(data, "product_name") and data.product_name is not None:
+            update_fields["product_name"] = data.product_name.strip()
 
         if image_bytes is not None:
             if not validate_image_bytes(image_bytes):
@@ -51,7 +53,7 @@ class ArticleService:
             return False
 
     @staticmethod
-    async def add_article(title, preview, content, tags, image_bytes, author_id):
+    async def add_article(title, preview, content, tags, image_bytes, author_id, product_name=None):
         try:
             now = datetime.now(timezone.utc)
             doc = {
@@ -61,6 +63,7 @@ class ArticleService:
                 "article_tags": [t.strip().lower() for t in tags],
                 "article_image": Binary(image_bytes) if image_bytes else None,
                 "author_id": author_id,
+                "product_name": product_name.strip() if product_name else None,
                 "report_count": 0,
                 "created_at": now,
                 "updated_at": now,

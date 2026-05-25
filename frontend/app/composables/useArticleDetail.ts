@@ -46,6 +46,7 @@ export const useArticleDetail = () => {
     article_content: '',
     article_tags: [],
     article_image: null,
+    product_name: null,
     prices: [],
     comments: [],
     ratings: [],
@@ -267,6 +268,7 @@ export const useArticleDetail = () => {
         article_content: response.article_content,
         article_tags: response.article_tags ?? [],
         article_image: toImageSrc(response.article_image),
+        product_name: response.product_name ?? null,
         prices: [],
         comments: (response.comments ?? []).map((comment) => ({
           ...comment,
@@ -278,7 +280,7 @@ export const useArticleDetail = () => {
       }
 
       // Parallelize price fetching - don't block article display
-      fetchPrices(response.article_title)
+      fetchPrices(response.product_name || response.article_title)
 
       return true
     } catch (err: any) {

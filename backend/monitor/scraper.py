@@ -5,6 +5,7 @@ from difflib import SequenceMatcher
 from typing import Optional
 from urllib.parse import quote_plus
 
+import requests as std_requests
 from curl_cffi import requests as cffi_requests
 from monitor.parser import normalize_product
 
@@ -43,6 +44,30 @@ GQL_QUERY = (
     "  }"
     "}"
 )
+
+
+def reverse_geocode(lat: float, lng: float) -> Optional[str]:
+    """Nominatim reverse geocode → city/regency name. No API key needed."""
+    try:
+        resp = std_requests.get(
+            "https://nominatim.openstreetmap.org/reverse",
+            params={"lat": lat, "lon": lng, "format": "json"},
+            headers={"User-Agent": "retogen-app/1.0"},
+            timeout=5,
+        )
+        data = resp.json()
+        addr = data.get("address", {})
+        # Priority: city > town > county > state
+        city = (
+            addr.get("city")
+            or addr.get("town")
+            or addr.get("county")
+            or addr.get("state")
+        )
+        return city
+    except Exception as e:
+        logger.warning("Reverse geocode failed: %s", e)
+        return None
 
 
 def _build_payload(keyword: str) -> str:
@@ -107,16 +132,33 @@ def _relevance_score(query: str, product_name: str) -> float:
     return round(score, 4)
 
 
-def scrape_tokopedia(product_name: str, limit: int = 10, min_score: float = 0.3) -> dict:
+def scrape_tokopedia(
+    product_name: str,
+    limit: int = 10,
+    latitude: Optional[float] = None,
+    longitude: Optional[float] = None,
+    min_score: float = 0.3,
+) -> dict:
     """
     Scrape Tokopedia for product listings matching product_name.
 
     Args:
         product_name: Search keyword
         limit: Max results to return after filtering
+        latitude: Optional device latitude for geo-enhanced search
+        longitude: Optional device longitude for geo-enhanced search
         min_score: Minimum fuzzy relevance score [0.0–1.0].
                    Results below threshold are excluded. Set 0.0 to disable filtering.
     """
+    # Reverse geocode if coords provided — appends city to keyword
+    detected_city = None
+    keyword = product_name
+    if latitude is not None and longitude is not None:
+        detected_city = reverse_geocode(latitude, longitude)
+        if detected_city:
+            keyword = f"{product_name} {detected_city}"
+            logger.info("Geo-enhanced search: %r (city: %s)", keyword, detected_city)
+
     session = cffi_requests.Session(impersonate="chrome120")
     _warmup_session(session)
 
@@ -124,12 +166,12 @@ def scrape_tokopedia(product_name: str, limit: int = 10, min_score: float = 0.3)
     results = []
 
     try:
-        # Fetch more rows (20) to have candidates after fuzzy filtering
-        raw_products = _fetch_raw(session, product_name)
+        # Fetch using geo-enhanced keyword (city appended if geolocation provided)
+        raw_products = _fetch_raw(session, keyword)
     except Exception as e:
         msg = f"GQL fetch failed: {e}"
         logger.error(msg)
-        return {"results": [], "errors": [msg], "total": 0}
+        return {"results": [], "errors": [msg], "total": 0, "detected_city": detected_city}
 
     scored = []
     for i, raw in enumerate(raw_products):
@@ -161,4 +203,4 @@ def scrape_tokopedia(product_name: str, limit: int = 10, min_score: float = 0.3)
         product_name, len(raw_products), len(scored), len(results), min_score
     )
 
-    return {"results": results, "errors": errors, "total": len(results)}
+    return {"results": results, "errors": errors, "total": len(results), "detected_city": detected_city}

@@ -2,6 +2,7 @@ import uuid
 import pytest
 
 SMALL_IMAGE_B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwADhQGAWjR9awAAAABJRU5ErkJggg=="
+FAKE_FCM_TOKEN = "fake_fcm_token_" + uuid.uuid4().hex
 
 
 # ── subscription cleanup ──────────────────────────────────────────────────────
@@ -51,7 +52,7 @@ def test_get_notifications_success(client, auth_headers_user):
 def test_get_notifications_no_token(client):
     print("\n[TEST CASE] Get Notifications - Tanpa Token")
     response = client.post("/notification/get")
-    assert response.status_code == 401
+    assert response.status_code == 403  # HTTPBearer returns 403 when no Authorization header
 
 
 def test_get_notifications_invalid_token(client):
@@ -366,3 +367,150 @@ def test_notification_response_has_notifications_key(client, auth_headers_user):
     print("\n[TEST CASE] Notification - Response Punya Key 'notifications'")
     response = client.post("/notification/get", headers=auth_headers_user)
     assert "notifications" in response.json()
+
+
+# ── is_read field ─────────────────────────────────────────────────────────────
+
+def test_notification_has_is_read_field(client, auth_headers_user, auth_headers_admin):
+    print("\n[TEST CASE] Notification - Has is_read Field")
+    tag = _unique_tag("isread")
+    client.post("/subscription/subscribe", json={"tag": tag}, headers=auth_headers_user)
+    _add_article_with_tags(client, auth_headers_admin, [tag])
+
+    response = client.post("/notification/get", headers=auth_headers_user)
+    matching = [n for n in response.json()["notifications"] if tag in n.get("tags", [])]
+    assert len(matching) > 0
+    assert "is_read" in matching[0]
+    assert isinstance(matching[0]["is_read"], bool)
+
+
+def test_new_notification_is_unread(client, auth_headers_user, auth_headers_admin):
+    print("\n[TEST CASE] Notification - Notif Baru Berstatus Unread")
+    tag = _unique_tag("newunread")
+    client.post("/subscription/subscribe", json={"tag": tag}, headers=auth_headers_user)
+    _add_article_with_tags(client, auth_headers_admin, [tag])
+
+    response = client.post("/notification/get", headers=auth_headers_user)
+    matching = [n for n in response.json()["notifications"] if tag in n.get("tags", [])]
+    assert len(matching) > 0
+    assert matching[0]["is_read"] is False
+
+
+# ── mark_read ─────────────────────────────────────────────────────────────────
+
+def test_mark_read_success(client, auth_headers_user, auth_headers_admin):
+    print("\n[TEST CASE] Notification - Mark Read Berhasil")
+    tag = _unique_tag("markrd")
+    client.post("/subscription/subscribe", json={"tag": tag}, headers=auth_headers_user)
+    _add_article_with_tags(client, auth_headers_admin, [tag])
+
+    notifs = client.post("/notification/get", headers=auth_headers_user).json()["notifications"]
+    matching = [n for n in notifs if tag in n.get("tags", [])]
+    assert len(matching) > 0
+
+    notif_id = matching[0]["notification_id"]
+    r = client.post("/notification/mark_read", json={"notification_id": notif_id}, headers=auth_headers_user)
+    assert r.status_code == 200
+    assert r.json()["confirmation"] == "successful: marked as read"
+
+
+def test_mark_read_reflects_in_get(client, auth_headers_user, auth_headers_admin):
+    print("\n[TEST CASE] Notification - Mark Read Tercermin Di Get")
+    tag = _unique_tag("markref")
+    client.post("/subscription/subscribe", json={"tag": tag}, headers=auth_headers_user)
+    _add_article_with_tags(client, auth_headers_admin, [tag])
+
+    notifs = client.post("/notification/get", headers=auth_headers_user).json()["notifications"]
+    matching = [n for n in notifs if tag in n.get("tags", [])]
+    notif_id = matching[0]["notification_id"]
+
+    client.post("/notification/mark_read", json={"notification_id": notif_id}, headers=auth_headers_user)
+
+    notifs_after = client.post("/notification/get", headers=auth_headers_user).json()["notifications"]
+    updated = next((n for n in notifs_after if n["notification_id"] == notif_id), None)
+    assert updated is not None
+    assert updated["is_read"] is True
+
+
+def test_mark_read_invalid_id(client, auth_headers_user):
+    print("\n[TEST CASE] Notification - Mark Read ID Tidak Valid")
+    r = client.post("/notification/mark_read", json={"notification_id": "000000000000000000000000"}, headers=auth_headers_user)
+    assert r.status_code == 200
+    assert "not found" in r.json()["confirmation"]
+
+
+def test_mark_read_no_token(client):
+    print("\n[TEST CASE] Notification - Mark Read Tanpa Token")
+    r = client.post("/notification/mark_read", json={"notification_id": "abc"})
+    assert r.status_code == 403  # HTTPBearer returns 403 when no Authorization header
+
+
+# ── mark_all_read ─────────────────────────────────────────────────────────────
+
+def test_mark_all_read_success(client, auth_headers_user, auth_headers_admin):
+    print("\n[TEST CASE] Notification - Mark All Read Berhasil")
+    tag1 = _unique_tag("allrd1")
+    tag2 = _unique_tag("allrd2")
+    client.post("/subscription/subscribe", json={"tag": tag1}, headers=auth_headers_user)
+    client.post("/subscription/subscribe", json={"tag": tag2}, headers=auth_headers_user)
+    _add_article_with_tags(client, auth_headers_admin, [tag1])
+    _add_article_with_tags(client, auth_headers_admin, [tag2])
+
+    r = client.post("/notification/mark_all_read", headers=auth_headers_user)
+    assert r.status_code == 200
+    assert r.json()["confirmation"] == "successful"
+    assert isinstance(r.json()["marked_count"], int)
+
+
+def test_mark_all_read_all_become_read(client, auth_headers_user, auth_headers_admin):
+    print("\n[TEST CASE] Notification - Semua Notif Jadi Read Setelah Mark All")
+    tag = _unique_tag("allread")
+    client.post("/subscription/subscribe", json={"tag": tag}, headers=auth_headers_user)
+    _add_article_with_tags(client, auth_headers_admin, [tag])
+
+    client.post("/notification/mark_all_read", headers=auth_headers_user)
+
+    notifs = client.post("/notification/get", headers=auth_headers_user).json()["notifications"]
+    unread = [n for n in notifs if not n.get("is_read", True)]
+    assert len(unread) == 0
+
+
+def test_mark_all_read_no_token(client):
+    print("\n[TEST CASE] Notification - Mark All Read Tanpa Token")
+    r = client.post("/notification/mark_all_read")
+    assert r.status_code == 403  # HTTPBearer returns 403 when no Authorization header
+
+
+def test_mark_all_read_returns_zero_when_none_unread(client, auth_headers_user):
+    print("\n[TEST CASE] Notification - Mark All Read Return 0 Jika Sudah Semua Read")
+    client.post("/notification/mark_all_read", headers=auth_headers_user)
+    r = client.post("/notification/mark_all_read", headers=auth_headers_user)
+    assert r.json()["marked_count"] == 0
+
+
+# ── register_token ────────────────────────────────────────────────────────────
+
+def test_register_fcm_token_success(client, auth_headers_user):
+    print("\n[TEST CASE] Notification - Register FCM Token Berhasil")
+    r = client.post("/notification/register_token", json={"fcm_token": FAKE_FCM_TOKEN}, headers=auth_headers_user)
+    assert r.status_code == 200
+    assert r.json()["confirmation"] == "successful: token registered"
+
+
+def test_register_fcm_token_update(client, auth_headers_user):
+    print("\n[TEST CASE] Notification - Update FCM Token Berhasil")
+    new_token = "updated_fcm_token_" + uuid.uuid4().hex
+    r = client.post("/notification/register_token", json={"fcm_token": new_token}, headers=auth_headers_user)
+    assert r.json()["confirmation"] == "successful: token registered"
+
+
+def test_register_fcm_token_empty(client, auth_headers_user):
+    print("\n[TEST CASE] Notification - Register FCM Token Kosong Ditolak")
+    r = client.post("/notification/register_token", json={"fcm_token": "   "}, headers=auth_headers_user)
+    assert r.json()["confirmation"] == "invalid token"
+
+
+def test_register_fcm_token_no_auth(client):
+    print("\n[TEST CASE] Notification - Register FCM Token Tanpa Auth")
+    r = client.post("/notification/register_token", json={"fcm_token": "sometoken"})
+    assert r.status_code == 403  # HTTPBearer returns 403 when no Authorization header
