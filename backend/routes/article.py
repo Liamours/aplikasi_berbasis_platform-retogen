@@ -41,7 +41,8 @@ async def edit_get_article(req: EditArticleGetRequest, payload: dict = Depends(g
         "article_preview": article["article_preview"],
         "article_content": article["article_content"],
         "article_tags": article.get("article_tags", []),
-        "article_image": image_base64
+        "article_image": image_base64,
+        "product_name": article.get("product_name")
     }
 
 
@@ -139,6 +140,7 @@ async def view_article(req: ViewArticleRequest, payload: dict = Depends(get_curr
         "article_content": article["article_content"],
         "article_tags": article.get("article_tags", []),
         "article_image": image_base64,
+        "product_name": article.get("product_name"),
         "comments": comments,
         "ratings": ratings
     }
@@ -270,7 +272,8 @@ async def add_article(req: AddArticle, payload: dict = Depends(get_current_user)
         req.article_content,
         normalized_tags,
         image_bytes,
-        author_id
+        author_id,
+        product_name=req.product_name
     )
 
     if article_id is None:

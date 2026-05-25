@@ -19,7 +19,7 @@ def hash_password(password: str) -> str:
 def verify_password(plain: str, hashed: str) -> bool:
     return bcrypt.checkpw(plain.encode("utf-8"), hashed.encode("utf-8"))
 
-def create_token(data: dict, expires_minutes: int = 60):
+def create_token(data: dict, expires_minutes: int = 60 * 24 * 30):  # default 30 days
     payload = data.copy()
     payload["exp"] = datetime.now(timezone.utc) + timedelta(minutes=expires_minutes)
     return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGO)

@@ -145,7 +145,7 @@ def test_login_success(client):
     print(f"    response: {response.json()}")
     assert response.status_code == 200
     assert response.json()["confirmation"] == "login successful"
-    assert "token" in response.json()
+    assert "access_token" in response.json()
 
 
 def test_login_wrong_password(client):
@@ -176,7 +176,7 @@ def test_login_user_role(client):
     })
     print(f"    response: {response.json()}")
     assert response.json()["confirmation"] == "login successful"
-    assert "token" in response.json()
+    assert "access_token" in response.json()
 
 
 # ── new tests: register username boundary ─────────────────────────────────────
@@ -397,7 +397,7 @@ def test_login_returns_non_empty_token(client):
         "email": "fathanaryamaulana@gmail.com",
         "password": "Tsukiya0"
     })
-    token = response.json().get("token", "")
+    token = response.json().get("access_token", "")
     assert isinstance(token, str)
     assert len(token) > 20
 

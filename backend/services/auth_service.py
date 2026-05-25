@@ -46,8 +46,8 @@ class AuthService:
             return {"confirmation": "password incorrect"}
 
         logger.info("[AUTH] Login successful: %s", data.email)
-        token = create_token({"email": user["email"], "role": user.get("role", "user")})
-        return {"confirmation": "login successful", "token": token}
+        access_token = create_token({"email": user["email"], "role": user.get("role", "user")})
+        return {"confirmation": "login successful", "access_token": access_token}
 
     @staticmethod
     def is_admin(payload: dict) -> bool:

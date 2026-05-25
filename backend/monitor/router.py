@@ -10,15 +10,22 @@ router = APIRouter()
 
 @router.post("/search", response_model=MonitorSearchResponse)
 @limiter.limit("20/minute")
-def monitor_search(request: Request, body: MonitorSearchRequest, payload: dict = Depends(get_current_user)):
+async def monitor_search(request: Request, body: MonitorSearchRequest, payload: dict = Depends(get_current_user)):
     """
     Search Tokopedia for a product and return top listings with price + rating.
     Requires valid JWT.
     """
+    import asyncio
     if not body.product_name.strip():
         raise HTTPException(status_code=400, detail="product_name required")
 
-    result = scrape_tokopedia(body.product_name.strip(), limit=body.limit)
+    result = await asyncio.to_thread(
+        scrape_tokopedia,
+        body.product_name.strip(),
+        body.limit,
+        body.latitude,
+        body.longitude,
+    )
     return result
 
 

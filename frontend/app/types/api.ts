@@ -99,6 +99,7 @@ export interface ArticleViewResponse extends ApiBaseResponse {
   article_content: string
   article_tags: string[]
   article_image: string | null
+  product_name?: string | null
   comments: ArticleComment[]
   ratings: ArticleRating[]
   reports?: ArticleReport[]
@@ -213,6 +214,7 @@ export interface DetailArticle {
   article_content: string
   article_tags: string[]
   article_image: string | null
+  product_name?: string | null
   prices: DetailPriceEntry[]
   comments: DetailComment[]
   ratings: DetailRating[]

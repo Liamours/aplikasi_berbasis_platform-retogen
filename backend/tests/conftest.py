@@ -29,7 +29,7 @@ def fresh_user_email():
 def admin_token(client):
     r = client.post("/auth/login", json={"email": ADMIN_EMAIL, "password": ADMIN_PASSWORD})
     assert r.json()["confirmation"] == "login successful", f"Admin login failed: {r.json()}"
-    return r.json()["token"]
+    return r.json()["access_token"]
 
 
 @pytest.fixture(scope="session")
@@ -43,7 +43,7 @@ def user_token(client):
     })
     r = client.post("/auth/login", json={"email": _FRESH_USER_EMAIL, "password": _FRESH_USER_PASSWORD})
     assert r.json()["confirmation"] == "login successful", f"Fresh user login failed: {r.json()}"
-    return r.json()["token"]
+    return r.json()["access_token"]
 
 
 @pytest.fixture(scope="session")

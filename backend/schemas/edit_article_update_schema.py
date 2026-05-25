@@ -8,3 +8,4 @@ class EditArticleUpdateRequest(BaseModel):
     article_content: Optional[str] = None
     article_tags: Optional[List[str]] = None
     article_image: Optional[str] = None
+    product_name: Optional[str] = None

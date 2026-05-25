@@ -3,6 +3,7 @@ import logging
 import time
 from typing import Optional
 
+import requests as std_requests
 from curl_cffi import requests as cffi_requests
 from monitor.parser import normalize_product
 
@@ -43,6 +44,30 @@ GQL_QUERY = (
 )
 
 
+def reverse_geocode(lat: float, lng: float) -> Optional[str]:
+    """Nominatim reverse geocode → city/regency name. No API key needed."""
+    try:
+        resp = std_requests.get(
+            "https://nominatim.openstreetmap.org/reverse",
+            params={"lat": lat, "lon": lng, "format": "json"},
+            headers={"User-Agent": "retogen-app/1.0"},
+            timeout=5,
+        )
+        data = resp.json()
+        addr = data.get("address", {})
+        # Priority: city > town > county > state
+        city = (
+            addr.get("city")
+            or addr.get("town")
+            or addr.get("county")
+            or addr.get("state")
+        )
+        return city
+    except Exception as e:
+        logger.warning("Reverse geocode failed: %s", e)
+        return None
+
+
 def _build_payload(keyword: str) -> str:
     params = f"device=desktop&q={keyword.replace(' ', '%20')}&rows=10&page=1&st=product&source=universe"
     return json.dumps([{
@@ -79,7 +104,22 @@ def _fetch_raw(session: cffi_requests.Session, keyword: str) -> list:
         return []
 
 
-def scrape_tokopedia(product_name: str, limit: int = 10) -> dict:
+def scrape_tokopedia(
+    product_name: str,
+    limit: int = 10,
+    latitude: Optional[float] = None,
+    longitude: Optional[float] = None,
+) -> dict:
+    # Reverse geocode if coords provided
+    detected_city = None
+    keyword = product_name
+    if latitude is not None and longitude is not None:
+        detected_city = reverse_geocode(latitude, longitude)
+        if detected_city:
+            # Append city to search query to bias results toward local sellers
+            keyword = f"{product_name} {detected_city}"
+            logger.info("Geo-enhanced search: %r (city: %s)", keyword, detected_city)
+
     session = cffi_requests.Session(impersonate="chrome120")
     _warmup_session(session)
 
@@ -87,11 +127,11 @@ def scrape_tokopedia(product_name: str, limit: int = 10) -> dict:
     results = []
 
     try:
-        raw_products = _fetch_raw(session, product_name)
+        raw_products = _fetch_raw(session, keyword)
     except Exception as e:
         msg = f"GQL fetch failed: {e}"
         logger.error(msg)
-        return {"results": [], "errors": [msg], "total": 0}
+        return {"results": [], "errors": [msg], "total": 0, "detected_city": detected_city}
 
     for i, raw in enumerate(raw_products[:limit]):
         product = normalize_product(raw)
@@ -102,4 +142,4 @@ def scrape_tokopedia(product_name: str, limit: int = 10) -> dict:
             logger.warning(msg)
             errors.append(msg)
 
-    return {"results": results, "errors": errors, "total": len(results)}
+    return {"results": results, "errors": errors, "total": len(results), "detected_city": detected_city}
