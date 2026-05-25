@@ -151,7 +151,7 @@ onBeforeUnmount(() => {
   border-radius: 14px;
   background: var(--glass-bg);
   border: 1px solid var(--glass-border);
-  box-shadow: var(--glass-shadow);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
   backdrop-filter: blur(20px) saturate(180%);
   -webkit-backdrop-filter: blur(20px) saturate(180%);
   z-index: 20;

@@ -21,3 +21,4 @@ mongo_data/
 
 # Misc
 .DS_Store
+.vscode/

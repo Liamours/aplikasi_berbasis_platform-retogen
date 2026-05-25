@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "511969739923",
+    "project_id": "retogen-28b58",
+    "storage_bucket": "retogen-28b58.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:511969739923:android:6f9d48e14a2d749f9c7966",
+        "android_client_info": {
+          "package_name": "com.retogen.retogen"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBI36fm6H8W3Q34QLwHuUoVajQ1SDb8LwY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

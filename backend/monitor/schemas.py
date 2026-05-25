@@ -7,6 +7,7 @@ class MonitorSearchRequest(BaseModel):
     limit: int = Field(default=10, ge=1, le=50)
     latitude: Optional[float] = Field(default=None, ge=-90, le=90)
     longitude: Optional[float] = Field(default=None, ge=-180, le=180)
+    min_score: float = Field(default=0.3, ge=0.0, le=1.0, description="Fuzzy relevance threshold (0=no filter, 1=exact). Results below this score are excluded.")
 
 
 class ProductResult(BaseModel):
@@ -14,6 +15,7 @@ class ProductResult(BaseModel):
     store: Optional[str]
     price: Optional[int]
     rating: Optional[float]
+    relevance_score: Optional[float] = None
 
 
 class MonitorSearchResponse(BaseModel):

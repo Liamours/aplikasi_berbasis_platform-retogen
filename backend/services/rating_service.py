@@ -40,7 +40,7 @@ class RatingService:
     @staticmethod
     async def fetch_article(article_id):
         try:
-            return await db.article.find_one({"_id": ObjectId(article_id)})
+            return await db.article.find_one({"_id": ObjectId(article_id), "is_deleted": False})
         except Exception as e:
             logger.error("fetch_article error: %s", e)
             return None

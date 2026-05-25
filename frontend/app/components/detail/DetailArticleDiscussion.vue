@@ -7,6 +7,7 @@ const {
   totalComments,
   activeReplyId,
   replyDrafts,
+  isAdmin,
   openReport,
   toggleReply,
   updateReplyDraft,
@@ -81,6 +82,7 @@ const {
     :initials="otherProfileInitials"
     :is-loading="isOtherLoading"
     :error-message="otherErrorMessage"
+    :is-admin="isAdmin"
     :format-date="formatDate"
     @close="closeOtherUserProfile"
   />
@@ -132,8 +134,6 @@ const {
   margin-top: 16px;
   display: grid;
   gap: 14px;
-  content-visibility: auto;
-  contain-intrinsic-size: 0 400px;
 }
 
 .article-comments__empty {

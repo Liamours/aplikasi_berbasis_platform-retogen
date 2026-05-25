@@ -13,9 +13,9 @@ export const useAuth = () => {
   const login = async (payload: LoginRequest) => {
     const response = await post<LoginResponse>('/auth/login', payload, false)
 
-    if (response.confirmation === 'login successful' && response.token) {
+    if (response.confirmation === 'login successful' && response.access_token) {
       authStore.setAuth({
-        token: response.token
+        token: response.access_token
       })
 
       await fetchSelf()

@@ -6,7 +6,6 @@ const { commentDraft, submitComment } = useArticleDetail()
   <div class="comment-composer">
     <div class="comment-composer__head">
       <h3 class="comment-composer__title">Tulis komentar</h3>
-      <span class="comment-composer__hint">Singkat dan jelas lebih mudah dibaca.</span>
     </div>
 
     <textarea

@@ -1,3 +1,4 @@
+import asyncio
 from fastapi import APIRouter, HTTPException, Depends, Request
 
 from monitor.schemas import MonitorSearchRequest, MonitorSearchResponse
@@ -19,16 +20,18 @@ async def monitor_search(request: Request, body: MonitorSearchRequest, payload: 
     if not body.product_name.strip():
         raise HTTPException(status_code=400, detail="product_name required")
 
+    # Run blocking scraper in thread pool — avoids blocking the async event loop
     result = await asyncio.to_thread(
         scrape_tokopedia,
         body.product_name.strip(),
         body.limit,
         body.latitude,
         body.longitude,
+        body.min_score,
     )
     return result
 
 
 @router.get("/health")
-def monitor_health():
+async def monitor_health():
     return {"status": "ok"}

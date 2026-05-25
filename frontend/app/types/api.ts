@@ -8,7 +8,7 @@ export interface LoginRequest {
 }
 
 export interface LoginResponse extends ApiBaseResponse {
-  token?: string
+  access_token?: string
 }
 
 export interface RegisterRequest {

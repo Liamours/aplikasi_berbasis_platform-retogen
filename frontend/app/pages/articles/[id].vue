@@ -163,7 +163,7 @@ onMounted(() => {
   justify-content: center;
   min-height: calc(100vh - var(--navbar-height));
   padding: 8px 0 40px;
-  background: var(--bg-page);
+  background: transparent;
 }
 
 .detail-card {
@@ -183,7 +183,7 @@ onMounted(() => {
   */
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
-  contain: layout paint style;
+  contain: layout style;
 }
 
 .detail-card--state {

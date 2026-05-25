@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:retogen/core/api_client.dart';
+import 'package:retogen/core/theme.dart';
 
 class ArticlesPage extends StatefulWidget {
   const ArticlesPage({super.key});
@@ -38,7 +40,31 @@ class _ArticlesPageState extends State<ArticlesPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('RetoGen')),
+      appBar: AppBar(
+        title: const Text('RetoGen'),
+        actions: [
+          IconButton(
+            tooltip: 'Profil saya',
+            icon: Container(
+              width: 34,
+              height: 34,
+              decoration: BoxDecoration(
+                color: const Color(0x246AADA8),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: AppTheme.glassBorder),
+              ),
+              alignment: Alignment.center,
+              child: const Icon(
+                Icons.person_rounded,
+                size: 18,
+                color: AppTheme.primaryCyan,
+              ),
+            ),
+            onPressed: () => context.push('/profile'),
+          ),
+          const SizedBox(width: 8),
+        ],
+      ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _error != null

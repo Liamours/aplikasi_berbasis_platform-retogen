@@ -129,10 +129,12 @@ export const useUserProfile = () => {
     isOtherProfileOpen.value = true
     isOtherLoading.value = true
 
+    const isAdmin = authStore.user?.role === 'admin'
+    const endpoint = isAdmin ? '/user/get_details' : '/report_user/get_user_profile'
+
     try {
-      // Use /user/get_details which returns reports for admins
-      const response = await api.post<UserDetailsResponse>(
-        '/user/get_details',
+      const response = await api.post<any>(
+        endpoint,
         { user_email: userEmail },
         true
       )
@@ -142,15 +144,16 @@ export const useUserProfile = () => {
         return
       }
 
-      // Map OwnUserProfile to PublicUserProfile
+      const userData = response.user
+      // Map response to PublicUserProfile, handling both endpoints
       otherProfile.value = {
-        user_id: response.user.user_id,
-        user_email: response.user.email,
-        username: response.user.username,
-        fullname: response.user.fullname,
-        role: response.user.role,
-        created_at: response.user.created_at || '',
-        reports: response.user.reports as any
+        user_id: userData.user_id,
+        user_email: userData.email || userData.user_email,
+        username: userData.username,
+        fullname: userData.fullname,
+        role: userData.role,
+        created_at: userData.created_at || '',
+        reports: userData.reports || undefined
       }
     } catch {
       otherErrorMessage.value = 'Gagal memuat profil user.'

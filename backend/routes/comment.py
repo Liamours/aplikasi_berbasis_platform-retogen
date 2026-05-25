@@ -129,6 +129,8 @@ async def add_comment(req: AddCommentRequest, payload: dict = Depends(get_curren
 async def edit_comment(req: EditCommentRequest, payload: dict = Depends(get_current_user)):
     user_email = payload.get("email")
     user = await db.user.find_one({"email": user_email})
+    if not user:
+        return {"confirmation": "token invalid"}
     owner_id = str(user["_id"])
 
     if req.parent_comment_id:

@@ -2,7 +2,9 @@ import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class ApiClient {
-  static const String baseUrl = 'http://10.0.2.2:8000'; // Android emulator → localhost
+  // 10.0.2.2 = Android emulator only. For physical device, use your laptop's WiFi IP.
+  // Run `ipconfig` on Windows and look for "IPv4 Address" under your WiFi adapter.
+  static const String baseUrl = 'http://192.168.1.4:8000'; // Laptop WiFi IP
 
   static final _storage = FlutterSecureStorage();
 
