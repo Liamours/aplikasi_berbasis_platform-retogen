@@ -1,13 +1,15 @@
 import 'package:go_router/go_router.dart';
 import 'package:retogen/features/auth/login_page.dart';
 import 'package:retogen/features/auth/register_page.dart';
+import 'package:retogen/features/auth/splash_page.dart';
 import 'package:retogen/features/articles/article_detail_page.dart';
 import 'package:retogen/features/main/main_page.dart';
 import 'package:retogen/features/profile/profile_page.dart';
 
 final router = GoRouter(
-  initialLocation: '/login',
+  initialLocation: '/',
   routes: [
+    GoRoute(path: '/', builder: (ctx, state) => const SplashPage()),
     GoRoute(
       path: '/login',
       builder: (ctx, state) {

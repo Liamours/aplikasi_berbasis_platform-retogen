@@ -14,6 +14,7 @@ import 'package:retogen/features/main/widgets/main_article_skeleton.dart';
 import 'package:retogen/features/main/widgets/main_notification_sheet.dart';
 import 'package:retogen/features/main/widgets/main_sort_bar.dart';
 import 'package:retogen/features/main/widgets/main_tag_filter.dart';
+import 'package:retogen/core/api_client.dart';
 
 class MainPage extends StatefulWidget {
   const MainPage({super.key});
@@ -122,6 +123,7 @@ class _MainPageState extends State<MainPage> {
     } on DioException catch (e) {
       if (!mounted) return;
       if (e.response?.statusCode == 401) {
+        await ApiClient.clearToken();
         context.go('/login');
         return;
       }

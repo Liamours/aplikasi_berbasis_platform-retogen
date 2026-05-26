@@ -105,6 +105,7 @@ class _ArticleDetailPageState extends State<ArticleDetailPage> {
       await _fetchPrices(detail.title);
     } on DioException catch (e) {
       if (e.response?.statusCode == 401 && mounted) {
+        await ApiClient.clearToken();
         context.go('/login');
         return;
       }

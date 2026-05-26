@@ -1,10 +1,11 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'router.dart';
 
 class ApiClient {
   // 10.0.2.2 = Android emulator only. For physical device, use your laptop's WiFi IP.
   // Run `ipconfig` on Windows and look for "IPv4 Address" under your WiFi adapter.
-  static const String baseUrl = 'http://192.168.1.4:8000'; // Laptop WiFi IP
+  static const String baseUrl = 'http://192.168.0.242:8000'; // Laptop WiFi IP
 
   static final _storage = FlutterSecureStorage();
 
@@ -24,7 +25,11 @@ class ApiClient {
         }
         handler.next(options);
       },
-      onError: (error, handler) {
+      onError: (error, handler) async {
+        if (error.response?.statusCode == 401) {
+          await _storage.delete(key: 'access_token');
+          router.go('/login');
+        }
         handler.next(error);
       },
     ));
