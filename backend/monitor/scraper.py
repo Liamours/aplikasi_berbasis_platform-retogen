@@ -1,7 +1,9 @@
 import json
 import logging
+import threading
 import time
 from difflib import SequenceMatcher
+from functools import lru_cache
 from typing import Optional
 from urllib.parse import quote_plus
 
@@ -46,18 +48,17 @@ GQL_QUERY = (
 )
 
 
-def reverse_geocode(lat: float, lng: float) -> Optional[str]:
-    """Nominatim reverse geocode → city/regency name. No API key needed."""
+@lru_cache(maxsize=256)
+def _reverse_geocode_cached(lat_r: float, lng_r: float) -> Optional[str]:
     try:
         resp = std_requests.get(
             "https://nominatim.openstreetmap.org/reverse",
-            params={"lat": lat, "lon": lng, "format": "json"},
+            params={"lat": lat_r, "lon": lng_r, "format": "json"},
             headers={"User-Agent": "retogen-app/1.0"},
             timeout=5,
         )
         data = resp.json()
         addr = data.get("address", {})
-        # Priority: city > town > county > state
         city = (
             addr.get("city")
             or addr.get("town")
@@ -70,13 +71,21 @@ def reverse_geocode(lat: float, lng: float) -> Optional[str]:
         return None
 
 
-def _build_payload(keyword: str) -> str:
-    params = f"device=desktop&q={quote_plus(keyword)}&rows=20&page=1&st=product&source=universe"
+def reverse_geocode(lat: float, lng: float) -> Optional[str]:
+    """Nominatim reverse geocode → city/regency name. Coords rounded to 2dp (~1km) for cache efficiency."""
+    return _reverse_geocode_cached(round(lat, 2), round(lng, 2))
+
+
+def _build_payload(keyword: str, rows: int = 20) -> str:
+    params = f"device=desktop&q={quote_plus(keyword)}&rows={rows}&page=1&st=product&source=universe"
     return json.dumps([{
         "operationName": "SearchProductQueryV4",
         "variables": {"params": params},
         "query": GQL_QUERY,
     }])
+
+
+_thread_local = threading.local()
 
 
 def _warmup_session(session: cffi_requests.Session) -> None:
@@ -91,12 +100,21 @@ def _warmup_session(session: cffi_requests.Session) -> None:
         logger.warning("Session warmup failed (continuing anyway): %s", e)
 
 
-def _fetch_raw(session: cffi_requests.Session, keyword: str) -> list:
+def _get_session() -> cffi_requests.Session:
+    """Return a warmed cffi session for the current thread. Warms up once per worker thread."""
+    if not hasattr(_thread_local, "session"):
+        s = cffi_requests.Session(impersonate="chrome120")
+        _warmup_session(s)
+        _thread_local.session = s
+    return _thread_local.session
+
+
+def _fetch_raw(session: cffi_requests.Session, keyword: str, rows: int = 20) -> list:
     headers = {
         **HEADERS,
         "Referer": f"https://www.tokopedia.com/search?q={quote_plus(keyword)}",
     }
-    resp = session.post(GQL_URL, headers=headers, data=_build_payload(keyword), timeout=20)
+    resp = session.post(GQL_URL, headers=headers, data=_build_payload(keyword, rows), timeout=20)
     resp.raise_for_status()
     body = resp.json()
     try:
@@ -159,16 +177,17 @@ def scrape_tokopedia(
             keyword = f"{product_name} {detected_city}"
             logger.info("Geo-enhanced search: %r (city: %s)", keyword, detected_city)
 
-    session = cffi_requests.Session(impersonate="chrome120")
-    _warmup_session(session)
+    session = _get_session()
+    fetch_rows = min(limit * 2, 50)
 
     errors = []
     results = []
 
     try:
-        # Fetch using geo-enhanced keyword (city appended if geolocation provided)
-        raw_products = _fetch_raw(session, keyword)
+        raw_products = _fetch_raw(session, keyword, fetch_rows)
     except Exception as e:
+        if hasattr(_thread_local, "session"):
+            del _thread_local.session
         msg = f"GQL fetch failed: {e}"
         logger.error(msg)
         return {"results": [], "errors": [msg], "total": 0, "detected_city": detected_city}

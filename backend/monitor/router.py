@@ -16,7 +16,6 @@ async def monitor_search(request: Request, body: MonitorSearchRequest, payload: 
     Search Tokopedia for a product and return top listings with price + rating.
     Requires valid JWT.
     """
-    import asyncio
     if not body.product_name.strip():
         raise HTTPException(status_code=400, detail="product_name required")
 

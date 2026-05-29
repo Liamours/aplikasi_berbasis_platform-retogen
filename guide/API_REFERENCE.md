@@ -55,7 +55,7 @@ Response:
 ```json
 {
   "confirmation": "login successful",
-  "token": "string"
+  "access_token": "string"
 }
 ```
 

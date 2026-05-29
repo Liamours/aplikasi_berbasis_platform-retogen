@@ -2,8 +2,8 @@
 .claude/
 
 # Python
-!backend/**/__pycache__/
-!backend/**/*.pyc
+backend/**/__pycache__/
+backend/**/*.pyc
 .pytest_cache/
 .env
 

@@ -3,58 +3,11 @@ import os
 from datetime import datetime, timedelta, timezone
 from bson import ObjectId
 from db.connection import db
+from core.fcm import send_push_multicast
 
 logger = logging.getLogger(__name__)
 
 NOTIFICATION_TTL_DAYS = int(os.getenv("NOTIFICATION_TTL_DAYS", "30"))
-
-# ---------------------------------------------------------------------------
-# Firebase Admin — optional, only initialised when credentials file exists
-# ---------------------------------------------------------------------------
-_firebase_ready = False
-
-
-def _init_firebase():
-    global _firebase_ready
-    if _firebase_ready:
-        return True
-
-    creds_path = os.getenv("FIREBASE_CREDENTIALS_PATH", "firebase_credentials.json")
-    if not os.path.exists(creds_path):
-        logger.info("Firebase credentials not found at '%s'. FCM push disabled.", creds_path)
-        return False
-
-    try:
-        import firebase_admin
-        from firebase_admin import credentials
-        if not firebase_admin._apps:
-            cred = credentials.Certificate(creds_path)
-            firebase_admin.initialize_app(cred)
-        _firebase_ready = True
-        logger.info("Firebase Admin SDK initialised.")
-        return True
-    except Exception as e:
-        logger.error("Firebase init error: %s", e)
-        return False
-
-
-async def _send_fcm(tokens: list[str], title: str, body: str):
-    """Send FCM multicast push. Silently skipped if Firebase not configured."""
-    if not tokens:
-        return
-    if not _init_firebase():
-        return
-    try:
-        from firebase_admin import messaging
-        response = messaging.send_each_for_multicast(
-            messaging.MulticastMessage(
-                notification=messaging.Notification(title=title, body=body),
-                tokens=tokens,
-            )
-        )
-        logger.info("FCM: %d sent, %d failed", response.success_count, response.failure_count)
-    except Exception as e:
-        logger.error("FCM send error: %s", e)
 
 
 # ---------------------------------------------------------------------------
@@ -87,8 +40,6 @@ class NotificationService:
         if not user_ids:
             return
         try:
-            from core.fcm import send_push_multicast
-
             now = datetime.now(timezone.utc)
             docs = [
                 {
@@ -116,7 +67,7 @@ class NotificationService:
 
             tokens = [u["fcm_token"] for u in users if u.get("fcm_token")]
             tag_line = f"Tag: {', '.join(tags)}" if tags else "Artikel baru di RetoGen"
-            await _send_fcm(tokens, article_title, tag_line)
+            await send_push_multicast(tokens, article_title, tag_line)
 
         except Exception as e:
             logger.error("create_notifications error: %s", e)
