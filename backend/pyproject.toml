@@ -1,0 +1,35 @@
+[project]
+name = "backend"
+version = "0.1.0"
+description = "RetoGen backend — electronics review platform API"
+requires-python = ">=3.12"
+dependencies = [
+    "bcrypt>=5.0.0",
+    "cryptography>=48.0.0",
+    "curl-cffi>=0.15.0",
+    "email-validator>=2.3.0",
+    "fastapi>=0.136.3",
+    "firebase-admin>=7.4.0",
+    "httpx>=0.28.1",
+    "motor>=3.7.1",
+    "orjson>=3.11.9",
+    "pydantic-extra-types>=2.11.1",
+    "pydantic-settings>=2.14.1",
+    "pyjwt>=2.13.0",
+    "python-dotenv>=1.2.2",
+    "python-multipart>=0.0.29",
+    "requests>=2.34.2",
+    "slowapi>=0.1.9",
+    "typer>=0.26.3",
+    "ujson>=5.12.1",
+    "uvicorn[standard]>=0.48.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.3",
+    "pytest-json-report>=1.5.0",
+]
+
+[tool.pytest.ini_options]
+addopts = "--json-report --json-report-file=tests/result.json"
