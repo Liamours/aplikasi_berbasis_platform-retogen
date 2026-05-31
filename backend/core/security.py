@@ -8,7 +8,13 @@ logger = logging.getLogger(__name__)
 
 JWT_SECRET = os.getenv("JWT_SECRET")
 if not JWT_SECRET:
-    logger.warning("JWT_SECRET is not set — using insecure default. Set the JWT_SECRET environment variable in production.")
+    _env = os.getenv("RAILWAY_ENVIRONMENT") or os.getenv("ENV") or os.getenv("ENVIRONMENT", "development")
+    if _env.lower() in ("production", "prod", "railway"):
+        raise RuntimeError(
+            "JWT_SECRET environment variable is not set. "
+            "Set it in the Railway dashboard before deploying."
+        )
+    logger.warning("JWT_SECRET is not set — using insecure default. DO NOT use in production.")
     JWT_SECRET = "dev_only_insecure_default_do_not_use_in_prod"
 JWT_ALGO = "HS256"  # pinned — never allow caller to override algorithm
 

@@ -5,8 +5,13 @@ import httpx
 
 BASE_URL = os.getenv("TEST_BASE_URL", "http://localhost:8000")
 
-ADMIN_EMAIL = os.getenv("TEST_ADMIN_EMAIL", "fathanaryamaulana@gmail.com")
-ADMIN_PASSWORD = os.getenv("TEST_ADMIN_PASSWORD", "Tsukiya0")
+ADMIN_EMAIL = os.getenv("TEST_ADMIN_EMAIL")
+ADMIN_PASSWORD = os.getenv("TEST_ADMIN_PASSWORD")
+if not ADMIN_EMAIL or not ADMIN_PASSWORD:
+    raise RuntimeError(
+        "Set TEST_ADMIN_EMAIL and TEST_ADMIN_PASSWORD env vars before running tests.\n"
+        "Example: TEST_ADMIN_EMAIL=admin@retogen.app TEST_ADMIN_PASSWORD=secret pytest tests/"
+    )
 
 _SESSION_UUID = uuid.uuid4().hex[:8]
 _FRESH_USER_EMAIL = f"freshusr_{_SESSION_UUID}@autotest.com"

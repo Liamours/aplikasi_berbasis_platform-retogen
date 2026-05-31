@@ -17,7 +17,7 @@ async def add_report_article(
 
     try:
         ObjectId(req.article_id)
-    except:
+    except Exception:
         return {"confirmation": "invalid article_id"}
 
     user_email = payload.get("email")

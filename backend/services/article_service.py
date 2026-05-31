@@ -78,6 +78,18 @@ class ArticleService:
             return None
 
     @staticmethod
+    async def soft_delete(article_id: str) -> bool:
+        try:
+            result = await db.article.update_one(
+                {"_id": ObjectId(article_id)},
+                {"$set": {"is_deleted": True}}
+            )
+            return result.modified_count > 0
+        except Exception as e:
+            logger.error("soft_delete error: %s", e)
+            return False
+
+    @staticmethod
     async def get_articles_filtered(sort: str, tag: str = None, search: str = None):
         try:
             match = {"is_deleted": False}
@@ -97,7 +109,7 @@ class ArticleService:
                 }[sort]
 
                 cursor = db.article.find(match).sort(sort_field[0], sort_field[1])
-                return await cursor.to_list(length=None)
+                return await cursor.to_list(length=500)
 
             if sort == "highest_rated":
                 pipeline = [
@@ -113,7 +125,7 @@ class ArticleService:
                     {"$sort": {"avg_rating": -1}},
                     {"$project": {"ratings": 0, "article_id_str": 0}}
                 ]
-                return await db.article.aggregate(pipeline).to_list(length=None)
+                return await db.article.aggregate(pipeline).to_list(length=500)
 
             if sort == "most_commented":
                 pipeline = [
@@ -129,10 +141,10 @@ class ArticleService:
                     {"$sort": {"comment_count": -1}},
                     {"$project": {"comments": 0, "article_id_str": 0}}
                 ]
-                return await db.article.aggregate(pipeline).to_list(length=None)
+                return await db.article.aggregate(pipeline).to_list(length=500)
 
             cursor = db.article.find(match).sort("created_at", -1)
-            return await cursor.to_list(length=None)
+            return await cursor.to_list(length=500)
 
         except Exception as e:
             logger.error("get_articles_filtered error: %s", e)

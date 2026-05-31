@@ -2,23 +2,30 @@ from fastapi import APIRouter, Depends
 from schemas.edit_article_get_schema import EditArticleGetRequest
 from schemas.edit_article_update_schema import EditArticleUpdateRequest
 from schemas.view_article_schema import ViewArticleRequest
-from services.rating_service import RatingService
-from services.report_article_service import ReportArticleService
-from services.comment_service import CommentService
 from services.article_service import ArticleService
 from services.auth_service import AuthService
 from services.subscription_service import SubscriptionService
 from services.notification_service import NotificationService
+from services.article_view import build_article_view
 from utils.base64_utils import base64_to_bytes, bytes_to_base64
 from utils.image_validator import validate_image_bytes
 from schemas.delete_article_schema import DeleteArticleRequest
-from bson import ObjectId, errors
-from db.connection import db
 from schemas.add_article_schema import AddArticle
 from schemas.main_page_schema import MainPageRequest
-from core.dependencies import get_current_user
+from core.dependencies import get_current_user, get_current_user_doc
 
 router = APIRouter()
+
+
+def _validate_article_fields(req) -> str | None:
+    """Returns error message if invalid, None if OK."""
+    if not req.article_title or not (1 <= len(req.article_title) <= 256):
+        return "Title must be 1-256 characters long."
+    if not req.article_preview or not (1 <= len(req.article_preview) <= 128):
+        return "Preview must be 1-128 characters long."
+    if not req.article_content or not (1 <= len(req.article_content) <= 65536):
+        return "Content must be 1-65536 characters long."
+    return None
 
 
 @router.post("/edit/get")
@@ -55,12 +62,9 @@ async def edit_update_article(req: EditArticleUpdateRequest, payload: dict = Dep
     if article is None:
         return {"confirmation": "backend error"}
 
-    if not (1 <= len(req.article_title) <= 256):
-        return {"confirmation": "Title must be 1-256 characters long."}
-    if not (1 <= len(req.article_preview) <= 128):
-        return {"confirmation": "Preview must be 1-128 characters long."}
-    if not (1 <= len(req.article_content) <= 65536):
-        return {"confirmation": "Content must be 1-65536 characters long."}
+    err = _validate_article_fields(req)
+    if err:
+        return {"confirmation": err}
 
     try:
         image_bytes = base64_to_bytes(req.article_image) if req.article_image else None
@@ -82,79 +86,7 @@ async def view_article(req: ViewArticleRequest, payload: dict = Depends(get_curr
     article = await ArticleService.fetch_article(req.article_id)
     if article is None:
         return {"confirmation": "backend error"}
-
-    user_email = payload.get("email")
-    user = await db.user.find_one({"email": user_email})
-    is_admin = AuthService.is_admin(payload)
-    userclass = "admin" if is_admin else "user"
-
-    image_base64 = None
-    if article.get("article_image"):
-        try:
-            image_base64 = bytes_to_base64(bytes(article["article_image"]))
-        except Exception:
-            image_base64 = None
-
-    comments_raw = await CommentService.get_comments(req.article_id)
-    if comments_raw is None:
-        return {"confirmation": "backend error"}
-
-    comments = []
-    for c in comments_raw:
-        try:
-            u = await db.user.find_one({"_id": ObjectId(c["owner_id"])})
-        except Exception:
-            u = None
-        comments.append({
-            "comment_id": str(c["_id"]),
-            "parent_comment_id": c.get("parent_comment_id"),
-            "owner": u["username"] if u else "Unknown",
-            "user_email": u["email"] if u else None,
-            "comment_content": c["comment_content"]
-        })
-
-    ratings_raw = await RatingService.get_ratings(req.article_id)
-    if ratings_raw is None:
-        return {"confirmation": "backend error"}
-
-    ratings = []
-    for r in ratings_raw:
-        try:
-            u = await db.user.find_one({"_id": ObjectId(r["owner_id"])})
-        except Exception:
-            u = None
-        ratings.append({
-            "rating_id": str(r["_id"]),
-            "owner": u["username"] if u else "Unknown",
-            "user_email": u["email"] if u else None,
-            "rating_value": r["rating_value"]
-        })
-
-
-    response = {
-        "confirmation": "successful",
-        "userclass": userclass,
-        "user_email": user_email,
-        "username": user["username"],
-        "article_title": article["article_title"],
-        "article_content": article["article_content"],
-        "article_tags": article.get("article_tags", []),
-        "article_image": image_base64,
-        "product_name": article.get("product_name"),
-        "comments": comments,
-        "ratings": ratings
-    }
-
-    if is_admin:
-        reports = await ReportArticleService.get_reports_by_article(req.article_id)
-
-        if reports is None:
-            return {"confirmation": "backend error"}
-
-        response["report_count"] = article.get("report_count", 0)
-        response["reports"] = reports
-
-    return response
+    return await build_article_view(article, payload)
 
 
 @router.post("/delete")
@@ -162,36 +94,23 @@ async def delete_article(req: DeleteArticleRequest, payload: dict = Depends(get_
     if not AuthService.is_admin(payload):
         return {"confirmation": "not admin"}
 
-    try:
-        article_oid = ObjectId(req.article_id)
-    except errors.InvalidId:
-        return {"confirmation": "backend error"}
-
     article = await ArticleService.fetch_article(req.article_id)
     if article is None:
         return {"confirmation": "backend error"}
 
-    try:
-        result = await db.article.update_one(
-            {"_id": article_oid},
-            {"$set": {"is_deleted": True}}
-        )
-    except Exception:
-        return {"confirmation": "backend error"}
-
-    if result.modified_count == 0:
+    deleted = await ArticleService.soft_delete(req.article_id)
+    if not deleted:
         return {"confirmation": "backend error"}
 
     return {"confirmation": "successful: article deleted"}
 
 
 @router.post("/main_page")
-async def main_page(req: MainPageRequest, payload: dict = Depends(get_current_user)):
-    user_email = payload.get("email")
-    user = await db.user.find_one({"email": user_email})
-
+async def main_page(req: MainPageRequest, payload: dict = Depends(get_current_user), user=Depends(get_current_user_doc)):
     if not user:
         return {"confirmation": "token invalid"}
+
+    user_email = payload.get("email")
 
     articles = await ArticleService.get_articles_filtered(
         sort=req.sort.value,
@@ -236,23 +155,18 @@ async def verification(payload: dict = Depends(get_current_user)):
 
 
 @router.post("/add")
-async def add_article(req: AddArticle, payload: dict = Depends(get_current_user)):
+async def add_article(req: AddArticle, payload: dict = Depends(get_current_user), user=Depends(get_current_user_doc)):
     if not AuthService.is_admin(payload):
         return {"confirmation": "not admin"}
 
-    user_email = payload.get("email")
-    user = await db.user.find_one({"email": user_email})
     if not user:
         return {"confirmation": "token invalid"}
 
     author_id = str(user["_id"])
 
-    if not (1 <= len(req.article_title) <= 256):
-        return {"confirmation": "Title must be 1-256 characters long."}
-    if not (1 <= len(req.article_preview) <= 128):
-        return {"confirmation": "Preview must be 1-128 characters long."}
-    if not (1 <= len(req.article_content) <= 65536):
-        return {"confirmation": "Content must be 1-65536 characters long."}
+    err = _validate_article_fields(req)
+    if err:
+        return {"confirmation": err}
     if not req.article_tags:
         return {"confirmation": "At least one tag is required."}
 

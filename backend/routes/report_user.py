@@ -21,8 +21,8 @@ async def get_user_profile(req: GetUserProfileRequest, payload: dict = Depends(g
     if created_at:
         try:
             created_at = created_at.isoformat()
-        except:
-            pass
+        except Exception:
+            created_at = str(created_at)
 
     return {
         "confirmation": "successful",

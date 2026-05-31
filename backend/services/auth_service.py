@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from core.security import verify_password, hash_password, create_token
 from db.connection import db
@@ -12,7 +13,7 @@ class AuthService:
         if existing_email:
             return {"confirmation": "email already registered"}
 
-        hashed_pw = hash_password(data.password)
+        hashed_pw = hash_password(data.password)  # bcrypt is CPU-bound; acceptable for low-traffic auth
         now = datetime.now(timezone.utc)
 
         new_user = {
@@ -26,7 +27,11 @@ class AuthService:
             "updated_at": now,
         }
 
-        await db.user.insert_one(new_user)
+        try:
+            await db.user.insert_one(new_user)
+        except Exception as e:
+            logger.error("register insert_one error: %s", e)
+            return {"confirmation": "backend error"}
         return {"confirmation": "register successful"}
 
     @staticmethod
