@@ -41,6 +41,7 @@ export const useArticleForm = () => {
   const isSubmitting = useState('article-form-submitting', () => false)
   const isLoading = useState('article-form-loading', () => false)
   const showSuccessModal = useState('article-form-show-success-modal', () => false)
+  const formError = useState('article-form-error', () => '')
 
   const isEditMode = computed(() => mode.value === 'edit')
 
@@ -265,18 +266,20 @@ export const useArticleForm = () => {
     const validation = validateForm()
 
     if (validation) {
-      const element = document.getElementById(validation.fieldId)
-      if (element) {
-        const offset = 100
-        const bodyRect = document.body.getBoundingClientRect().top
-        const elementRect = element.getBoundingClientRect().top
-        const elementPosition = elementRect - bodyRect
-        const offsetPosition = elementPosition - offset
+      if (import.meta.client) {
+        const element = document.getElementById(validation.fieldId)
+        if (element) {
+          const offset = 100
+          const bodyRect = document.body.getBoundingClientRect().top
+          const elementRect = element.getBoundingClientRect().top
+          const elementPosition = elementRect - bodyRect
+          const offsetPosition = elementPosition - offset
 
-        window.scrollTo({
-          top: offsetPosition,
-          behavior: 'smooth'
-        })
+          window.scrollTo({
+            top: offsetPosition,
+            behavior: 'smooth'
+          })
+        }
       }
       return
     }
@@ -380,6 +383,7 @@ export const useArticleForm = () => {
     tagCount,
     hasInvalidTagLength,
     showSuccessModal,
+    formError,
     TITLE_MAX_LENGTH,
     PREVIEW_MAX_LENGTH,
     TAG_MAX_COUNT,

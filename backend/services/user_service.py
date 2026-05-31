@@ -11,7 +11,8 @@ class UserService:
     @staticmethod
     async def get_all_users():
         try:
-            return await db.user.find({}).sort("created_at", -1).to_list(length=1000)
+            # Exclude password hash from response — never send to client
+            return await db.user.find({}, {"password": 0}).sort("created_at", -1).to_list(length=1000)
         except Exception as e:
             logger.error("get_all_users error: %s", e)
             return None

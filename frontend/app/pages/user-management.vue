@@ -9,7 +9,7 @@ import OtherUserProfileModal from '~/components/profile/OtherUserProfileModal.vu
 
 definePageMeta({
   layout: 'default',
-  // middleware: 'auth'
+  middleware: ['auth', 'admin']
 })
 
 const {

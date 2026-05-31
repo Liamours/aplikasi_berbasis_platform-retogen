@@ -272,7 +272,7 @@ export const useArticleDetail = () => {
         prices: [],
         comments: (response.comments ?? []).map((comment) => ({
           ...comment,
-          created_at: new Date().toISOString()
+          created_at: comment.created_at ?? new Date().toISOString()
         })),
         ratings: response.ratings ?? [],
         report_count: response.report_count ?? response.reports?.length ?? 0,
