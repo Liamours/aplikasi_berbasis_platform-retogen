@@ -1,16 +1,21 @@
 import json
 import logging
 import os
+import threading
 
 logger = logging.getLogger(__name__)
 
 _initialized = False
+_init_lock = threading.Lock()
 
 
 def _init_firebase():
     global _initialized
     if _initialized:
         return True
+    with _init_lock:
+        if _initialized:   # re-check inside lock
+            return True
     try:
         import firebase_admin
         from firebase_admin import credentials

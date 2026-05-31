@@ -2,6 +2,9 @@ FROM python:3.12-slim
 
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
+# Install curl for healthcheck (lighter than starting a Python process every 30s)
+RUN apt-get update && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -13,9 +16,13 @@ RUN uv sync --frozen --no-dev
 
 COPY . .
 
+# Run as non-root user
+RUN adduser --disabled-password --gecos "" appuser
+USER appuser
+
 EXPOSE 8000
 
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD uv run python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/')" || exit 1
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+    CMD curl -f http://localhost:${PORT:-8000}/ || exit 1
 
 CMD uv run uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}

@@ -2,14 +2,13 @@ from fastapi import APIRouter, Depends
 from services.notification_service import NotificationService
 from schemas.notification_schema import RegisterFcmTokenRequest, MarkReadRequest
 from db.connection import db
-from core.dependencies import get_current_user
+from core.dependencies import get_current_user_doc
 
 router = APIRouter()
 
 
 @router.post("/get")
-async def get_notifications(payload: dict = Depends(get_current_user)):
-    user = await db.user.find_one({"email": payload.get("email")})
+async def get_notifications(user=Depends(get_current_user_doc)):
     if not user:
         return {"confirmation": "token invalid"}
     notifications = await NotificationService.get_notifications(str(user["_id"]))
@@ -17,9 +16,8 @@ async def get_notifications(payload: dict = Depends(get_current_user)):
 
 
 @router.post("/register_token")
-async def register_fcm_token(req: RegisterFcmTokenRequest, payload: dict = Depends(get_current_user)):
+async def register_fcm_token(req: RegisterFcmTokenRequest, user=Depends(get_current_user_doc)):
     """Register or update FCM device token for push notifications."""
-    user = await db.user.find_one({"email": payload.get("email")})
     if not user:
         return {"confirmation": "token invalid"}
     if not req.fcm_token or not req.fcm_token.strip():
@@ -32,9 +30,8 @@ async def register_fcm_token(req: RegisterFcmTokenRequest, payload: dict = Depen
 
 
 @router.post("/mark_read")
-async def mark_notification_read(req: MarkReadRequest, payload: dict = Depends(get_current_user)):
+async def mark_notification_read(req: MarkReadRequest, user=Depends(get_current_user_doc)):
     """Mark a single notification as read."""
-    user = await db.user.find_one({"email": payload.get("email")})
     if not user:
         return {"confirmation": "token invalid"}
     ok = await NotificationService.mark_read(req.notification_id, str(user["_id"]))
@@ -44,9 +41,8 @@ async def mark_notification_read(req: MarkReadRequest, payload: dict = Depends(g
 
 
 @router.post("/mark_all_read")
-async def mark_all_notifications_read(payload: dict = Depends(get_current_user)):
+async def mark_all_notifications_read(user=Depends(get_current_user_doc)):
     """Mark all unread notifications as read."""
-    user = await db.user.find_one({"email": payload.get("email")})
     if not user:
         return {"confirmation": "token invalid"}
     count = await NotificationService.mark_all_read(str(user["_id"]))
