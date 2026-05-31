@@ -52,7 +52,7 @@ def test_get_notifications_success(client, auth_headers_user):
 def test_get_notifications_no_token(client):
     print("\n[TEST CASE] Get Notifications - Tanpa Token")
     response = client.post("/notification/get")
-    assert response.status_code == 403  # HTTPBearer returns 403 when no Authorization header
+    assert response.status_code == 401  # HTTPBearer returns 401 when no Authorization header
 
 
 def test_get_notifications_invalid_token(client):
@@ -442,7 +442,7 @@ def test_mark_read_invalid_id(client, auth_headers_user):
 def test_mark_read_no_token(client):
     print("\n[TEST CASE] Notification - Mark Read Tanpa Token")
     r = client.post("/notification/mark_read", json={"notification_id": "abc"})
-    assert r.status_code == 403  # HTTPBearer returns 403 when no Authorization header
+    assert r.status_code == 401  # HTTPBearer returns 401 when no Authorization header
 
 
 # ── mark_all_read ─────────────────────────────────────────────────────────────
@@ -478,7 +478,7 @@ def test_mark_all_read_all_become_read(client, auth_headers_user, auth_headers_a
 def test_mark_all_read_no_token(client):
     print("\n[TEST CASE] Notification - Mark All Read Tanpa Token")
     r = client.post("/notification/mark_all_read")
-    assert r.status_code == 403  # HTTPBearer returns 403 when no Authorization header
+    assert r.status_code == 401  # HTTPBearer returns 401 when no Authorization header
 
 
 def test_mark_all_read_returns_zero_when_none_unread(client, auth_headers_user):
@@ -513,4 +513,4 @@ def test_register_fcm_token_empty(client, auth_headers_user):
 def test_register_fcm_token_no_auth(client):
     print("\n[TEST CASE] Notification - Register FCM Token Tanpa Auth")
     r = client.post("/notification/register_token", json={"fcm_token": "sometoken"})
-    assert r.status_code == 403  # HTTPBearer returns 403 when no Authorization header
+    assert r.status_code == 401  # HTTPBearer returns 401 when no Authorization header
