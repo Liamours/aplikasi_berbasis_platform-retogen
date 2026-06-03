@@ -23,9 +23,13 @@ function Write-Step {
 
 function Remove-IfExists {
     param([scriptblock]$Command)
+    $previousPreference = $ErrorActionPreference
+    $ErrorActionPreference = "SilentlyContinue"
     try {
-        & $Command | Out-Null
+        & $Command *> $null
     } catch {
+    } finally {
+        $ErrorActionPreference = $previousPreference
     }
 }
 
@@ -41,7 +45,26 @@ function Get-DockerLogs {
     }
 }
 
+function Assert-DockerAvailable {
+    $exitCode = 1
+    $previousPreference = $ErrorActionPreference
+    $ErrorActionPreference = "Continue"
+    try {
+        docker info *> $null
+        $exitCode = $LASTEXITCODE
+    } finally {
+        $ErrorActionPreference = $previousPreference
+    }
+
+    if ($exitCode -ne 0) {
+        throw "Docker Desktop is not running or the Docker engine is unavailable. Start Docker Desktop, wait until it is ready, then rerun this preflight."
+    }
+}
+
 try {
+    Write-Step "Checking Docker engine"
+    Assert-DockerAvailable
+
     Write-Step "Building backend Docker image"
     docker build -t $imageName $backendDir
 
@@ -84,8 +107,11 @@ try {
         }
 
         try {
-            $apiResponse = docker exec $backendName curl -fsS "http://localhost:8000/" 2>$null
-            if ($apiResponse -match '"message"\s*:\s*"API Ready"') {
+            $apiResponse = docker exec $backendName curl -fsS "http://localhost:8000/health" 2>$null
+            if (
+                $apiResponse -match '"status"\s*:\s*"ok"' -and
+                $apiResponse -match '"database"\s*:\s*"reachable"'
+            ) {
                 $apiReady = $true
                 break
             }
@@ -94,7 +120,7 @@ try {
         Start-Sleep -Seconds 2
     }
     if (-not $apiReady) {
-        throw "Backend did not return API Ready. Last response: $apiResponse`nLogs:`n$(Get-DockerLogs $backendName)"
+        throw "Backend did not return healthy database status. Last response: $apiResponse`nLogs:`n$(Get-DockerLogs $backendName)"
     }
 
     $backendLogs = Get-DockerLogs $backendName
@@ -118,6 +144,10 @@ try {
     }
 
     Write-Step "Deployment preflight passed"
+} catch {
+    Write-Host ""
+    Write-Host "Preflight failed: $($_.Exception.Message)" -ForegroundColor Red
+    exit 1
 } finally {
     Remove-IfExists { docker rm -f $backendName }
     Remove-IfExists { docker rm -f $mongoName }

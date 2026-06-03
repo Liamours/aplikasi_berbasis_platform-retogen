@@ -11,6 +11,7 @@ from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from core.limiter import limiter
 from core.api_handlers import validation_exception_handler
+from db.connection import db
 from db.indexes import ensure_indexes
 from routes import auth, article, comment, rating, report_article, report_user, user, subscription, notification
 from monitor.router import router as monitor_router
@@ -38,6 +39,7 @@ ALLOWED_ORIGINS = [
         "ALLOWED_ORIGINS",
         "http://localhost:3000,http://127.0.0.1:3000"
     ).split(",")
+    if origin.strip()
 ]
 logger.info(f"Allowed Origins: {ALLOWED_ORIGINS}")
 
@@ -78,6 +80,12 @@ app.include_router(monitor_router, prefix="/monitor", tags=["Monitor Harga"])
 @app.get("/")
 def root():
     return {"message": "API Ready"}
+
+
+@app.get("/health")
+async def health():
+    await db.command("ping")
+    return {"status": "ok", "database": "reachable"}
 
 
 if __name__ == "__main__":

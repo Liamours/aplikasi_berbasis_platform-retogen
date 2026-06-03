@@ -1,12 +1,35 @@
+import os
 import logging
 from pymongo import ASCENDING, DESCENDING
 from db.connection import db
 
 logger = logging.getLogger(__name__)
 
+NOTIFICATION_TTL_DAYS = int(os.getenv("NOTIFICATION_TTL_DAYS", "30"))
+NOTIFICATION_TTL_SECONDS = NOTIFICATION_TTL_DAYS * 24 * 60 * 60
+
+
+async def ensure_notification_ttl_index():
+    index_name = "notification_created_ttl"
+    expected_key = [("created_at", ASCENDING)]
+    existing = await db.notification.index_information()
+    current = existing.get(index_name)
+
+    if current and (
+        current.get("expireAfterSeconds") != NOTIFICATION_TTL_SECONDS
+        or current.get("key") != expected_key
+    ):
+        await db.notification.drop_index(index_name)
+
+    await db.notification.create_index(
+        expected_key,
+        name=index_name,
+        expireAfterSeconds=NOTIFICATION_TTL_SECONDS,
+    )
+
 
 async def ensure_indexes():
-    """Create all MongoDB indexes. Safe to call on every startup — idempotent."""
+    """Create all MongoDB indexes. Safe to call on every startup; idempotent."""
     try:
         # user: login + register check by email
         await db.user.create_index([("email", ASCENDING)], unique=True, name="user_email_unique")
@@ -49,7 +72,9 @@ async def ensure_indexes():
             [("user_id", ASCENDING), ("created_at", DESCENDING)],
             name="notification_user_created"
         )
+        await ensure_notification_ttl_index()
 
         logger.info("MongoDB indexes ensured.")
-    except Exception as e:
-        logger.error("ensure_indexes error: %s", e)
+    except Exception:
+        logger.exception("ensure_indexes error")
+        raise
