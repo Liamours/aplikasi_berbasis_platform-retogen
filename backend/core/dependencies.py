@@ -6,6 +6,7 @@ from jwt import ExpiredSignatureError, InvalidTokenError
 
 from core.exceptions import Unauthorized
 from core.security import JWT_SECRET, JWT_ALGO
+from db.connection import db
 
 logger = logging.getLogger(__name__)
 
@@ -30,3 +31,13 @@ def get_current_user(
     except InvalidTokenError:
         logger.warning("[AUTH] Rejected invalid token")
         raise Unauthorized("Invalid token")
+
+
+async def get_current_user_doc(payload: dict = Depends(get_current_user)):
+    email = payload.get("email")
+    if not email:
+        raise Unauthorized("Invalid token payload")
+    user = await db.user.find_one({"email": email})
+    if not user:
+        raise Unauthorized("User not found")
+    return user
