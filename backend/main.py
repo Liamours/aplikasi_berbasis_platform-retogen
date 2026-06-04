@@ -33,19 +33,18 @@ app = FastAPI(title="RetoGen API", lifespan=lifespan)
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
-ALLOWED_ORIGINS = [
-    origin.strip()
-    for origin in os.getenv(
-        "ALLOWED_ORIGINS",
-        "http://localhost:3000,http://127.0.0.1:3000"
-    ).split(",")
-    if origin.strip()
-]
-logger.info(f"Allowed Origins: {ALLOWED_ORIGINS}")
+_raw_origins = os.getenv(
+    "ALLOWED_ORIGINS",
+    "http://localhost:3000,http://127.0.0.1:3000"
+)
+ALLOWED_ORIGINS = [o.strip() for o in _raw_origins.split(",")]
+
+_use_wildcard = "*" in ALLOWED_ORIGINS
+logger.info(f"Allowed Origins: {'* (all)' if _use_wildcard else ALLOWED_ORIGINS}")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=ALLOWED_ORIGINS,
+    allow_origins=["*"] if _use_wildcard else ALLOWED_ORIGINS,
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
