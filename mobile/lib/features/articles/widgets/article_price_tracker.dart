@@ -156,6 +156,17 @@ class _PriceRow extends StatelessWidget {
                     height: 1.45,
                   ),
                 ),
+                if (price.sellerCityLabel != null) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    price.sellerCityLabel!,
+                    style: const TextStyle(
+                      color: AppTheme.textMuted,
+                      fontSize: 12,
+                      height: 1.35,
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 6),
                 Text(
                   formatRupiah(price.price),

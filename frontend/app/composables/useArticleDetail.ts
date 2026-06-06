@@ -3,7 +3,9 @@ import type {
   ArticleViewResponse,
   DetailArticle,
   DetailComment,
-  DetailCommentTree
+  DetailCommentTree,
+  MonitorSearchRequest,
+  MonitorSearchResponse
 } from '~/types/api'
 
 type ArticleReportLog = {
@@ -36,6 +38,7 @@ const priceFormatter = new Intl.NumberFormat('id-ID', {
 
 export const useArticleDetail = () => {
   const { post } = useApi()
+  const { getMonitorLocation } = useMonitorLocation()
   const authStore = useAuthStore()
   const route = useRoute()
 
@@ -302,12 +305,19 @@ export const useArticleDetail = () => {
     if (!productName) return
 
     try {
-      const response = await post<any>(
+      const location = await getMonitorLocation()
+      const payload: MonitorSearchRequest = {
+        product_name: productName,
+        limit: 10
+      }
+
+      if (location) {
+        payload.location = location
+      }
+
+      const response = await post<MonitorSearchResponse>(
         '/monitor/search',
-        {
-          product_name: productName,
-          limit: 10
-        },
+        payload,
         true
       )
 
@@ -316,9 +326,16 @@ export const useArticleDetail = () => {
           id: `price-${index}`,
           store: item.store || 'Tokopedia',
           product: item.product,
+          seller_city: item.seller_city ?? null,
           price: item.price,
           rating: item.rating,
-          logo: null
+          logo: null,
+          shippingNote: [
+            response.location_fallback_used && response.applied_location
+              ? `Hasil di luar ${response.applied_location}`
+              : null,
+            item.seller_city ? `Lokasi toko: ${item.seller_city}` : null
+          ].filter(Boolean).join(' - ') || undefined
         }))
       }
     } catch (err) {
