@@ -22,11 +22,13 @@ async def monitor_search(request: Request, body: MonitorSearchRequest, payload: 
     # Run blocking scraper in thread pool — avoids blocking the async event loop
     result = await asyncio.to_thread(
         scrape_tokopedia,
-        body.product_name.strip(),
-        body.limit,
-        body.latitude,
-        body.longitude,
-        body.min_score,
+        product_name=body.product_name.strip(),
+        limit=body.limit,
+        latitude=body.latitude,
+        longitude=body.longitude,
+        min_score=body.min_score,
+        location=body.location,
+        fcity=body.fcity,
     )
     return result
 

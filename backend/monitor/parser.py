@@ -52,10 +52,13 @@ def normalize_product(raw: dict) -> Optional[dict]:
         if not name or not isinstance(name, str):
             logger.warning("Missing or invalid product name: %r", raw)
             return None
-        store = raw.get("shop", {}).get("name") if isinstance(raw.get("shop"), dict) else None
+        shop = raw.get("shop", {}) if isinstance(raw.get("shop"), dict) else {}
+        store = shop.get("name")
+        seller_city = shop.get("city")
         return {
             "product": name.strip(),
             "store": store.strip() if store else None,
+            "seller_city": seller_city.strip() if seller_city else None,
             "price": parse_price(raw.get("price")),
             "rating": parse_rating(raw.get("ratingAverage")),
         }
