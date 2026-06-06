@@ -10,6 +10,7 @@ import 'package:retogen/features/articles/utils/article_data_utils.dart';
 import 'package:retogen/features/articles/widgets/article_confirm_delete_sheet.dart';
 import 'package:retogen/features/articles/widgets/article_detail_hero.dart';
 import 'package:retogen/features/articles/widgets/article_detail_shell.dart';
+import 'package:retogen/features/articles/widgets/article_detail_skeleton.dart';
 import 'package:retogen/features/articles/widgets/article_discussion_section.dart';
 import 'package:retogen/features/articles/widgets/article_price_tracker.dart';
 import 'package:retogen/features/articles/widgets/article_rating_section.dart';
@@ -105,8 +106,9 @@ class _ArticleDetailPageState extends State<ArticleDetailPage> {
 
       await _fetchPrices(detail.productName ?? detail.title);
     } on DioException catch (e) {
-      if (e.response?.statusCode == 401 && mounted) {
+      if (e.response?.statusCode == 401) {
         await ApiClient.clearToken();
+        if (!mounted) return;
         context.go('/login');
         return;
       }
@@ -130,10 +132,7 @@ class _ArticleDetailPageState extends State<ArticleDetailPage> {
 
     try {
       final location = await LocationService.getCurrentCoordinates();
-      final payload = <String, dynamic>{
-        'product_name': title,
-        'limit': 10,
-      };
+      final payload = <String, dynamic>{'product_name': title, 'limit': 10};
 
       if (location != null) {
         payload.addAll(location.toJson());
@@ -450,9 +449,7 @@ class _ArticleDetailPageState extends State<ArticleDetailPage> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => OtherUserProfileSheet(
-        userEmail: email,
-      ),
+      builder: (context) => OtherUserProfileSheet(userEmail: email),
     );
   }
 
@@ -514,9 +511,7 @@ class _ArticleDetailPageState extends State<ArticleDetailPage> {
 
   Widget _buildBody() {
     if (_loading) {
-      return const Center(
-        child: CircularProgressIndicator(color: AppTheme.primaryCyan),
-      );
+      return ArticleDetailSkeleton(onBack: _goBack);
     }
 
     if (_error != null) {
