@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:retogen/core/api_client.dart';
+import 'package:retogen/core/location_service.dart';
 import 'package:retogen/core/theme.dart';
 import 'package:retogen/core/widgets/glass_background.dart';
 import 'package:retogen/features/articles/models/article_detail.dart';
@@ -102,7 +103,7 @@ class _ArticleDetailPageState extends State<ArticleDetailPage> {
         _loading = false;
       });
 
-      await _fetchPrices(detail.title);
+      await _fetchPrices(detail.productName ?? detail.title);
     } on DioException catch (e) {
       if (e.response?.statusCode == 401 && mounted) {
         await ApiClient.clearToken();
@@ -128,9 +129,21 @@ class _ArticleDetailPageState extends State<ArticleDetailPage> {
     setState(() => _pricesLoading = true);
 
     try {
+      final location = await LocationService.getCurrentCoordinates();
+      final payload = <String, dynamic>{
+        'product_name': title,
+        'limit': 10,
+      };
+
+      if (location != null) {
+        payload.addAll(location.toJson());
+      }
+
+      debugPrint('Retogen monitor payload: $payload');
+
       final response = await ApiClient.instance.post(
         '/monitor/search',
-        data: {'product_name': title, 'limit': 10},
+        data: payload,
       );
       final data = asMap(response.data);
       final prices = asMapList(data['results'])

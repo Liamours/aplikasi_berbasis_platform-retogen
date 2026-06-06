@@ -3,6 +3,7 @@ import 'package:retogen/features/articles/utils/article_data_utils.dart';
 class ArticleDetail {
   final String id;
   final String title;
+  final String? productName;
   final String preview;
   final String content;
   final List<String> tags;
@@ -16,6 +17,7 @@ class ArticleDetail {
   const ArticleDetail({
     required this.id,
     required this.title,
+    required this.productName,
     required this.preview,
     required this.content,
     required this.tags,
@@ -34,10 +36,14 @@ class ArticleDetail {
   }) {
     final content = json['article_content']?.toString() ?? '';
     final preview = json['article_preview']?.toString().trim();
+    final productName = json['product_name']?.toString().trim();
 
     return ArticleDetail(
       id: id,
       title: json['article_title']?.toString() ?? 'Artikel',
+      productName: productName == null || productName.isEmpty
+          ? null
+          : productName,
       preview: (preview != null && preview.isNotEmpty)
           ? preview
           : deriveArticlePreview(content),
@@ -58,6 +64,7 @@ class ArticleDetail {
     return ArticleDetail(
       id: id,
       title: title,
+      productName: productName,
       preview: preview,
       content: content,
       tags: tags,
