@@ -12,6 +12,7 @@ type ArticleEditGetResponse = ApiBaseResponse & {
   article_content: string
   article_tags: string[]
   article_image: string | null
+  product_name?: string | null
 }
 
 const TITLE_MAX_LENGTH = 256
@@ -30,7 +31,8 @@ export const useArticleForm = () => {
     article_preview: '',
     article_content: '',
     article_tags: [],
-    article_image: null
+    article_image: null,
+    product_name: ''
   }))
 
   const tagsInput = useState('article-form-tags-input', () => '')
@@ -67,7 +69,8 @@ export const useArticleForm = () => {
       article_preview: '',
       article_content: '',
       article_tags: [],
-      article_image: null
+      article_image: null,
+      product_name: ''
     }
 
     tagsInput.value = ''
@@ -239,7 +242,8 @@ export const useArticleForm = () => {
         article_preview: response.article_preview,
         article_content: response.article_content,
         article_tags: response.article_tags ?? [],
-        article_image: response.article_image
+        article_image: response.article_image,
+        product_name: response.product_name ?? ''
       }
 
       tagsInput.value = (response.article_tags ?? []).join(', ')
@@ -298,7 +302,8 @@ export const useArticleForm = () => {
       article_preview: String(form.value.article_preview || '').trim(),
       article_content: String(form.value.article_content || '').trim(),
       article_tags: normalizeTags(tagsInput.value),
-      article_image: stripDataUrl(String(form.value.article_image || ''))
+      article_image: stripDataUrl(String(form.value.article_image || '')),
+      product_name: String(form.value.product_name || '').trim() || null
     }
 
     try {

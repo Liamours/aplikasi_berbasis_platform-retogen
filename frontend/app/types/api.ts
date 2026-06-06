@@ -112,6 +112,7 @@ export interface ArticleAddRequest {
   article_content: string
   article_tags: string[]
   article_image: string
+  product_name?: string | null
 }
 
 export interface ArticleAddResponse extends ApiBaseResponse {}
@@ -127,6 +128,7 @@ export interface ArticleEditGetResponse extends ApiBaseResponse {
   article_content: string
   article_tags: string[]
   article_image: string | null
+  product_name?: string | null
 }
 
 export interface ArticleEditUpdateRequest extends ArticleAddRequest {
@@ -148,6 +150,7 @@ export interface ArticleFormData {
   article_content: string
   article_tags: string[]
   article_image: string | null
+  product_name?: string | null
 }
 
 // Monitor harga API types

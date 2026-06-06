@@ -105,6 +105,20 @@ const showInlineSuccess = computed(() => formSuccess.value && isEditMode.value)
           </small>
         </label>
 
+        <label id="field-product-name" class="article-form__field">
+          <span>Nama produk</span>
+          <input
+            v-model="form.product_name"
+            class="article-form__input"
+            type="text"
+            placeholder="Contoh: Sony WH-1000XM5 Wireless Headphones"
+            :disabled="isLoading || isSubmitting"
+          >
+          <small>
+            Opsional, digunakan untuk pencarian harga produk.
+          </small>
+        </label>
+
         <label id="field-preview" class="article-form__field">
           <span>Preview singkat</span>
           <textarea
