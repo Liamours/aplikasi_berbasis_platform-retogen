@@ -157,19 +157,28 @@ export interface ArticleFormData {
 export interface MonitorSearchRequest {
   product_name: string
   limit?: number
+  location?: string
+  fcity?: string
+  min_score?: number
 }
 
 export interface MonitorPriceResult {
   product: string
   store: string | null
+  seller_city?: string | null
   price: number
   rating: number | null
+  relevance_score?: number | null
 }
 
 export interface MonitorSearchResponse {
   results: MonitorPriceResult[]
   errors: string[]
   total: number
+  detected_city?: string | null
+  applied_location?: string | null
+  location_filter_applied?: boolean
+  location_fallback_used?: boolean
 }
 
 // Article detail page types

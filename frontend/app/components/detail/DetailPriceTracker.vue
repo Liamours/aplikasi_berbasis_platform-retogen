@@ -116,6 +116,10 @@ const formatRating = (value: number | null) => {
             {{ item.product }}
           </p>
 
+          <p v-if="item.shippingNote" class="price-tracker__meta">
+            {{ item.shippingNote }}
+          </p>
+
           <div class="price-tracker__price">
             {{ formatPrice(item.price) }}
           </div>
@@ -288,6 +292,13 @@ const formatRating = (value: number | null) => {
   color: var(--text-secondary);
   font-size: 13px;
   line-height: 1.5;
+}
+
+.price-tracker__meta {
+  margin-top: 4px;
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1.4;
 }
 
 .price-tracker__price {

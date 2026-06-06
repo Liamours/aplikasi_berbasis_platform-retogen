@@ -220,6 +220,7 @@ class ArticleRating {
 class PriceEntry {
   final String id;
   final String? store;
+  final String? sellerCity;
   final String product;
   final num price;
   final num? rating;
@@ -227,6 +228,7 @@ class PriceEntry {
   const PriceEntry({
     required this.id,
     required this.store,
+    required this.sellerCity,
     required this.product,
     required this.price,
     required this.rating,
@@ -236,6 +238,7 @@ class PriceEntry {
     return PriceEntry(
       id: 'price-$index',
       store: json['store']?.toString(),
+      sellerCity: json['seller_city']?.toString(),
       product: json['product']?.toString() ?? 'Produk',
       price: json['price'] as num? ?? 0,
       rating: json['rating'] as num?,
@@ -254,5 +257,11 @@ class PriceEntry {
     final value = rating;
     if (value == null) return 'Belum ada';
     return value.toStringAsFixed(1);
+  }
+
+  String? get sellerCityLabel {
+    final label = sellerCity?.trim();
+    if (label == null || label.isEmpty) return null;
+    return 'Lokasi toko: $label';
   }
 }

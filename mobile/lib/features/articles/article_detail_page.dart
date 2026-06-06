@@ -131,14 +131,12 @@ class _ArticleDetailPageState extends State<ArticleDetailPage> {
     setState(() => _pricesLoading = true);
 
     try {
-      final location = await LocationService.getCurrentCoordinates();
+      final location = await LocationService.getCurrentLocation();
       final payload = <String, dynamic>{'product_name': title, 'limit': 10};
 
       if (location != null) {
         payload.addAll(location.toJson());
       }
-
-      debugPrint('Retogen monitor payload: $payload');
 
       final response = await ApiClient.instance.post(
         '/monitor/search',
