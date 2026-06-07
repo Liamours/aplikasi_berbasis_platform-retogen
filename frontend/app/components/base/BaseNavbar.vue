@@ -25,26 +25,21 @@ const authButton = computed(() => {
       </NuxtLink>
 
       <div class="navbar__actions">
-        <!-- Main page: admin add-article + profile -->
-        <template v-if="isMainPage">
-          <MainAdminMenu/>
-        </template>
         <!-- Theme toggle — always visible -->
         <BaseButton variant="icon" aria-label="Toggle theme" @click="toggleTheme">
           <span>{{ isDark ? '☀' : '☾' }}</span>
         </BaseButton>
 
-        <!-- Main page: admin add-article + profile -->
+        <!-- Main / article pages: admin menu + profile -->
         <template v-if="isMainPage">
+          <MainAdminMenu />
           <MainProfileDropdown />
         </template>
 
-        <!-- Simple navbar pages (Profile, User Management): Only show theme toggle -->
-        <template v-else-if="isSimpleNavbarPage">
-          <!-- no extra actions -->
-        </template>
+        <!-- Profile / User Management: theme toggle only (already shown above) -->
+        <template v-else-if="isSimpleNavbarPage" />
 
-        <!-- Auth pages: toggle between login/register -->
+        <!-- Auth pages: login ↔ register toggle -->
         <template v-else>
           <NuxtLink :to="authButton.link">
             <BaseButton variant="ghost">{{ authButton.text }}</BaseButton>

@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:go_router/go_router.dart';
 import 'package:retogen/core/theme.dart';
 import 'package:retogen/features/articles/widgets/article_detail_shell.dart';
 import 'package:retogen/features/main/models/main_notification.dart';
 
-class MainNotificationSheet extends StatelessWidget {
+class MainNotificationSheet extends StatefulWidget {
   final List<MainNotification> notifications;
   final bool isLoading;
 
@@ -15,7 +16,46 @@ class MainNotificationSheet extends StatelessWidget {
   });
 
   @override
+  State<MainNotificationSheet> createState() => _MainNotificationSheetState();
+}
+
+class _MainNotificationSheetState extends State<MainNotificationSheet> {
+  static const _storage = FlutterSecureStorage();
+  static const _readKey = 'read_notification_ids';
+
+  Set<String> _readIds = {};
+  bool _loadingRead = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadReadIds();
+  }
+
+  Future<void> _loadReadIds() async {
+    final raw = await _storage.read(key: _readKey);
+    setState(() {
+      _readIds = raw != null && raw.isNotEmpty
+          ? raw.split(',').toSet()
+          : {};
+      _loadingRead = false;
+    });
+  }
+
+  Future<void> _markAsRead(String id) async {
+    final next = {..._readIds, id};
+    await _storage.write(key: _readKey, value: next.join(','));
+    setState(() => _readIds = next);
+  }
+
+  List<MainNotification> get _unreadNotifs => widget.notifications
+      .where((n) => !_readIds.contains(n.id))
+      .toList();
+
+  @override
   Widget build(BuildContext context) {
+    final unread = _unreadNotifs;
+
     return ArticleBottomSheetSurface(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -46,7 +86,7 @@ class MainNotificationSheet extends StatelessWidget {
                 ),
               ),
               const Spacer(),
-              if (notifications.isNotEmpty)
+              if (unread.isNotEmpty)
                 Container(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
@@ -55,7 +95,7 @@ class MainNotificationSheet extends StatelessWidget {
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text(
-                    '${notifications.length}',
+                    '${unread.length} baru',
                     style: const TextStyle(
                       color: AppTheme.primaryRed,
                       fontSize: 12,
@@ -73,36 +113,33 @@ class MainNotificationSheet extends StatelessWidget {
           const SizedBox(height: 16),
 
           // Body
-          if (isLoading)
+          if (widget.isLoading || _loadingRead)
             const Center(
               child: Padding(
                 padding: EdgeInsets.symmetric(vertical: 28),
-                child:
-                    CircularProgressIndicator(color: AppTheme.primaryCyan),
+                child: CircularProgressIndicator(color: AppTheme.primaryCyan),
               ),
             )
-          else if (notifications.isEmpty)
+          else if (unread.isEmpty)
             Center(
               child: Padding(
                 padding: const EdgeInsets.symmetric(vertical: 28),
                 child: Column(
-                  children: [
-                    const Icon(
+                  children: const [
+                    Icon(
                       Icons.notifications_none_rounded,
                       size: 42,
                       color: AppTheme.textMuted,
                     ),
-                    const SizedBox(height: 10),
-                    const Text(
-                      'Belum ada notifikasi baru',
-                      style:
-                          TextStyle(color: AppTheme.textMuted, fontSize: 14),
+                    SizedBox(height: 10),
+                    Text(
+                      'Semua notifikasi sudah dibaca',
+                      style: TextStyle(color: AppTheme.textMuted, fontSize: 14),
                     ),
-                    const SizedBox(height: 4),
-                    const Text(
-                      'Subscribe tag untuk mendapat notifikasi',
-                      style:
-                          TextStyle(color: AppTheme.textMuted, fontSize: 12),
+                    SizedBox(height: 4),
+                    Text(
+                      'Subscribe tag untuk mendapat notifikasi baru',
+                      style: TextStyle(color: AppTheme.textMuted, fontSize: 12),
                     ),
                   ],
                 ),
@@ -116,18 +153,21 @@ class MainNotificationSheet extends StatelessWidget {
               child: ListView.separated(
                 shrinkWrap: true,
                 physics: const ClampingScrollPhysics(),
-                itemCount: notifications.length,
+                itemCount: unread.length,
                 separatorBuilder: (_, __) => const Divider(
                   color: AppTheme.glassBorder,
                   height: 1,
                 ),
                 itemBuilder: (context, index) {
-                  final notif = notifications[index];
+                  final notif = unread[index];
                   return _NotifTile(
                     notification: notif,
-                    onTap: () {
-                      Navigator.of(context).pop();
-                      context.push('/articles/${notif.articleId}');
+                    onTap: () async {
+                      await _markAsRead(notif.id);
+                      if (context.mounted) {
+                        Navigator.of(context).pop();
+                        context.push('/articles/${notif.articleId}');
+                      }
                     },
                   );
                 },
