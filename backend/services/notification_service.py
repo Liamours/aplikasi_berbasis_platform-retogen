@@ -66,7 +66,7 @@ class NotificationService:
             ).to_list(length=None)
 
             tokens = [u["fcm_token"] for u in users if u.get("fcm_token")]
-            await send_push_multicast(tokens, f"Artikel Baru: {article_title}", "")
+            await send_push_multicast(tokens, f"Artikel Baru: {article_title}", "", {"article_id": article_id})
 
         except Exception as e:
             logger.error("create_notifications error: %s", e)
