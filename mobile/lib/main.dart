@@ -38,21 +38,23 @@ void main() async {
     );
   });
 
-  // Tap notifikasi saat app terminated → buka app lalu navigasi ke /articles
+  // Tap notifikasi saat app terminated → buka app lalu navigasi ke artikel
   final initial = await FirebaseMessaging.instance.getInitialMessage();
   if (initial != null) {
-    pendingNotifNavigation = true;
+    final articleId = initial.data['article_id'];
+    if (articleId != null && articleId.isNotEmpty) {
+      pendingNotifArticleId = articleId;
+    } else {
+      pendingNotifNavigation = true;
+    }
   }
 
-  // Tap notifikasi saat app background
-  FirebaseMessaging.onMessageOpenedApp.listen((_) {
-    router.go('/articles');
-  });
 
   runApp(const RetoGenApp());
 }
 
 bool pendingNotifNavigation = false;
+String? pendingNotifArticleId;
 
 class RetoGenApp extends StatelessWidget {
   const RetoGenApp({super.key});

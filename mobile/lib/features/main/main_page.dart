@@ -16,7 +16,8 @@ import 'package:retogen/features/main/widgets/main_sort_bar.dart';
 import 'package:retogen/features/main/widgets/main_tag_filter.dart';
 import 'package:retogen/core/api_client.dart';
 import 'package:retogen/core/router.dart' show routeObserver;
-import 'package:retogen/main.dart' show pendingNotifNavigation;
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:retogen/main.dart' show pendingNotifNavigation, pendingNotifArticleId;
 
 class MainPage extends StatefulWidget {
   const MainPage({super.key});
@@ -57,6 +58,7 @@ class _MainPageState extends State<MainPage> with RouteAware {
 
   // User
   String _username = '';
+  StreamSubscription<RemoteMessage>? _fcmOpenedSub;
 
   // ── Lifecycle ────────────────────────────────────────────────────────────
 
@@ -65,9 +67,18 @@ class _MainPageState extends State<MainPage> with RouteAware {
     super.initState();
     _init();
 
-    // Auto-refresh artikel setiap 60 detik
+    // Handle tap notifikasi saat app background (fire setelah MainPage mount)
+    _fcmOpenedSub = FirebaseMessaging.onMessageOpenedApp.listen((message) async {
+      final articleId = message.data['article_id'];
+      await _fetchArticles(clearFirst: true);
+      if (mounted && articleId != null && articleId.isNotEmpty) {
+        context.push('/articles/$articleId');
+      }
+    });
+
+    // Auto-refresh artikel setiap 5 detik
     _articleTimer = Timer.periodic(
-      const Duration(seconds: 10),
+      const Duration(seconds: 5),
       (_) => _fetchArticles(silent: true),
     );
 
@@ -86,14 +97,12 @@ class _MainPageState extends State<MainPage> with RouteAware {
   }
 
   @override
-  void didPopNext() {
-    // Kembali ke MainPage dari halaman lain → refresh
-    _fetchArticles(clearFirst: true);
-  }
+  void didPopNext() {}
 
   @override
   void dispose() {
     routeObserver.unsubscribe(this);
+    _fcmOpenedSub?.cancel();
     _debounce?.cancel();
     _articleTimer?.cancel();
     _notifTimer?.cancel();
@@ -111,9 +120,14 @@ class _MainPageState extends State<MainPage> with RouteAware {
     ]);
 
     // App dibuka dari tap notifikasi saat terminated
-    if (pendingNotifNavigation) {
+    if (pendingNotifArticleId != null) {
+      final articleId = pendingNotifArticleId!;
+      pendingNotifArticleId = null;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) context.push('/articles/$articleId');
+      });
+    } else if (pendingNotifNavigation) {
       pendingNotifNavigation = false;
-      // Sudah di MainPage, cukup pastikan data ter-refresh (sudah dilakukan di atas)
     }
   }
 
