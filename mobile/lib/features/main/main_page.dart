@@ -34,6 +34,11 @@ class _MainPageState extends State<MainPage> {
   bool _loading = true;
   String? _error;
 
+  // New article banner
+  int _pendingNewCount = 0;
+  bool _showNewBanner = false;
+  List<MainArticle> _pendingArticles = [];
+
   // Filter state
   String _sort = 'newest';
   String _activeTag = '';
@@ -61,7 +66,7 @@ class _MainPageState extends State<MainPage> {
     // Auto-refresh artikel setiap 60 detik
     _articleTimer = Timer.periodic(
       const Duration(seconds: 10),
-      (_) => _fetchArticles(),
+      (_) => _fetchArticles(silent: true),
     );
 
     // Poll notifikasi setiap 30 detik
@@ -86,6 +91,7 @@ class _MainPageState extends State<MainPage> {
       _fetchSubscriptions(),
       _fetchNotifications(),
       _fetchUserDetails(),
+      MainService.registerFcmToken(),
     ]);
   }
 
@@ -99,12 +105,15 @@ class _MainPageState extends State<MainPage> {
     return _sort;
   }
 
-  Future<void> _fetchArticles() async {
+  Future<void> _fetchArticles({bool silent = false, bool clearFirst = false}) async {
     if (!mounted) return;
-    setState(() {
-      _loading = _articles.isEmpty;
-      _error = null;
-    });
+    if (!silent) {
+      setState(() {
+        if (clearFirst) _articles = [];
+        _loading = clearFirst || _articles.isEmpty;
+        _error = null;
+      });
+    }
 
     try {
       final result = await MainService.fetchArticles(
@@ -115,10 +124,35 @@ class _MainPageState extends State<MainPage> {
       if (!mounted) return;
       final articles = result['articles'] as List<MainArticle>;
       final username = result['username'] as String? ?? '';
+
+      if (silent && _articles.isNotEmpty) {
+        // Deteksi perubahan
+        final oldIds = _articles.map((a) => a.id).toSet();
+        final newIds = articles.map((a) => a.id).toSet();
+        final addedCount = newIds.difference(oldIds).length;
+        final removedCount = oldIds.difference(newIds).length;
+
+        if (addedCount > 0 || removedCount > 0) {
+          setState(() {
+            _pendingNewCount = addedCount;
+            _pendingArticles = articles;
+            _showNewBanner = true;
+          });
+          return; // Jangan update list dulu, tunggu user tap banner
+        }
+      }
+
+      // Hanya update list jika ada perubahan nyata (hindari rebuild sia-sia)
+      final oldIds = _articles.map((a) => a.id).toList();
+      final newIds = articles.map((a) => a.id).toList();
+      final listChanged = oldIds.length != newIds.length ||
+          !oldIds.asMap().entries.every((e) => e.value == newIds[e.key]);
+
       setState(() {
-        _articles = articles;
+        if (listChanged) _articles = articles;
         if (_username.isEmpty && username.isNotEmpty) _username = username;
         _loading = false;
+        _showNewBanner = false;
       });
     } on DioException catch (e) {
       if (!mounted) return;
@@ -127,17 +161,30 @@ class _MainPageState extends State<MainPage> {
         context.go('/login');
         return;
       }
-      setState(() {
-        _error = 'Gagal memuat artikel. Pastikan backend berjalan.';
-        _loading = false;
-      });
+      if (!silent) {
+        setState(() {
+          _error = 'Gagal memuat artikel. Pastikan backend berjalan.';
+          _loading = false;
+        });
+      }
     } catch (_) {
       if (!mounted) return;
-      setState(() {
-        _error = 'Gagal memuat artikel. Pastikan backend berjalan.';
-        _loading = false;
-      });
+      if (!silent) {
+        setState(() {
+          _error = 'Gagal memuat artikel. Pastikan backend berjalan.';
+          _loading = false;
+        });
+      }
     }
+  }
+
+  void _applyPendingArticles() {
+    setState(() {
+      _articles = _pendingArticles;
+      _pendingArticles = [];
+      _pendingNewCount = 0;
+      _showNewBanner = false;
+    });
   }
 
   Future<void> _fetchSubscriptions() async {
@@ -205,7 +252,7 @@ class _MainPageState extends State<MainPage> {
     _debounce?.cancel();
     _debounce = Timer(
       const Duration(milliseconds: 400),
-      _fetchArticles,
+      () => _fetchArticles(clearFirst: true),
     );
   }
 
@@ -216,21 +263,21 @@ class _MainPageState extends State<MainPage> {
       _sort = sort;
       _activeTag = '';
     });
-    _fetchArticles();
+    _fetchArticles(clearFirst: true);
   }
 
   void _setTag(String tag) {
     if (_activeTag == tag) return;
     _searchCtrl.clear();
     setState(() => _activeTag = tag);
-    _fetchArticles();
+    _fetchArticles(clearFirst: true);
   }
 
   void _clearTag() {
     if (_activeTag.isEmpty && _searchCtrl.text.isEmpty) return;
     _searchCtrl.clear();
     setState(() => _activeTag = '');
-    _fetchArticles();
+    _fetchArticles(clearFirst: true);
   }
 
   Future<void> _toggleSubscription(String tag) async {
@@ -271,7 +318,6 @@ class _MainPageState extends State<MainPage> {
   }
 
   Future<void> _openNotifications() async {
-    // Open sheet immediately with cached data — timer already keeps it fresh
     if (!mounted) return;
     await showModalBottomSheet(
       context: context,
@@ -282,6 +328,8 @@ class _MainPageState extends State<MainPage> {
         isLoading: false,
       ),
     );
+    // Refresh setelah sheet ditutup supaya titik merah sinkron dengan is_read backend
+    _fetchNotifications();
   }
 
   void _showSnack(String message) {
@@ -340,6 +388,7 @@ class _MainPageState extends State<MainPage> {
                   ),
                 ),
                 SliverToBoxAdapter(child: const SizedBox(height: 14)),
+                if (_showNewBanner) SliverToBoxAdapter(child: _buildNewBanner()),
                 _buildArticleList(),
                 const SliverToBoxAdapter(child: SizedBox(height: 32)),
               ],
@@ -396,7 +445,7 @@ class _MainPageState extends State<MainPage> {
                   size: 20,
                   color: AppTheme.textSecondary,
                 ),
-                if (_notifications.isNotEmpty)
+                if (_notifications.any((n) => !n.isRead))
                   Positioned(
                     top: -3,
                     right: -3,
@@ -491,6 +540,51 @@ class _MainPageState extends State<MainPage> {
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
             borderSide: const BorderSide(color: AppTheme.primaryCyan),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNewBanner() {
+    final label = _pendingNewCount > 0
+        ? '$_pendingNewCount artikel baru · tap untuk refresh'
+        : 'Ada perubahan · tap untuk refresh';
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+      child: GestureDetector(
+        onTap: _applyPendingArticles,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeOut,
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          decoration: BoxDecoration(
+            color: AppTheme.primaryCyan,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: AppTheme.primaryCyan.withValues(alpha: 0.35),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.arrow_upward_rounded,
+                  size: 16, color: Colors.white),
+              const SizedBox(width: 8),
+              Text(
+                label,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
           ),
         ),
       ),

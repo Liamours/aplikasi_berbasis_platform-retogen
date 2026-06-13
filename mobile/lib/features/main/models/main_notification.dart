@@ -6,6 +6,7 @@ class MainNotification {
   final String articleTitle;
   final List<String> tags;
   final String createdAt;
+  final bool isRead;
 
   const MainNotification({
     required this.id,
@@ -13,6 +14,7 @@ class MainNotification {
     required this.articleTitle,
     required this.tags,
     required this.createdAt,
+    this.isRead = false,
   });
 
   factory MainNotification.fromJson(Map<String, dynamic> json) {
@@ -22,6 +24,7 @@ class MainNotification {
       articleTitle: json['article_title']?.toString() ?? 'Artikel baru',
       tags: asStringList(json['tags']),
       createdAt: json['created_at']?.toString() ?? '',
+      isRead: json['is_read'] == true,
     );
   }
 }

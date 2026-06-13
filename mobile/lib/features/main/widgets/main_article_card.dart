@@ -1,10 +1,12 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:retogen/core/theme.dart';
 import 'package:retogen/features/articles/utils/article_data_utils.dart';
 import 'package:retogen/features/main/models/main_article.dart';
 
-class MainArticleCard extends StatelessWidget {
+class MainArticleCard extends StatefulWidget {
   final MainArticle article;
   final String? activeTag;
   final void Function(String tag) onTagTap;
@@ -17,11 +19,32 @@ class MainArticleCard extends StatelessWidget {
   });
 
   @override
+  State<MainArticleCard> createState() => _MainArticleCardState();
+}
+
+class _MainArticleCardState extends State<MainArticleCard> {
+  Uint8List? _imageBytes;
+
+  @override
+  void initState() {
+    super.initState();
+    _imageBytes = decodeBase64Image(widget.article.imageBase64);
+  }
+
+  @override
+  void didUpdateWidget(MainArticleCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.article.imageBase64 != widget.article.imageBase64) {
+      _imageBytes = decodeBase64Image(widget.article.imageBase64);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final imageBytes = decodeBase64Image(article.imageBase64);
+    final imageBytes = _imageBytes;
 
     return GestureDetector(
-      onTap: () => context.push('/articles/${article.id}'),
+      onTap: () => context.push('/articles/${widget.article.id}'),
       child: Container(
         decoration: BoxDecoration(
           color: AppTheme.glassBg,
@@ -45,7 +68,8 @@ class MainArticleCard extends StatelessWidget {
               child: AspectRatio(
                 aspectRatio: 16 / 9,
                 child: imageBytes != null
-                    ? Image.memory(imageBytes, fit: BoxFit.cover)
+                    ? Image.memory(imageBytes,
+                        fit: BoxFit.cover, gaplessPlayback: true)
                     : Image.asset(
                         'assets/logo.jpg',
                         fit: BoxFit.cover,
@@ -70,7 +94,7 @@ class MainArticleCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    article.title,
+                    widget.article.title,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
@@ -80,10 +104,10 @@ class MainArticleCard extends StatelessWidget {
                       height: 1.25,
                     ),
                   ),
-                  if (article.preview.isNotEmpty) ...[
+                  if (widget.article.preview.isNotEmpty) ...[
                     const SizedBox(height: 6),
                     Text(
-                      article.preview,
+                      widget.article.preview,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
@@ -93,15 +117,15 @@ class MainArticleCard extends StatelessWidget {
                       ),
                     ),
                   ],
-                  if (article.tags.isNotEmpty) ...[
+                  if (widget.article.tags.isNotEmpty) ...[
                     const SizedBox(height: 10),
                     Wrap(
                       spacing: 6,
                       runSpacing: 6,
-                      children: article.tags.map((tag) {
-                        final isActive = tag == activeTag;
+                      children: widget.article.tags.map((tag) {
+                        final isActive = tag == widget.activeTag;
                         return GestureDetector(
-                          onTap: () => onTagTap(tag),
+                          onTap: () => widget.onTagTap(tag),
                           child: Container(
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 8, vertical: 4),

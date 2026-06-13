@@ -1,3 +1,4 @@
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:retogen/core/api_client.dart';
 import 'package:retogen/features/articles/utils/article_data_utils.dart';
 import 'package:retogen/features/main/models/main_article.dart';
@@ -61,5 +62,17 @@ class MainService {
   static Future<Map<String, dynamic>> fetchUserDetails() async {
     final response = await ApiClient.instance.post('/user/get_details');
     return asMap(response.data);
+  }
+
+  /// Ambil FCM token device dan daftarkan ke backend.
+  static Future<void> registerFcmToken() async {
+    try {
+      final token = await FirebaseMessaging.instance.getToken();
+      if (token == null || token.isEmpty) return;
+      await ApiClient.instance.post(
+        '/notification/register_token',
+        data: {'fcm_token': token},
+      );
+    } catch (_) {}
   }
 }

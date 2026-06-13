@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:go_router/go_router.dart';
+import 'package:retogen/core/api_client.dart';
 import 'package:retogen/core/theme.dart';
 import 'package:retogen/features/articles/widgets/article_detail_shell.dart';
 import 'package:retogen/features/main/models/main_notification.dart';
@@ -34,22 +35,39 @@ class _MainNotificationSheetState extends State<MainNotificationSheet> {
 
   Future<void> _loadReadIds() async {
     final raw = await _storage.read(key: _readKey);
+    final localIds = raw != null && raw.isNotEmpty
+        ? raw.split(',').toSet()
+        : <String>{};
+
     setState(() {
-      _readIds = raw != null && raw.isNotEmpty
-          ? raw.split(',').toSet()
-          : {};
+      _readIds = localIds;
       _loadingRead = false;
     });
+
+    // Sync notifikasi yang sudah dibaca lokal tapi belum tercatat di backend
+    for (final notif in widget.notifications) {
+      if (!notif.isRead && localIds.contains(notif.id)) {
+        ApiClient.instance
+            .post('/notification/mark_read', data: {'notification_id': notif.id})
+            .catchError((_) {});
+      }
+    }
   }
 
   Future<void> _markAsRead(String id) async {
+    // Update lokal dulu supaya UI responsif
     final next = {..._readIds, id};
     await _storage.write(key: _readKey, value: next.join(','));
-    setState(() => _readIds = next);
+    if (mounted) setState(() => _readIds = next);
+    // Sync ke backend (fire-and-forget, tidak di-await)
+    ApiClient.instance
+        .post('/notification/mark_read', data: {'notification_id': id})
+        .catchError((_) {});
   }
 
+  // Unread = backend belum tandai is_read DAN belum di-tap sesi ini
   List<MainNotification> get _unreadNotifs => widget.notifications
-      .where((n) => !_readIds.contains(n.id))
+      .where((n) => !n.isRead && !_readIds.contains(n.id))
       .toList();
 
   @override
@@ -162,12 +180,14 @@ class _MainNotificationSheetState extends State<MainNotificationSheet> {
                   final notif = unread[index];
                   return _NotifTile(
                     notification: notif,
-                    onTap: () async {
-                      await _markAsRead(notif.id);
-                      if (context.mounted) {
-                        Navigator.of(context).pop();
-                        context.push('/articles/${notif.articleId}');
-                      }
+                    onTap: () {
+                      final articleId = notif.articleId;
+                      final go = GoRouter.of(context);
+                      // Mark read di background, jangan await
+                      _markAsRead(notif.id);
+                      // Tutup sheet lalu navigate pakai router yang sudah di-capture
+                      Navigator.of(context).pop();
+                      go.push('/articles/$articleId');
                     },
                   );
                 },

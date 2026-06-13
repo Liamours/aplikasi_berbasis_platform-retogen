@@ -185,7 +185,7 @@ class _SemualPill extends StatelessWidget {
 
 // ── Tag Select Bottom Sheet ────────────────────────────────────────────────────
 
-class _TagSelectSheet extends StatelessWidget {
+class _TagSelectSheet extends StatefulWidget {
   final List<String> tags;
   final String activeTag;
   final Set<String> subscriptions;
@@ -203,10 +203,34 @@ class _TagSelectSheet extends StatelessWidget {
   });
 
   @override
+  State<_TagSelectSheet> createState() => _TagSelectSheetState();
+}
+
+class _TagSelectSheetState extends State<_TagSelectSheet> {
+  late Set<String> _localSubs;
+
+  @override
+  void initState() {
+    super.initState();
+    _localSubs = Set<String>.from(widget.subscriptions);
+  }
+
+  void _handleToggleSub(String tag) {
+    setState(() {
+      if (_localSubs.contains(tag)) {
+        _localSubs.remove(tag);
+      } else {
+        _localSubs.add(tag);
+      }
+    });
+    widget.onToggleSubscription(tag);
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: AppTheme.surface,
+        color: AppTheme.bgSurface,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
         border: Border.all(color: AppTheme.glassBorder),
       ),
@@ -249,18 +273,18 @@ class _TagSelectSheet extends StatelessWidget {
 
           // "Semua" option
           GestureDetector(
-            onTap: onClearTag,
+            onTap: widget.onClearTag,
             child: Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               margin: const EdgeInsets.only(bottom: 12),
               decoration: BoxDecoration(
-                color: activeTag.isEmpty
+                color: widget.activeTag.isEmpty
                     ? AppTheme.primaryCyan.withValues(alpha: 0.15)
                     : AppTheme.glassBg,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: activeTag.isEmpty
+                  color: widget.activeTag.isEmpty
                       ? AppTheme.primaryCyan
                       : AppTheme.glassBorder,
                 ),
@@ -270,7 +294,7 @@ class _TagSelectSheet extends StatelessWidget {
                   Icon(
                     Icons.apps_rounded,
                     size: 18,
-                    color: activeTag.isEmpty
+                    color: widget.activeTag.isEmpty
                         ? AppTheme.primaryCyan
                         : AppTheme.textMuted,
                   ),
@@ -278,7 +302,7 @@ class _TagSelectSheet extends StatelessWidget {
                   Text(
                     'Semua Artikel',
                     style: TextStyle(
-                      color: activeTag.isEmpty
+                      color: widget.activeTag.isEmpty
                           ? AppTheme.primaryCyan
                           : AppTheme.textPrimary,
                       fontSize: 15,
@@ -286,7 +310,7 @@ class _TagSelectSheet extends StatelessWidget {
                     ),
                   ),
                   const Spacer(),
-                  if (activeTag.isEmpty)
+                  if (widget.activeTag.isEmpty)
                     const Icon(
                       Icons.check_circle_rounded,
                       size: 18,
@@ -298,7 +322,7 @@ class _TagSelectSheet extends StatelessWidget {
           ),
 
           // Tag grid
-          if (tags.isEmpty)
+          if (widget.tags.isEmpty)
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 20),
               child: Center(
@@ -317,15 +341,15 @@ class _TagSelectSheet extends StatelessWidget {
                 child: Wrap(
                   spacing: 10,
                   runSpacing: 10,
-                  children: tags.map((tag) {
-                    final isActive = activeTag == tag;
-                    final isSubscribed = subscriptions.contains(tag);
+                  children: widget.tags.map((tag) {
+                    final isActive = widget.activeTag == tag;
+                    final isSubscribed = _localSubs.contains(tag);
                     return _TagChip(
                       tag: tag,
                       isActive: isActive,
                       isSubscribed: isSubscribed,
-                      onTap: () => onTagSelected(tag),
-                      onToggleSub: () => onToggleSubscription(tag),
+                      onTap: () => widget.onTagSelected(tag),
+                      onToggleSub: () => _handleToggleSub(tag),
                     );
                   }).toList(),
                 ),
