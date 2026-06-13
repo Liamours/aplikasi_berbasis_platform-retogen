@@ -66,8 +66,7 @@ class NotificationService:
             ).to_list(length=None)
 
             tokens = [u["fcm_token"] for u in users if u.get("fcm_token")]
-            tag_line = f"Tag: {', '.join(tags)}" if tags else "Artikel baru di RetoGen"
-            await send_push_multicast(tokens, article_title, tag_line)
+            await send_push_multicast(tokens, f"Artikel Baru: {article_title}", "")
 
         except Exception as e:
             logger.error("create_notifications error: %s", e)

@@ -15,6 +15,8 @@ import 'package:retogen/features/main/widgets/main_notification_sheet.dart';
 import 'package:retogen/features/main/widgets/main_sort_bar.dart';
 import 'package:retogen/features/main/widgets/main_tag_filter.dart';
 import 'package:retogen/core/api_client.dart';
+import 'package:retogen/core/router.dart' show routeObserver;
+import 'package:retogen/main.dart' show pendingNotifNavigation;
 
 class MainPage extends StatefulWidget {
   const MainPage({super.key});
@@ -23,7 +25,7 @@ class MainPage extends StatefulWidget {
   State<MainPage> createState() => _MainPageState();
 }
 
-class _MainPageState extends State<MainPage> {
+class _MainPageState extends State<MainPage> with RouteAware {
   final _searchCtrl = TextEditingController();
   Timer? _debounce;
   Timer? _articleTimer;
@@ -77,7 +79,21 @@ class _MainPageState extends State<MainPage> {
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final route = ModalRoute.of(context);
+    if (route != null) routeObserver.subscribe(this, route);
+  }
+
+  @override
+  void didPopNext() {
+    // Kembali ke MainPage dari halaman lain → refresh
+    _fetchArticles(clearFirst: true);
+  }
+
+  @override
   void dispose() {
+    routeObserver.unsubscribe(this);
     _debounce?.cancel();
     _articleTimer?.cancel();
     _notifTimer?.cancel();
@@ -93,6 +109,12 @@ class _MainPageState extends State<MainPage> {
       _fetchUserDetails(),
       MainService.registerFcmToken(),
     ]);
+
+    // App dibuka dari tap notifikasi saat terminated
+    if (pendingNotifNavigation) {
+      pendingNotifNavigation = false;
+      // Sudah di MainPage, cukup pastikan data ter-refresh (sudah dilakukan di atas)
+    }
   }
 
   // ── API calls ─────────────────────────────────────────────────────────────
@@ -213,14 +235,6 @@ class _MainPageState extends State<MainPage> {
         for (final notif in notifs) {
           if (!_knownNotifIds.contains(notif.id)) {
             _knownNotifIds.add(notif.id);
-            final tagLine = notif.tags.isNotEmpty
-                ? 'Tag: ${notif.tags.join(', ')}'
-                : 'Artikel baru di RetoGen';
-            await NotificationService.show(
-              id: notif.id.hashCode,
-              title: notif.articleTitle,
-              body: tagLine,
-            );
           }
         }
       }
@@ -548,8 +562,8 @@ class _MainPageState extends State<MainPage> {
 
   Widget _buildNewBanner() {
     final label = _pendingNewCount > 0
-        ? '$_pendingNewCount artikel baru · tap untuk refresh'
-        : 'Ada perubahan · tap untuk refresh';
+        ? '$_pendingNewCount Artikel Baru'
+        : 'Ada Perubahan';
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
       child: GestureDetector(

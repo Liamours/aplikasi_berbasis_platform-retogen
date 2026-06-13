@@ -2,31 +2,46 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:retogen/core/notification_service.dart';
-import 'package:retogen/core/router.dart';
+import 'package:retogen/core/router.dart' show router;
 import 'package:retogen/core/theme.dart';
 
 /// Background / terminated message handler — must be a top-level function.
+// Android otomatis tampilkan notifikasi dari FCM notification payload.
+// Handler ini hanya wajib ada (tidak boleh dihapus) tapi tidak perlu show manual.
 @pragma('vm:entry-point')
 Future<void> _firebaseBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp();
-  await NotificationService.init();
-  final title = message.notification?.title ?? 'RetoGen';
-  final body  = message.notification?.body  ?? '';
-  if (title.isEmpty && body.isEmpty) return;
-  await NotificationService.show(
-    id: message.messageId?.hashCode ?? DateTime.now().millisecondsSinceEpoch,
-    title: title,
-    body: body,
-  );
 }
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
   FirebaseMessaging.onBackgroundMessage(_firebaseBackgroundHandler);
+
+  // Minta izin notifikasi dari FCM (wajib agar getToken() tidak null)
+  await FirebaseMessaging.instance.requestPermission(
+    alert: true,
+    badge: true,
+    sound: true,
+  );
+
   await NotificationService.init();
+
+  // Tap notifikasi saat app terminated → buka app lalu navigasi ke /articles
+  final initial = await FirebaseMessaging.instance.getInitialMessage();
+  if (initial != null) {
+    pendingNotifNavigation = true;
+  }
+
+  // Tap notifikasi saat app background
+  FirebaseMessaging.onMessageOpenedApp.listen((_) {
+    router.go('/articles');
+  });
+
   runApp(const RetoGenApp());
 }
+
+bool pendingNotifNavigation = false;
 
 class RetoGenApp extends StatelessWidget {
   const RetoGenApp({super.key});

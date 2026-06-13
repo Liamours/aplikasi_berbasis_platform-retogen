@@ -26,9 +26,6 @@ class NotificationService {
       ),
     );
 
-    // Minta izin notifikasi (Android 13+)
-    await android?.requestNotificationsPermission();
-
     _ready = true;
   }
 

@@ -68,11 +68,18 @@ class MainService {
   static Future<void> registerFcmToken() async {
     try {
       final token = await FirebaseMessaging.instance.getToken();
-      if (token == null || token.isEmpty) return;
-      await ApiClient.instance.post(
+      print('[FCM] token: $token');
+      if (token == null || token.isEmpty) {
+        print('[FCM] token null/empty, skip register');
+        return;
+      }
+      final response = await ApiClient.instance.post(
         '/notification/register_token',
         data: {'fcm_token': token},
       );
-    } catch (_) {}
+      print('[FCM] register response: ${response.data}');
+    } catch (e) {
+      print('[FCM] error: $e');
+    }
   }
 }

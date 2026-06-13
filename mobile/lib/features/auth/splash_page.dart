@@ -132,7 +132,7 @@ class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateM
                               ),
                               const SizedBox(height: 8),
                               const Text(
-                                'Platform Cerdas Generasi Baru',
+                                'Review elektronik, tenang dibaca.',
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
                                   fontSize: 13,
