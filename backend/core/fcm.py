@@ -54,7 +54,7 @@ def _send_push_sync(token: str, title: str, body: str, data: dict) -> bool:
     try:
         from firebase_admin import messaging
         msg = messaging.Message(
-            notification=messaging.Notification(title=title, body=body),
+            notification=messaging.Notification(title=title, body=body or None),
             data={k: str(v) for k, v in data.items()},
             token=token,
         )
@@ -77,7 +77,7 @@ def _send_multicast_sync(tokens: list[str], title: str, body: str, data: dict) -
     try:
         from firebase_admin import messaging
         msg = messaging.MulticastMessage(
-            notification=messaging.Notification(title=title, body=body),
+            notification=messaging.Notification(title=title, body=body or None),
             data={k: str(v) for k, v in data.items()},
             tokens=tokens,
         )

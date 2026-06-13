@@ -83,8 +83,7 @@ def root():
 
 @app.get("/health")
 async def health():
-    await db.command("ping")
-    return {"status": "ok", "database": "reachable"}
+    return {"status": "ok"}
 
 
 if __name__ == "__main__":

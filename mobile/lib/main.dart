@@ -27,6 +27,17 @@ void main() async {
 
   await NotificationService.init();
 
+  // Notifikasi saat app foreground (Android tidak auto-show, harus manual)
+  FirebaseMessaging.onMessage.listen((message) async {
+    final title = message.notification?.title ?? '';
+    if (title.isEmpty) return;
+    await NotificationService.show(
+      id: message.messageId?.hashCode ?? DateTime.now().millisecondsSinceEpoch,
+      title: title,
+      body: '',
+    );
+  });
+
   // Tap notifikasi saat app terminated → buka app lalu navigasi ke /articles
   final initial = await FirebaseMessaging.instance.getInitialMessage();
   if (initial != null) {
