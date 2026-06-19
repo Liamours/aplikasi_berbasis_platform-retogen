@@ -17,6 +17,7 @@ import 'package:retogen/features/main/widgets/main_tag_filter.dart';
 import 'package:retogen/core/api_client.dart';
 import 'package:retogen/core/router.dart' show routeObserver;
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:retogen/features/help/help_page.dart';
 import 'package:retogen/main.dart' show pendingNotifNavigation, pendingNotifArticleId;
 
 class MainPage extends StatefulWidget {
@@ -458,6 +459,22 @@ class _MainPageState extends State<MainPage> with RouteAware {
             ),
           ),
           const Spacer(),
+
+          // Help button
+          _NavButton(
+            tooltip: 'Bantuan',
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => const HelpPage(),
+              ),
+            ),
+            child: const Icon(
+              Icons.help_outline_rounded,
+              size: 20,
+              color: AppTheme.textSecondary,
+            ),
+          ),
+          const SizedBox(width: 8),
 
           // Notification bell
           _NavButton(
