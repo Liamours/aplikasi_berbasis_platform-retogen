@@ -22,3 +22,8 @@ mongo_data/
 # Misc
 .DS_Store
 .vscode/
+
+# Firebase credentials (jangan commit ke git)
+backend/google-services.json
+backend/firebase_credentials.json
+mobile/android/app/google-services.json

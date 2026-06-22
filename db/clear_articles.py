@@ -1,3 +1,8 @@
+"""
+Kosongkan semua dokumen di setiap collection (collection tetap ada).
+Usage:
+    MONGO_URI=<uri> python db/clear_articles.py
+"""
 import asyncio
 import os
 import sys
@@ -8,11 +13,15 @@ if not MONGO_URI:
     print("ERROR: Set MONGO_URI terlebih dahulu.")
     sys.exit(1)
 
-async def clear():
+COLLECTIONS = ["article", "user", "comment", "notification", "subscription", "tag", "rating", "report_article", "report_user"]
+
+async def clear_all():
     client = AsyncIOMotorClient(MONGO_URI)
     db = client["Retogen"]
-    result = await db.article.delete_many({})
-    print(f"Deleted {result.deleted_count} articles.")
+    for col in COLLECTIONS:
+        result = await db[col].delete_many({})
+        print(f"  {col}: {result.deleted_count} dokumen dihapus")
     client.close()
+    print("Selesai.")
 
-asyncio.run(clear())
+asyncio.run(clear_all())
